@@ -39,7 +39,7 @@ export default function App() {
     }).catch(() => setUser({ balance_ton: 0, username: 'Пользователь' }))
   }, [])
 
-  const isAdmin = user?.telegram_id === ADMIN_ID
+  const isAdmin = Number(user?.telegram_id) === ADMIN_ID
   const visibleTabs = TABS.filter(t => t.id !== 'admin' || isAdmin)
   const balance = parseFloat(user?.balance_ton ?? 0)
 
