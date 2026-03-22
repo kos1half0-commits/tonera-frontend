@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useUserStore } from './store/userStore'
 import { authLogin } from './api/index'
+import api from './api/index'
 import Home from './pages/Home/Home'
 import Staking from './pages/Staking/Staking'
 import Tasks from './pages/Tasks/Tasks'
 import Referrals from './pages/Referrals/Referrals'
 import Wallet from './pages/Wallet/Wallet'
+import Admin from './pages/Admin/Admin'
 import './App.css'
+
+const ADMIN_ID = 5651190404
 
 const TABS = [
   { id: 'home',      label: 'ГЛАВНАЯ',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
@@ -14,23 +18,33 @@ const TABS = [
   { id: 'tasks',     label: 'ЗАДАНИЯ',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> },
   { id: 'referrals', label: 'РЕФЕРАЛЫ', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M3 20c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><circle cx="18" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.8"/><path d="M14.5 20c0-2.485 1.567-4.5 3.5-4.5s3.5 2.015 3.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
   { id: 'wallet',    label: 'КОШЕЛЁК',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M16 13a1 1 0 100 2 1 1 0 000-2z" fill="currentColor"/><path d="M2 10h20" stroke="currentColor" strokeWidth="1.8"/></svg> },
+  { id: 'admin',     label: 'АДМИН',    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
 ]
 
 export default function App() {
   const [tab, setTab] = useState('home')
-  const { user, setUser, loading } = useUserStore()
+  const { user, setUser } = useUserStore()
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
     if (tg) { tg.ready(); tg.expand() }
-    authLogin().then(r => setUser(r.data.user)).catch(() => setUser({ balance_ton: 0, username: 'Пользователь' }))
+
+    authLogin().then(async r => {
+      setUser(r.data.user)
+      // Применить реф код если есть start_param
+      const startParam = tg?.initDataUnsafe?.start_param
+      if (startParam) {
+        try { await api.post('/api/referrals/apply', { ref_code: startParam }) } catch {}
+      }
+    }).catch(() => setUser({ balance_ton: 0, username: 'Пользователь' }))
   }, [])
 
+  const isAdmin = user?.telegram_id === ADMIN_ID
+  const visibleTabs = TABS.filter(t => t.id !== 'admin' || isAdmin)
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   return (
     <div className="app">
-      {/* HEADER */}
       <div className="app-header">
         <div className="logo-row">
           <div className="logo-circle">
@@ -54,27 +68,25 @@ export default function App() {
         </div>
       </div>
 
-      {/* TABS BAR */}
       <div className="tabs-bar">
-        {TABS.map(t => (
+        {visibleTabs.map(t => (
           <button key={t.id} className={`tab-btn ${tab === t.id ? 'on' : ''}`} onClick={() => setTab(t.id)}>
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* PAGE CONTENT */}
       <div className="app-content">
         {tab === 'home'      && <Home      user={user} onTab={setTab} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks     />}
         {tab === 'referrals' && <Referrals user={user} />}
         {tab === 'wallet'    && <Wallet    user={user} />}
+        {tab === 'admin'     && <Admin     />}
       </div>
 
-      {/* BOTTOM NAV */}
       <nav className="bottom-nav">
-        {TABS.map(t => (
+        {visibleTabs.map(t => (
           <button key={t.id} className={`nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
             <span className="nav-icon">{t.icon}</span>
             <span className="nav-label">{t.label}</span>
