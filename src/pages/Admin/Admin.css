@@ -68,3 +68,22 @@
 .aui-name{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#e8f2ff;}
 .aui-meta{font-size:10px;color:rgba(232,242,255,0.3);margin-top:2px;}
 .aui-balance{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#00d4ff;flex-shrink:0;}
+
+.confirm-overlay{position:fixed;inset:0;background:rgba(5,10,26,0.92);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.confirm-modal{background:#070e20;border:1px solid rgba(255,77,106,0.3);border-radius:20px;padding:24px 20px;width:100%;max-width:300px;}
+.confirm-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#ff4d6a;letter-spacing:.1em;margin-bottom:10px;text-align:center;}
+.confirm-name{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;color:#e8f2ff;text-align:center;margin-bottom:6px;}
+.confirm-warn{font-size:12px;color:rgba(232,242,255,0.4);text-align:center;margin-bottom:18px;}
+.confirm-btns{display:flex;gap:8px;}
+.mb-del{background:linear-gradient(135deg,#cc1a1a,#991010);box-shadow:0 4px 16px rgba(204,26,26,0.35);}
+
+.admin-user-item{display:flex;align-items:center;gap:10px;background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:12px;padding:10px 12px;margin-bottom:8px;}
+.admin-user-item.blocked{opacity:.6;border-color:rgba(255,77,106,0.2);}
+.blocked-badge{font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;background:rgba(255,77,106,0.15);color:#ff4d6a;border-radius:4px;padding:2px 5px;margin-left:6px;vertical-align:middle;}
+.aui-actions{display:flex;gap:6px;flex-shrink:0;}
+.aui-btn{width:30px;height:30px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:opacity .2s;}
+.aui-btn:active{opacity:.7;}
+.aui-btn.block{background:rgba(255,179,0,0.12);border:1px solid rgba(255,179,0,0.3);}
+.aui-btn.unblock{background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);}
+.aui-btn.del{background:rgba(255,77,106,0.12);border:1px solid rgba(255,77,106,0.3);}
+.aui-balance{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#00d4ff;flex-shrink:0;}
