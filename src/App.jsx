@@ -8,17 +8,19 @@ import Tasks from './pages/Tasks/Tasks'
 import Referrals from './pages/Referrals/Referrals'
 import Wallet from './pages/Wallet/Wallet'
 import Admin from './pages/Admin/Admin'
+import Customer from './pages/Customer/Customer'
 import './App.css'
 
 const ADMIN_ID = 5651190404
 
 const TABS = [
-  { id: 'home',      label: 'ГЛАВНАЯ',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
-  { id: 'staking',   label: 'СТЕЙК',    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
-  { id: 'tasks',     label: 'ЗАДАНИЯ',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-  { id: 'referrals', label: 'РЕФЕРАЛЫ', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M3 20c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><circle cx="18" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.8"/><path d="M14.5 20c0-2.485 1.567-4.5 3.5-4.5s3.5 2.015 3.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
-  { id: 'wallet',    label: 'КОШЕЛЁК',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M16 13a1 1 0 100 2 1 1 0 000-2z" fill="currentColor"/><path d="M2 10h20" stroke="currentColor" strokeWidth="1.8"/></svg> },
-  { id: 'admin',     label: 'АДМИН',    icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
+  { id: 'home',      label: 'ГЛАВНАЯ',   icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
+  { id: 'staking',   label: 'СТЕЙК',     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
+  { id: 'tasks',     label: 'ЗАДАНИЯ',   icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  { id: 'customer',  label: 'ЗАКАЗАТЬ',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg> },
+  { id: 'referrals', label: 'РЕФЕРАЛЫ',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" stroke="currentColor" strokeWidth="1.8"/><path d="M3 20c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><circle cx="18" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.8"/><path d="M14.5 20c0-2.485 1.567-4.5 3.5-4.5s3.5 2.015 3.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
+  { id: 'wallet',    label: 'КОШЕЛЁК',   icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M16 13a1 1 0 100 2 1 1 0 000-2z" fill="currentColor"/><path d="M2 10h20" stroke="currentColor" strokeWidth="1.8"/></svg> },
+  { id: 'admin',     label: 'АДМИН',     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
 ]
 
 export default function App() {
@@ -31,7 +33,6 @@ export default function App() {
 
     authLogin().then(async r => {
       setUser(r.data.user)
-      // Применить реф код если есть start_param
       const startParam = tg?.initDataUnsafe?.start_param
       if (startParam) {
         try { await api.post('/api/referrals/apply', { ref_code: startParam }) } catch {}
@@ -80,6 +81,7 @@ export default function App() {
         {tab === 'home'      && <Home      user={user} onTab={setTab} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks     />}
+        {tab === 'customer'  && <Customer  />}
         {tab === 'referrals' && <Referrals user={user} />}
         {tab === 'wallet'    && <Wallet    user={user} />}
         {tab === 'admin'     && <Admin     />}

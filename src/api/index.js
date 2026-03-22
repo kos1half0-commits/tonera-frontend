@@ -21,3 +21,6 @@ export const getReferrals    = () => api.get('/api/referrals')
 export const getTransactions = () => api.get('/api/wallet/transactions')
 
 export default api
+
+export const createTask    = (data) => api.post('/api/tasks/create', data)
+export const getMyTasks    = () => api.get('/api/tasks/my')
