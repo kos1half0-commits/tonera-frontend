@@ -3,18 +3,13 @@ import { getTasks, completeTask } from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Tasks.css'
 
-const TYPE_LABEL = { tg:'TELEGRAM', yt:'YOUTUBE', tw:'TWITTER', stake:'СТЕЙКИНГ', custom:'ДРУГОЕ' }
-const TYPE_CLS   = { tg:'t-tg', yt:'t-yt', tw:'t-tw', stake:'t-custom', custom:'t-custom' }
-const TYPE_BADGE = { tg:'b-tg', yt:'b-yt', tw:'b-tw', stake:'b-custom', custom:'b-custom' }
-
 export default function Tasks() {
   const { updateBalance } = useUserStore()
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(null)
-  const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ title:'', link:'', type:'tg', reward:'0.5' })
   const [toast, setToast] = useState('')
+  const [toastErr, setToastErr] = useState(false)
 
   useEffect(() => {
     getTasks()
@@ -23,118 +18,78 @@ export default function Tasks() {
       .finally(() => setLoading(false))
   }, [])
 
-  const showToast = (msg) => {
-    setToast(msg)
+  const showToast = (msg, err=false) => {
+    setToast(msg); setToastErr(err)
     setTimeout(() => setToast(''), 2500)
   }
 
   const handleClaim = async (task) => {
     if (task.completed || completing === task.id) return
     setCompleting(task.id)
+
+    // Если есть ссылка — открываем её сначала
+    if (task.link) {
+      const tg = window.Telegram?.WebApp
+      if (tg) tg.openTelegramLink(task.link)
+      else window.open(task.link, '_blank')
+    }
+
     try {
-      await completeTask(task.id)
+      const res = await completeTask(task.id)
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed: true } : t))
-      updateBalance(parseFloat(task.reward))
-      showToast(`+${task.reward} TON ЗАЧИСЛЕНО`)
-    } catch {
-      showToast('ОШИБКА')
+      updateBalance(parseFloat(res.data?.reward || task.reward))
+      showToast(`+${res.data?.reward || task.reward} TON ЗАЧИСЛЕНО`)
+    } catch (e) {
+      const msg = e?.response?.data?.message || 'ОШИБКА'
+      showToast(msg, true)
     }
     setCompleting(null)
   }
 
-  const handleAdd = () => {
-    if (!form.title.trim()) return
-    const icons = { tg:'✈️', yt:'▶️', tw:'🐦', stake:'💰', custom:'⭐' }
-    setTasks(prev => [...prev, {
-      id: Date.now(), type: form.type,
-      title: form.title, link: form.link,
-      reward: parseFloat(form.reward) || 0.5,
-      icon: icons[form.type] || '⭐',
-      completed: false,
-    }])
-    setForm({ title:'', link:'', type:'tg', reward:'0.5' })
-    setShowAdd(false)
-    showToast('ЗАДАНИЕ ДОБАВЛЕНО')
-  }
-
   return (
     <div className="tasks-wrap">
-      {toast && <div className="tasks-toast">{toast}</div>}
+      {toast && <div className={`tasks-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
 
       <div className="tasks-hdr">
         <div className="tasks-title">Задания</div>
-        <button className="add-btn" onClick={() => setShowAdd(true)}>+ Добавить</button>
       </div>
 
       {loading ? (
-        <div className="tasks-empty">
-          <div className="spinner"></div>
-        </div>
+        <div className="tasks-empty"><div className="spinner"></div></div>
       ) : tasks.length === 0 ? (
         <div className="tasks-empty">
           <div className="empty-icon">📋</div>
           <div className="empty-text">Заданий пока нет</div>
-          <div className="empty-sub">Добавь первое задание</div>
         </div>
       ) : (
         <div className="tasks-list">
           {tasks.map(task => (
             <div key={task.id} className={`task-card ${task.completed ? 'done' : ''}`}>
-              <div className={`task-ico ${TYPE_CLS[task.type] || 't-custom'}`}>{task.icon}</div>
+              {task.channel_photo
+                ? <img src={task.channel_photo} className="task-photo" onError={e => e.target.style.display='none'}/>
+                : <div className={`task-ico ${task.type === 'bot' ? 't-bot' : 't-sub'}`}>
+                    {task.icon || (task.type === 'bot' ? '🤖' : '✈️')}
+                  </div>
+              }
               <div className="task-body">
-                <div className="task-name">{task.title}</div>
+                <div className="task-name">{task.channel_title || task.title}</div>
                 <div className="task-rew">+{task.reward} TON</div>
-                {task.link && <div className="task-link">{task.link}</div>}
+                {task.link && <div className="task-link">{task.link.replace('https://', '')}</div>}
                 <div className="task-meta">
-                  <span className={`task-badge ${TYPE_BADGE[task.type] || 'b-custom'}`}>
-                    {TYPE_LABEL[task.type] || 'ДРУГОЕ'}
+                  <span className={`task-badge ${task.type === 'bot' ? 'b-bot' : 'b-sub'}`}>
+                    {task.type === 'bot' ? 'БОТ' : 'ПОДПИСКА'}
                   </span>
                   <button
                     className={`claim-btn ${task.completed ? 'claimed' : ''}`}
                     onClick={() => handleClaim(task)}
                     disabled={task.completed || completing === task.id}
                   >
-                    {task.completed ? '✓ Готово' : completing === task.id ? '...' : 'Выполнить'}
+                    {task.completed ? '✓ Готово' : completing === task.id ? '...' : task.type === 'bot' ? 'Запустить' : 'Подписаться'}
                   </button>
                 </div>
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {showAdd && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowAdd(false)}>
-          <div className="add-modal">
-            <div className="modal-title">НОВОЕ ЗАДАНИЕ</div>
-            <div className="afield">
-              <label>НАЗВАНИЕ</label>
-              <input className="ainput" placeholder="Название" value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))}/>
-            </div>
-            <div className="afield">
-              <label>ССЫЛКА</label>
-              <input className="ainput" placeholder="https://t.me/..." value={form.link} onChange={e => setForm(p=>({...p,link:e.target.value}))}/>
-            </div>
-            <div className="arow">
-              <div className="afield">
-                <label>ТИП</label>
-                <select className="aselect" value={form.type} onChange={e => setForm(p=>({...p,type:e.target.value}))}>
-                  <option value="tg">Telegram</option>
-                  <option value="yt">YouTube</option>
-                  <option value="tw">Twitter</option>
-                  <option value="custom">Другое</option>
-                </select>
-              </div>
-              <div className="afield">
-                <label>НАГРАДА TON</label>
-                <input className="ainput" type="number" step="0.1" placeholder="0.5" value={form.reward} onChange={e => setForm(p=>({...p,reward:e.target.value}))}/>
-              </div>
-            </div>
-            <div className="mbtns">
-              <button className="mbtn mb-c" onClick={() => setShowAdd(false)}>Отмена</button>
-              <button className="mbtn mb-ok" onClick={handleAdd}>Добавить</button>
-            </div>
-          </div>
         </div>
       )}
     </div>
