@@ -12,15 +12,17 @@ export default function Staking({ user }) {
   const [acc, setAcc] = useState(0)
   const [t0, setT0] = useState(Date.now())
   const [income, setIncome] = useState(0)
-  const [modal, setModal] = useState(null) // 'plus' | 'minus'
+  const [modal, setModal] = useState(null)
   const [amount, setAmount] = useState('')
   const [stakeId, setStakeId] = useState(null)
   const [toast, setToast] = useState('')
   const timerRef = useRef(null)
+  const depRef = useRef(dep)
 
-  const getIncome = (a, t) => a + dep * RATE_MS * (Date.now() - t)
+  useEffect(() => { depRef.current = dep }, [dep])
 
-  // Load active stake on mount
+  const getIncome = (a, t) => a + depRef.current * RATE_MS * (Date.now() - t)
+
   useEffect(() => {
     getUserStakes().then(r => {
       if (r.data?.length > 0) {
@@ -33,7 +35,6 @@ export default function Staking({ user }) {
     }).catch(() => {})
   }, [])
 
-  // Live ticker
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setIncome(getIncome(acc, t0))
@@ -53,7 +54,7 @@ export default function Staking({ user }) {
     setTimeout(() => setToast(''), 2500)
   }
 
-  const handleCollect = () => {
+  const handleCollect = async () => {
     if (income < 1e-9) return
     const v = snap()
     setAcc(0)
@@ -61,15 +62,29 @@ export default function Staking({ user }) {
     setWal(w => w + v)
     updateBalance(v)
     showToast(`СОБРАНО +${v.toFixed(6)} TON`)
+    try {
+      if (stakeId) {
+        await unstake(stakeId)
+        // Re-create stake with same deposit
+        const res = await createStake({ amount: dep })
+        if (res.data?.stake?.id) setStakeId(res.data.stake.id)
+      }
+    } catch {}
   }
 
-  const handleReinvest = () => {
+  const handleReinvest = async () => {
     if (income < 1e-9) return
     const v = snap()
+    const newDep = dep + v
     setAcc(0)
     setT0(Date.now())
-    setDep(d => d + v)
+    setDep(newDep)
     showToast(`РЕИНВЕСТ +${v.toFixed(6)} TON`)
+    try {
+      if (stakeId) await unstake(stakeId)
+      const res = await createStake({ amount: newDep })
+      if (res.data?.stake?.id) setStakeId(res.data.stake.id)
+    } catch {}
   }
 
   const handleConfirm = async () => {
@@ -82,7 +97,11 @@ export default function Staking({ user }) {
       setWal(w => w - val)
       setDep(d => d + val)
       updateBalance(-val)
-      try { await createStake({ amount: val }) } catch {}
+      try {
+        if (stakeId) await unstake(stakeId)
+        const res = await createStake({ amount: dep + val })
+        if (res.data?.stake?.id) setStakeId(res.data.stake.id)
+      } catch {}
       showToast(`ДЕПОЗИТ +${val.toFixed(4)} TON`)
     } else {
       if (val > dep) { showToast('БОЛЬШЕ ДЕПОЗИТА'); return }
@@ -91,7 +110,15 @@ export default function Staking({ user }) {
       setDep(d => d - val)
       setWal(w => w + val)
       updateBalance(val)
-      if (stakeId) { try { await unstake(stakeId) } catch {} }
+      try {
+        if (stakeId) await unstake(stakeId)
+        if (dep - val > 0) {
+          const res = await createStake({ amount: dep - val })
+          if (res.data?.stake?.id) setStakeId(res.data.stake.id)
+        } else {
+          setStakeId(null)
+        }
+      } catch {}
       showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
     }
     setModal(null)
