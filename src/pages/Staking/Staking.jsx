@@ -3,224 +3,168 @@ import { getUserStakes, createStake, unstake } from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Staking.css'
 
-const DAILY_RATE = 0.01 // 1% per day — mirrors backend
+const RATE_MS = 0.01 / (24 * 60 * 60 * 1000)
 
-function calcEarned(amount, startedAt) {
-  const msPerDay = 1000 * 60 * 60 * 24
-  const days = (Date.now() - new Date(startedAt).getTime()) / msPerDay
-  return parseFloat(amount) * DAILY_RATE * days
-}
+export default function Staking({ user }) {
+  const { updateBalance } = useUserStore()
+  const [dep, setDep] = useState(0)
+  const [wal, setWal] = useState(parseFloat(user?.balance_ton ?? 0))
+  const [acc, setAcc] = useState(0)
+  const [t0, setT0] = useState(Date.now())
+  const [income, setIncome] = useState(0)
+  const [modal, setModal] = useState(null) // 'plus' | 'minus'
+  const [amount, setAmount] = useState('')
+  const [stakeId, setStakeId] = useState(null)
+  const [toast, setToast] = useState('')
+  const timerRef = useRef(null)
 
-export default function Staking() {
-  const { user, updateBalance } = useUserStore()
-  const [stakes, setStakes]     = useState([])
-  const [amount, setAmount]     = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [unstaking, setUnstaking] = useState(null)
-  const [tab, setTab]           = useState('stake') // stake | active
-  const [earned, setEarned]     = useState({}) // stakeId -> earned
-  const tickRef = useRef(null)
+  const getIncome = (a, t) => a + dep * RATE_MS * (Date.now() - t)
 
-  const balance = parseFloat(user?.balance_ton ?? 0)
-
-  // Load active stakes
-  const loadStakes = async () => {
-    try {
-      const res = await getUserStakes()
-      setStakes(res.data)
-    } catch {}
-  }
-
+  // Load active stake on mount
   useEffect(() => {
-    loadStakes()
+    getUserStakes().then(r => {
+      if (r.data?.length > 0) {
+        const s = r.data[0]
+        setDep(parseFloat(s.amount))
+        setStakeId(s.id)
+        setAcc(parseFloat(s.earned) || 0)
+        setT0(new Date(s.started_at).getTime())
+      }
+    }).catch(() => {})
   }, [])
 
-  // Live earned ticker — updates every second
+  // Live ticker
   useEffect(() => {
-    if (stakes.length === 0) return
-    tickRef.current = setInterval(() => {
-      const updated = {}
-      stakes.forEach(s => {
-        updated[s.id] = calcEarned(s.amount, s.started_at)
-      })
-      setEarned(updated)
-    }, 1000)
-    return () => clearInterval(tickRef.current)
-  }, [stakes])
+    timerRef.current = setInterval(() => {
+      setIncome(getIncome(acc, t0))
+    }, 100)
+    return () => clearInterval(timerRef.current)
+  }, [dep, acc, t0])
 
-  const handleStake = async () => {
-    if (!amount || parseFloat(amount) <= 0) return
-    if (parseFloat(amount) > balance) return
-    setLoading(true)
-    try {
-      await createStake({ amount: parseFloat(amount) })
-      setAmount('')
-      await loadStakes()
-      setTab('active')
-      // Refresh user balance
-      updateBalance(balance - parseFloat(amount))
-    } catch (e) {
-      alert(e?.response?.data?.error || 'Ошибка')
-    }
-    setLoading(false)
+  const snap = () => {
+    const cur = getIncome(acc, t0)
+    setAcc(cur)
+    setT0(Date.now())
+    return cur
   }
 
-  const handleUnstake = async (stakeId) => {
-    setUnstaking(stakeId)
-    try {
-      const res = await unstake(stakeId)
-      await loadStakes()
-      updateBalance(balance + res.data.returned)
-      setTab('stake')
-    } catch (e) {
-      alert(e?.response?.data?.error || 'Ошибка')
-    }
-    setUnstaking(null)
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(''), 2500)
   }
 
-  const dailyPreview = amount ? (parseFloat(amount) * DAILY_RATE).toFixed(4) : null
+  const handleCollect = () => {
+    if (income < 1e-9) return
+    const v = snap()
+    setAcc(0)
+    setT0(Date.now())
+    setWal(w => w + v)
+    updateBalance(v)
+    showToast(`СОБРАНО +${v.toFixed(6)} TON`)
+  }
+
+  const handleReinvest = () => {
+    if (income < 1e-9) return
+    const v = snap()
+    setAcc(0)
+    setT0(Date.now())
+    setDep(d => d + v)
+    showToast(`РЕИНВЕСТ +${v.toFixed(6)} TON`)
+  }
+
+  const handleConfirm = async () => {
+    const val = parseFloat(amount)
+    if (!val || val <= 0) { showToast('ВВЕДИ СУММУ'); return }
+    if (modal === 'plus') {
+      if (val > wal) { showToast('НЕДОСТАТОЧНО СРЕДСТВ'); return }
+      snap()
+      setAcc(0); setT0(Date.now())
+      setWal(w => w - val)
+      setDep(d => d + val)
+      updateBalance(-val)
+      try { await createStake({ amount: val }) } catch {}
+      showToast(`ДЕПОЗИТ +${val.toFixed(4)} TON`)
+    } else {
+      if (val > dep) { showToast('БОЛЬШЕ ДЕПОЗИТА'); return }
+      snap()
+      setAcc(0); setT0(Date.now())
+      setDep(d => d - val)
+      setWal(w => w + val)
+      updateBalance(val)
+      if (stakeId) { try { await unstake(stakeId) } catch {} }
+      showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
+    }
+    setModal(null)
+    setAmount('')
+  }
 
   return (
-    <div className="staking fade-up">
-      <div className="page-header">
-        <div className="page-title">Стейкинг</div>
-        <div className="page-subtitle">1% в день от суммы</div>
+    <div className="staking-wrap">
+      {toast && <div className="stake-toast">{toast}</div>}
+
+      <div className="stake-topbar">
+        <div className="swpill">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.8"/><path d="M16 13a1 1 0 100 2 1 1 0 000-2z" fill="currentColor"/><path d="M2 10h20" stroke="currentColor" strokeWidth="1.8"/></svg>
+          <span className="swp-b">{wal.toFixed(4)}</span>
+          <span className="swp-c">TON</span>
+        </div>
+        <div className="dep-badge">РАБОЧИЙ ДЕПОЗИТ</div>
       </div>
 
-      {/* Info card */}
-      <div className="staking-info-card">
-        <div className="sic-item">
-          <div className="sic-value">1%</div>
-          <div className="sic-label">в день</div>
+      <div className="stake-row">
+        <div>
+          <div className="sr-label">ДЕПОЗИТ</div>
+          <div className="sr-val">
+            <span className="sr-num">{dep.toFixed(4)}</span>
+            <span className="sr-cur">TON</span>
+          </div>
         </div>
-        <div className="sic-divider" />
-        <div className="sic-item">
-          <div className="sic-value">~30%</div>
-          <div className="sic-label">в месяц</div>
-        </div>
-        <div className="sic-divider" />
-        <div className="sic-item">
-          <div className="sic-value">365%</div>
-          <div className="sic-label">в год</div>
+        <div className="sbg">
+          <button className="sbsq sbsq-m" onClick={() => { setModal('minus'); setAmount('') }}>−</button>
+          <button className="sbsq sbsq-p" onClick={() => { setModal('plus'); setAmount('') }}>+</button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="staking-tabs">
-        <button className={`staking-tab ${tab === 'stake' ? 'active' : ''}`} onClick={() => setTab('stake')}>
-          Застейкать
-        </button>
-        <button className={`staking-tab ${tab === 'active' ? 'active' : ''}`} onClick={() => setTab('active')}>
-          Активные ({stakes.length})
-        </button>
+      <div className="stake-row">
+        <div>
+          <div className="sr-label">ДОХОД В ДЕНЬ</div>
+          <div className="sr-val">
+            <span className="sr-num" style={{fontSize:22}}>1%</span>
+            <span className="sr-sub">~{(dep * 0.01).toFixed(4)} TON</span>
+          </div>
+        </div>
+        <button className="sbsq-po" onClick={() => { setModal('plus'); setAmount('') }}>+</button>
       </div>
 
-      {/* STAKE FORM */}
-      {tab === 'stake' && (
-        <div className="stake-form card">
-          <div className="stake-balance-hint">
-            Доступно: <span>{balance.toFixed(4)} TON</span>
-          </div>
+      <div className="income-card">
+        <div className="inc-lbl">ДОХОД</div>
+        <div className="inc-row">
+          <span className={`inc-num ${income > 0 ? 'g' : ''}`}>{income.toFixed(8)}</span>
+          <span className="inc-ton">TON</span>
+        </div>
+        <div className="inc-btns">
+          <button className="ibtn ibtn-c" onClick={handleCollect}>Собрать</button>
+          <button className="ibtn ibtn-r" onClick={handleReinvest}>Реинвест</button>
+        </div>
+      </div>
 
-          <div className="stake-input-wrap">
-            <input
-              className="stake-input"
-              type="number"
-              placeholder="Сумма TON"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-            <span className="stake-input-currency">TON</span>
-          </div>
-
-          {/* Quick % buttons */}
-          <div className="stake-quick">
-            {[25, 50, 75, 100].map(pct => (
-              <button
-                key={pct}
-                className="quick-pct"
-                onClick={() => setAmount((balance * pct / 100).toFixed(4))}
-              >
-                {pct}%
-              </button>
-            ))}
-          </div>
-
-          {/* Preview */}
-          {dailyPreview && (
-            <div className="stake-preview">
-              <div className="preview-row">
-                <span>Доход в день</span>
-                <span className="preview-value">+{dailyPreview} TON</span>
-              </div>
-              <div className="preview-row">
-                <span>Доход в месяц</span>
-                <span className="preview-value">+{(parseFloat(dailyPreview) * 30).toFixed(4)} TON</span>
-              </div>
+      {modal && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setModal(null)}>
+          <div className="modal-inner">
+            <div className="modal-title">{modal === 'plus' ? 'ДОБАВИТЬ ДЕПОЗИТ' : 'ВЫВЕСТИ ДЕПОЗИТ'}</div>
+            <div className="mi-wrap">
+              <input className="mi" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} autoFocus/>
+              <span className="mi-cur">TON</span>
             </div>
-          )}
-
-          <button
-            className="btn-primary"
-            onClick={handleStake}
-            disabled={loading || !amount || parseFloat(amount) <= 0 || parseFloat(amount) > balance}
-          >
-            {loading ? 'Обработка...' : 'Застейкать'}
-          </button>
-        </div>
-      )}
-
-      {/* ACTIVE STAKES */}
-      {tab === 'active' && (
-        <div className="active-stakes">
-          {stakes.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">📭</div>
-              <div className="empty-text">Нет активных стейков</div>
-              <div className="empty-sub">Перейди во вкладку «Застейкать»</div>
+            <div className="mhint">
+              {modal === 'plus' ? 'Доступно в кошельке: ' : 'Депозит: '}
+              <span>{(modal === 'plus' ? wal : dep).toFixed(4)}</span> TON
             </div>
-          ) : (
-            stakes.map(s => {
-              const liveEarned = earned[s.id] ?? calcEarned(s.amount, s.started_at)
-              const daily = parseFloat(s.amount) * DAILY_RATE
-              const daysActive = (Date.now() - new Date(s.started_at).getTime()) / (1000 * 60 * 60 * 24)
-
-              return (
-                <div key={s.id} className="active-stake-card card">
-                  <div className="as-header">
-                    <div className="as-label">Стейк</div>
-                    <span className="tag tag-accent">1% / день</span>
-                  </div>
-
-                  <div className="as-amount">{parseFloat(s.amount).toFixed(4)} TON</div>
-
-                  <div className="as-stats">
-                    <div className="as-stat">
-                      <div className="as-stat-label">Заработано</div>
-                      <div className="as-stat-value earned-live">+{liveEarned.toFixed(6)} TON</div>
-                    </div>
-                    <div className="as-stat">
-                      <div className="as-stat-label">В день</div>
-                      <div className="as-stat-value">+{daily.toFixed(4)} TON</div>
-                    </div>
-                    <div className="as-stat">
-                      <div className="as-stat-label">Дней</div>
-                      <div className="as-stat-value">{daysActive.toFixed(1)}</div>
-                    </div>
-                  </div>
-
-                  <button
-                    className="btn-ghost"
-                    onClick={() => handleUnstake(s.id)}
-                    disabled={unstaking === s.id}
-                    style={{ marginTop: 12 }}
-                  >
-                    {unstaking === s.id ? 'Вывод...' : `Вывести ${(parseFloat(s.amount) + liveEarned).toFixed(4)} TON`}
-                  </button>
-                </div>
-              )
-            })
-          )}
+            <div className="mbtns">
+              <button className="mbtn mb-c" onClick={() => setModal(null)}>Отмена</button>
+              <button className="mbtn mb-ok" onClick={handleConfirm}>Подтвердить</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
