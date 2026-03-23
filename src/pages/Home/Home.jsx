@@ -6,8 +6,16 @@ export default function Home({ user, onTab, onCreate, onMyTasks }) {
   const balance = parseFloat(user?.balance_ton ?? 0)
   const username = user?.username || user?.first_name || 'Пользователь'
   const [stakeTotal, setStakeTotal] = useState(null)
+  const [tasksDone, setTasksDone] = useState(null)
 
   useEffect(() => {
+    import('../../api/index').then(({ getTasks }) => {
+      getTasks().then(r => {
+        const done = (r.data || []).filter(t => t.completed).length
+        setTasksDone(done)
+      }).catch(() => setTasksDone(0))
+    })
+
     getUserStakes().then(r => {
       const total = (r.data || []).reduce((s, st) => s + parseFloat(st.amount), 0)
       setStakeTotal(total)
@@ -39,6 +47,16 @@ export default function Home({ user, onTab, onCreate, onMyTasks }) {
           <div className="stat-info">
             <div className="stat-val">{balance.toFixed(4)}</div>
             <div className="stat-lbl">Баланс TON</div>
+          </div>
+          <div className="stat-arr">›</div>
+        </div>
+        <div className="stat-card" onClick={() => onTab('tasks')}>
+          <div className="stat-icon si-warn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+          </div>
+          <div className="stat-info">
+            <div className="stat-val">{tasksDone === null ? '...' : tasksDone}</div>
+            <div className="stat-lbl">Выполнено заданий</div>
           </div>
           <div className="stat-arr">›</div>
         </div>
