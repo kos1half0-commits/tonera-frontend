@@ -18,6 +18,7 @@ export const unstake         = (stakeId, label, internal=false) => api.post(`/ap
 export const reinvestStake   = (stakeId, earned, newAmount) => api.post(`/api/staking/reinvest/${stakeId}`, { earned, newAmount })
 export const addToStake      = (stakeId, amount) => api.post('/api/staking/add', { stakeId, amount })
 export const collectStake    = (stakeId) => api.post(`/api/staking/collect/${stakeId}`)
+export const withdrawStake   = (stakeId, amount) => api.post('/api/staking/withdraw', { stakeId, amount })
 export const getTasks        = () => api.get('/api/tasks')
 export const completeTask    = (id) => api.post(`/api/tasks/${id}/complete`)
 export const createTask      = (data) => api.post('/api/tasks/create', data)

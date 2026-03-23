@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getUserStakes, createStake, unstake, reinvestStake, addToStake, collectStake } from '../../api/index'
+import { getUserStakes, createStake, unstake, reinvestStake, addToStake, collectStake, withdrawStake } from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Staking.css'
 
@@ -129,11 +129,8 @@ export default function Staking({ user }) {
       setWal(w => w + val)
       updateBalance(val)
       try {
-        if (stakeId) await unstake(stakeId, 'Вывод депозита', false)
-        if (dep - val > 0) {
-          const res = await createStake({ amount: dep - val })
-          if (res.data?.stake?.id) setStakeId(res.data.stake.id)
-        } else { setStakeId(null) }
+        await withdrawStake(stakeId, val)
+        if (dep - val <= 0) setStakeId(null)
       } catch {}
       showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
     }
