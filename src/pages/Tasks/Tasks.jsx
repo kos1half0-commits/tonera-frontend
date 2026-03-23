@@ -91,12 +91,11 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
       setLoadingCh(true)
       setBotCheck(null)
       try {
-        const [info, check] = await Promise.all([
-          api.get(`/api/channels/info?link=${encodeURIComponent(link)}`),
-          api.get(`/api/channels/check?link=${encodeURIComponent(link)}`),
-        ])
+        const requests = [api.get(`/api/channels/info?link=${encodeURIComponent(link)}`)]
+        if (form.type === 'subscribe') requests.push(api.get(`/api/channels/check?link=${encodeURIComponent(link)}`))
+        const [info, check] = await Promise.all(requests)
         setForm(p => ({ ...p, title: info.data.title || p.title, channel_title: info.data.title || '', channel_photo: info.data.photo || '' }))
-        setBotCheck(check.data)
+        if (check) setBotCheck(check.data)
       } catch {}
       setLoadingCh(false)
     }, 800)
@@ -205,7 +204,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
             </div>
           )}
 
-          {botCheck !== null && (
+          {botCheck !== null && form.type === 'subscribe' && (
             <div className={`task-bot-check ${botCheck.ok ? 'ok' : 'fail'}`}>
               {botCheck.ok ? (
                 <span>✅ Бот добавлен в канал — проверка подписки работает</span>
@@ -253,7 +252,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
             <div className="dist-row"><span>🏦 Комиссия</span><span>{parseFloat(pricing.task_project_fee).toFixed(4)} TON</span></div>
           </div>
 
-          <button className="create-btn" onClick={handleCreate} disabled={creating || balance < totalCost || !form.link || !form.title || (botCheck !== null && !botCheck.ok)}>
+          <button className="create-btn" onClick={handleCreate} disabled={creating || balance < totalCost || !form.link || !form.title || (form.type === 'subscribe' && botCheck !== null && !botCheck.ok)}>
             {creating ? 'СОЗДАНИЕ...' : `СОЗДАТЬ ЗА ${totalCost.toFixed(4)} TON`}
           </button>
         </div>
