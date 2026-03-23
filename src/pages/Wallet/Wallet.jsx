@@ -7,7 +7,7 @@ export default function Wallet({ user }) {
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   useEffect(() => {
-    getTransactions().then(r => setTxs(r.data)).catch(() => {})
+    getTransactions().then(r => setTxs((r.data || []).filter(t => t.type !== 'fee'))).catch(() => {})
   }, [])
 
   return (
