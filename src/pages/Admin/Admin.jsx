@@ -142,14 +142,14 @@ export default function Admin() {
   return (
     <>
       {confirmDelete && (
-        <div className="confirm-overlay" onClick={() => setConfirmDelete(null)}>
-          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+        <div className="confirm-overlay">
+          <div className="confirm-modal">
             <div className="confirm-title">УДАЛИТЬ ПОЛЬЗОВАТЕЛЯ?</div>
             <div className="confirm-name">{confirmDelete.username || confirmDelete.first_name}</div>
             <div className="confirm-warn">Это действие нельзя отменить</div>
             <div className="confirm-btns">
-              <button className="mbtn mb-c" onClick={() => setConfirmDelete(null)}>Отмена</button>
-              <button className="mbtn mb-del" onClick={() => deleteUser(confirmDelete)}>УДАЛИТЬ</button>
+              <button className="mbtn mb-c" type="button" onClick={() => { setConfirmDelete(null) }}>Отмена</button>
+              <button className="mbtn mb-del" type="button" onClick={() => { const u = confirmDelete; setConfirmDelete(null); deleteUser(u) }}>УДАЛИТЬ</button>
             </div>
           </div>
         </div>

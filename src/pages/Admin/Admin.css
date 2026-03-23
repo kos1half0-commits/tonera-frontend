@@ -85,8 +85,8 @@
 .aui-btn.del{background:rgba(255,77,106,0.12);border:1px solid rgba(255,77,106,0.3);}
 
 /* Confirm modal */
-.confirm-overlay{position:fixed;inset:0;background:rgba(5,10,26,0.92);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
-.confirm-modal{background:#070e20;border:1px solid rgba(255,77,106,0.3);border-radius:20px;padding:24px 20px;width:100%;max-width:300px;}
+.confirm-overlay{position:fixed;inset:0;background:rgba(5,10,26,0.92);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;pointer-events:all;}
+.confirm-modal{background:#070e20;border:1px solid rgba(255,77,106,0.3);border-radius:20px;padding:24px 20px;width:100%;max-width:300px;pointer-events:all;}
 .confirm-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#ff4d6a;letter-spacing:.1em;margin-bottom:10px;text-align:center;}
 .confirm-name{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;color:#e8f2ff;text-align:center;margin-bottom:6px;}
 .confirm-warn{font-size:12px;color:rgba(232,242,255,0.4);text-align:center;margin-bottom:18px;}
