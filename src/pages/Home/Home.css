@@ -22,3 +22,5 @@
 .qa:active{border-color:rgba(26,95,255,0.4);}
 .qa-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;}
 .qa-lbl{font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.04em;}
+.si-purple{background:rgba(124,58,237,0.15);color:#a855f7;}
+.qa-highlight{border-color:rgba(124,58,237,0.3);}
