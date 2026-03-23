@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getUserStakes, createStake, unstake, reinvestStake, addToStake } from '../../api/index'
+import { getUserStakes, createStake, unstake, reinvestStake, addToStake, collectStake } from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Staking.css'
 
@@ -79,9 +79,7 @@ export default function Staking({ user }) {
     updateBalance(v)
     showToast(`СОБРАНО +${v.toFixed(6)} TON`)
     try {
-      if (stakeId) await unstake(stakeId, 'Сбор дохода', true)
-      const res = await createStake({ amount: dep })
-      if (res.data?.stake?.id) setStakeId(res.data.stake.id)
+      if (stakeId) await collectStake(stakeId)
     } catch {}
   }
 
