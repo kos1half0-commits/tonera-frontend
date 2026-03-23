@@ -91,11 +91,12 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
       setLoadingCh(true)
       setBotCheck(null)
       try {
-        const requests = [api.get(`/api/channels/info?link=${encodeURIComponent(link)}`)]
-        if (form.type === 'subscribe') requests.push(api.get(`/api/channels/check?link=${encodeURIComponent(link)}`))
-        const [info, check] = await Promise.all(requests)
-        setForm(p => ({ ...p, title: info.data.title || p.title, channel_title: info.data.title || '', channel_photo: info.data.photo || '' }))
-        if (check) setBotCheck(check.data)
+        const infoRes = await api.get(`/api/channels/info?link=${encodeURIComponent(link)}`)
+        setForm(p => ({ ...p, title: infoRes.data.title || p.title, channel_title: infoRes.data.title || '', channel_photo: infoRes.data.photo || '' }))
+        if (form.type === 'subscribe') {
+          const checkRes = await api.get(`/api/channels/check?link=${encodeURIComponent(link)}`)
+          setBotCheck(checkRes.data)
+        }
       } catch {}
       setLoadingCh(false)
     }, 800)
