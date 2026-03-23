@@ -59,6 +59,19 @@ export default function Staking({ user }) {
     return () => clearInterval(timerRef.current)
   }, [dep, acc, t0])
 
+  const reloadStake = async () => {
+    try {
+      const r = await getUserStakes()
+      if (r.data?.length > 0) {
+        const s = r.data[0]
+        setDep(parseFloat(s.amount))
+        setStakeId(s.id)
+        setAcc(parseFloat(s.earned) || 0)
+        setT0(new Date(s.started_at).getTime())
+      }
+    } catch {}
+  }
+
   const snap = () => {
     const cur = getIncome(acc, t0)
     setAcc(cur)
@@ -112,8 +125,8 @@ export default function Staking({ user }) {
       setDep(d => d + val)
       updateBalance(-val)
       try {
-        const res = await addToStake(stakeId, val)
-        if (res.data?.stake?.id) setStakeId(res.data.stake.id)
+        await addToStake(stakeId, val)
+        await reloadStake()
       } catch {}
       showToast(`ДЕПОЗИТ +${val.toFixed(4)} TON`)
     } else {
@@ -130,7 +143,7 @@ export default function Staking({ user }) {
       updateBalance(val)
       try {
         await withdrawStake(stakeId, val)
-        if (dep - val <= 0) setStakeId(null)
+        await reloadStake()
       } catch {}
       showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
     }
