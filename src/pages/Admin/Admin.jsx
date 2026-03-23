@@ -88,12 +88,11 @@ export default function Admin() {
       setLoadingChannel(true)
       setBotCheck(null)
       try {
-        const [info, check] = await Promise.all([
-          api.get(`/api/channels/info?link=${encodeURIComponent(link)}`),
-          api.get(`/api/channels/check?link=${encodeURIComponent(link)}`),
-        ])
+        const requests = [api.get(`/api/channels/info?link=${encodeURIComponent(link)}`)]
+        if (form.type === 'subscribe') requests.push(api.get(`/api/channels/check?link=${encodeURIComponent(link)}`))
+        const [info, check] = await Promise.all(requests)
         setForm(p => ({ ...p, title: info.data.title || p.title, channel_title: info.data.title || '', channel_photo: info.data.photo || '', icon: p.type === 'bot' ? '🤖' : '✈️' }))
-        setBotCheck(check.data)
+        if (check) setBotCheck(check.data)
       } catch {}
       setLoadingChannel(false)
     }, 800)
@@ -237,8 +236,8 @@ export default function Admin() {
             <div className="atf-row">
               <label className="atf-label">ТИП</label>
               <div className="type-btns">
-                <button className={`type-btn ${form.type==='subscribe'?'on':''}`} onClick={() => setForm(p=>({...p,type:'subscribe',icon:'✈️'}))}>✈️ Подписка</button>
-                <button className={`type-btn ${form.type==='bot'?'on':''}`} onClick={() => setForm(p=>({...p,type:'bot',icon:'🤖'}))}>🤖 Бот</button>
+                <button className={`type-btn ${form.type==='subscribe'?'on':''}`} onClick={() => { setForm({ title:'', link:'', type:'subscribe', icon:'✈️', channel_title:'', channel_photo:'' }); setBotCheck(null) }}>✈️ Подписка</button>
+                <button className={`type-btn ${form.type==='bot'?'on':''}`} onClick={() => { setForm({ title:'', link:'', type:'bot', icon:'🤖', channel_title:'', channel_photo:'' }); setBotCheck(null) }}>🤖 Бот</button>
               </div>
             </div>
             <div className="atf-row">
@@ -254,7 +253,7 @@ export default function Admin() {
                 <div className="ch-info"><div className="ch-title">{form.channel_title}</div><div className="ch-link">{form.link}</div></div>
               </div>
             )}
-            {botCheck !== null && (
+            {botCheck !== null && form.type === 'subscribe' && (
               <div className={`bot-check ${botCheck.ok ? 'ok' : 'fail'}`}>
                 {botCheck.ok ? (
                   <span>✅ Бот является администратором канала</span>
