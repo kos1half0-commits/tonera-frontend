@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import api from '../api/index'
+import { useUserStore } from '../store/userStore'
 import './WelcomeBonus.css'
 
 export default function WelcomeBonus({ onClaim }) {
   const [show, setShow] = useState(false)
   const [claiming, setClaiming] = useState(false)
+  const { setUser } = useUserStore()
 
   useEffect(() => {
     api.get('/api/bonus/status').then(r => {
@@ -16,9 +18,14 @@ export default function WelcomeBonus({ onClaim }) {
     setClaiming(true)
     try {
       await api.post('/api/bonus/claim')
+      // Перезагружаем юзера чтобы получить актуальный bonus_balance
+      const r = await api.get('/api/user/me')
+      setUser(r.data)
       setShow(false)
       onClaim()
-    } catch {}
+    } catch (e) {
+      console.error(e)
+    }
     setClaiming(false)
   }
 

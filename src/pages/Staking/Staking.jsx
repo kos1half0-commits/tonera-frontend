@@ -8,7 +8,7 @@ const RATE_MS = 0.01 / (24 * 60 * 60 * 1000)
 export default function Staking({ user }) {
   const { updateBalance } = useUserStore()
   const [dep, setDep] = useState(0)
-  const [bonusDep, setBonusDep] = useState(parseFloat(user?.bonus_balance ?? 0))
+  const [bonusDep, setBonusDep] = useState(0)
   const [wal, setWal] = useState(parseFloat(user?.balance_ton ?? 0))
   const [acc, setAcc] = useState(0)
   const [t0, setT0] = useState(Date.now())
@@ -25,6 +25,7 @@ export default function Staking({ user }) {
   const getIncome = (a, t) => a + depRef.current * RATE_MS * (Date.now() - t)
 
   useEffect(() => {
+    // Загружаем активный стейк
     getUserStakes().then(r => {
       if (r.data?.length > 0) {
         const s = r.data[0]
@@ -34,10 +35,33 @@ export default function Staking({ user }) {
         setT0(new Date(s.started_at).getTime())
       }
     }).catch(() => {})
-    // Load bonus balance
-    setBonusDep(parseFloat(user?.bonus_balance ?? 0))
   }, [])
 
+  // Когда user обновился (после клейма бонуса) — обновляем wal и bonusDep
+  useEffect(() => {
+    setWal(parseFloat(user?.balance_ton ?? 0))
+    const bonus = parseFloat(user?.bonus_balance ?? 0)
+    setBonusDep(bonus)
+    // Если есть бонус и нет активного стейка — автоматически стейкаем бонус
+    if (bonus > 0 && dep === 0 && !stakeId) {
+      handleAutoStakeBonus(bonus)
+    }
+  }, [user])
+
+  const handleAutoStakeBonus = async (bonusAmount) => {
+    try {
+      const res = await createStake({ amount: bonusAmount, is_bonus: true })
+      if (res.data?.stake) {
+        setDep(bonusAmount)
+        setStakeId(res.data.stake.id)
+        setAcc(0)
+        setT0(Date.now())
+        setBonusDep(0)
+      }
+    } catch {}
+  }
+
+  // Live ticker
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setIncome(getIncome(acc, t0))
@@ -60,18 +84,14 @@ export default function Staking({ user }) {
   const handleCollect = async () => {
     if (income < 1e-9) return
     const v = snap()
-    setAcc(0)
-    setT0(Date.now())
+    setAcc(0); setT0(Date.now())
     setWal(w => w + v)
     updateBalance(v)
     showToast(`СОБРАНО +${v.toFixed(6)} TON`)
     try {
-      if (stakeId) {
-        await unstake(stakeId)
-        // Re-create stake with same deposit
-        const res = await createStake({ amount: dep })
-        if (res.data?.stake?.id) setStakeId(res.data.stake.id)
-      }
+      if (stakeId) await unstake(stakeId)
+      const res = await createStake({ amount: dep })
+      if (res.data?.stake?.id) setStakeId(res.data.stake.id)
     } catch {}
   }
 
@@ -79,8 +99,7 @@ export default function Staking({ user }) {
     if (income < 1e-9) return
     const v = snap()
     const newDep = dep + v
-    setAcc(0)
-    setT0(Date.now())
+    setAcc(0); setT0(Date.now())
     setDep(newDep)
     showToast(`РЕИНВЕСТ +${v.toFixed(6)} TON`)
     try {
@@ -95,8 +114,7 @@ export default function Staking({ user }) {
     if (!val || val <= 0) { showToast('ВВЕДИ СУММУ'); return }
     if (modal === 'plus') {
       if (val > wal) { showToast('НЕДОСТАТОЧНО СРЕДСТВ'); return }
-      snap()
-      setAcc(0); setT0(Date.now())
+      snap(); setAcc(0); setT0(Date.now())
       setWal(w => w - val)
       setDep(d => d + val)
       updateBalance(-val)
@@ -107,9 +125,13 @@ export default function Staking({ user }) {
       } catch {}
       showToast(`ДЕПОЗИТ +${val.toFixed(4)} TON`)
     } else {
-      if (val > dep) { showToast('БОЛЬШЕ ДЕПОЗИТА'); return }
-      snap()
-      setAcc(0); setT0(Date.now())
+      // Нельзя вывести бонусную часть
+      const withdrawable = dep - bonusDep
+      if (val > withdrawable) {
+        showToast(`МАКС. ВЫВОД: ${withdrawable.toFixed(4)} TON`)
+        return
+      }
+      snap(); setAcc(0); setT0(Date.now())
       setDep(d => d - val)
       setWal(w => w + val)
       updateBalance(val)
@@ -118,14 +140,11 @@ export default function Staking({ user }) {
         if (dep - val > 0) {
           const res = await createStake({ amount: dep - val })
           if (res.data?.stake?.id) setStakeId(res.data.stake.id)
-        } else {
-          setStakeId(null)
-        }
+        } else { setStakeId(null) }
       } catch {}
       showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
     }
-    setModal(null)
-    setAmount('')
+    setModal(null); setAmount('')
   }
 
   return (
@@ -148,6 +167,9 @@ export default function Staking({ user }) {
             <span className="sr-num">{dep.toFixed(4)}</span>
             <span className="sr-cur">TON</span>
           </div>
+          {bonusDep > 0 && (
+            <div className="sr-bonus">🎁 {bonusDep.toFixed(4)} TON бонус (вывод недоступен)</div>
+          )}
         </div>
         <div className="sbg">
           <button className="sbsq sbsq-m" onClick={() => { setModal('minus'); setAmount('') }}>−</button>
@@ -182,13 +204,18 @@ export default function Staking({ user }) {
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setModal(null)}>
           <div className="modal-inner">
             <div className="modal-title">{modal === 'plus' ? 'ДОБАВИТЬ ДЕПОЗИТ' : 'ВЫВЕСТИ ДЕПОЗИТ'}</div>
+            {modal === 'minus' && bonusDep > 0 && (
+              <div className="modal-bonus-note">
+                🎁 Бонус {bonusDep.toFixed(4)} TON не выводится. Доступно к выводу: {(dep - bonusDep).toFixed(4)} TON
+              </div>
+            )}
             <div className="mi-wrap">
               <input className="mi" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} autoFocus/>
               <span className="mi-cur">TON</span>
             </div>
             <div className="mhint">
-              {modal === 'plus' ? 'Доступно в кошельке: ' : 'Депозит: '}
-              <span>{(modal === 'plus' ? wal : dep).toFixed(4)}</span> TON
+              {modal === 'plus' ? 'Доступно в кошельке: ' : 'Доступно к выводу: '}
+              <span>{modal === 'plus' ? wal.toFixed(4) : (dep - bonusDep).toFixed(4)}</span> TON
             </div>
             <div className="mbtns">
               <button className="mbtn mb-c" onClick={() => setModal(null)}>Отмена</button>
