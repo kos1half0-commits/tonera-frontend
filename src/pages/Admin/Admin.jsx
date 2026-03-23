@@ -140,9 +140,7 @@ export default function Admin() {
   const currentGroup = SETTING_GROUPS.find(g => g.id === settingsTab)
 
   return (
-    <div className="admin-wrap">
-      {toast && <div className={`admin-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
-
+    <>
       {confirmDelete && (
         <div className="confirm-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="confirm-modal" onClick={e => e.stopPropagation()}>
@@ -156,6 +154,8 @@ export default function Admin() {
           </div>
         </div>
       )}
+    <div className="admin-wrap">
+      {toast && <div className={`admin-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
 
       <div className="admin-header">
         <div className="admin-title">⚙️ Админ панель</div>
@@ -302,5 +302,6 @@ export default function Admin() {
         </div>
       )}
     </div>
+    </>
   )
 }
