@@ -66,6 +66,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
 
   const handleClaim = async (task) => {
     if (task.completed || completing === task.id) return
+    alert('claim task: ' + task.id + ' type: ' + task.type)
     setCompleting(task.id)
     if (task.link) {
       const tg = window.Telegram?.WebApp
@@ -78,7 +79,8 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
       updateBalance(parseFloat(res.data?.reward || task.reward))
       showToast(`+${res.data?.reward || task.reward} TON ЗАЧИСЛЕНО`)
     } catch (e) {
-      showToast(e?.response?.data?.message || 'ОШИБКА', true)
+      const msg = e?.response?.data?.message || e?.response?.data?.error || e?.message || 'ОШИБКА'
+      showToast(msg, true)
     }
     setCompleting(null)
   }
