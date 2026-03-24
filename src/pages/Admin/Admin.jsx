@@ -195,7 +195,7 @@ export default function Admin() {
       </div>
 
       <div className="admin-tabs">
-        {[{id:'stats',label:'📊 СТАТ'},{id:'settings',label:'⚙️ НАСТРОЙКИ'},{id:'tasks',label:'✅ ЗАДАНИЯ'},{id:'users',label:'👥 ЮЗЕРЫ'},{id:'withdrawals',label:'💸 ЗАЯВКИ'}].map(t => (
+        {[{id:'stats',label:'📊 СТАТ'},{id:'settings',label:'⚙️ НАСТРОЙКИ'},{id:'tasks',label:'✅ ЗАДАНИЯ'},{id:'users',label:'👥 ЮЗЕРЫ'},{id:'withdrawals',label:`💸 ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`}].map(t => (
           <button key={t.id} className={`atab ${tab===t.id?'on':''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </div>
