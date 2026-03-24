@@ -7,7 +7,8 @@ import './Staking.css'
 const RATE_MS = 0.01 / (24 * 60 * 60 * 1000)
 
 export default function Staking({ user }) {
-  const { updateBalance } = useUserStore()
+  const { updateBalance, setUser } = useUserStore()
+  const reloadUser = async () => { try { const r = await api.get('/api/user/me'); setUser(r.data); setWal(parseFloat(r.data?.balance_ton ?? 0)) } catch {} }
   const [dep, setDep] = useState(0)
   const [bonusDep, setBonusDep] = useState(0)
   const [wal, setWal] = useState(parseFloat(user?.balance_ton ?? 0))
@@ -95,7 +96,10 @@ export default function Staking({ user }) {
     updateBalance(v)
     showToast(`СОБРАНО +${v.toFixed(6)} TON`)
     try {
-      if (stakeId) await collectStake(stakeId)
+      if (stakeId) {
+        await collectStake(stakeId)
+        await reloadUser()
+      }
     } catch {}
   }
 
@@ -144,9 +148,7 @@ export default function Staking({ user }) {
       setDep(d => d - val)
       try {
         const res = await withdrawStake(stakeId, val)
-        const net = res.data?.netWithdraw ?? val
-        setWal(w => w + net)
-        updateBalance(net)
+        await reloadUser()
         await reloadStake()
       } catch {}
       showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
