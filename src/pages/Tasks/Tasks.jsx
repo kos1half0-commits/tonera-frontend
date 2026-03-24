@@ -84,6 +84,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
   }
 
   const handleLinkChange = async (link) => {
+    alert('link: ' + link)
     if (!link || !link.includes('t.me/')) return
     setLoadingCh(true)
     setBotCheck(null)
