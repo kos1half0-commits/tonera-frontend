@@ -119,3 +119,6 @@
 .wi-copy-btn{padding:4px 8px;border-radius:6px;background:rgba(26,95,255,0.15);border:1px solid rgba(26,95,255,0.3);font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:#00d4ff;cursor:pointer;white-space:nowrap;}
 .wi-copy-amt{background:rgba(255,77,106,0.1);border-color:rgba(255,77,106,0.3);color:#ff4d6a;}
 .setting-textarea{resize:none;font-size:12px;line-height:1.5;word-break:break-all;}
+.wallet-input-wrap{display:flex;flex-direction:column;gap:8px;}
+.wallet-addr-display{padding:10px 14px;background:#0b1630;border:1px solid rgba(26,95,255,0.4);border-radius:10px;font-family:'Orbitron',sans-serif;font-size:9px;color:#00d4ff;word-break:break-all;line-height:1.6;}
+.wallet-edit-btn{padding:10px;background:#0e1c3a;border:1px solid rgba(26,95,255,0.4);border-radius:10px;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:#e8f2ff;cursor:pointer;}
