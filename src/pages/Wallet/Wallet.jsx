@@ -23,6 +23,7 @@ export default function Wallet({ user }) {
   const [projectWallet, setProjectWallet] = useState('')
   const [minDeposit, setMinDeposit] = useState(0.5)
   const [withdrawFee, setWithdrawFee] = useState(0)
+  const [minWithdraw, setMinWithdraw] = useState(1)
 
   const [tonConnectUI] = useTonConnectUI()
   const wallet = useTonWallet()
@@ -34,6 +35,7 @@ export default function Wallet({ user }) {
       setProjectWallet(r.data.wallet)
       setMinDeposit(r.data.min_amount || 0.5)
       setWithdrawFee(r.data.withdraw_fee || 0)
+      setMinWithdraw(r.data.min_withdraw || 1)
     }).catch(() => {})
   }, [])
 
@@ -193,7 +195,7 @@ export default function Wallet({ user }) {
           <div className="wmodal">
             <div className="wm-title">ВЫВЕСТИ</div>
             <div className="wm-info">
-              Доступно: <span>{balance.toFixed(4)} TON</span>
+              Доступно: <span>{balance.toFixed(4)} TON</span> · Мин: <span>{minWithdraw} TON</span>
             </div>
             <div className="mi-wrap">
               <input className="mi" type="number" step="0.1" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)}/>
