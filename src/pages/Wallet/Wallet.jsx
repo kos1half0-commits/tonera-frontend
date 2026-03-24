@@ -212,7 +212,7 @@ export default function Wallet({ user }) {
               </div>
             )}
             {withdrawFee > 0 && (
-              <div className="wm-fee">Комиссия: {withdrawFee}% = {(parseFloat(amount||0) * withdrawFee / 100).toFixed(4)} TON</div>
+              <div className="wm-fee">Комиссия: {withdrawFee} TON (фиксированная)</div>
             )}
             <div className="wm-warn">⚠️ Обработка до 24 часов вручную</div>
             <button className="wm-btn" onClick={handleWithdraw} disabled={loading}>
