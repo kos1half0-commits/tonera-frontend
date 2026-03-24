@@ -123,7 +123,7 @@ export default function Wallet({ user }) {
 
         <div className="wc-btns">
           <button className="wc-btn wc-in" onClick={() => { setModal('deposit'); setAmount('') }}>⬇ ПОПОЛНИТЬ</button>
-          <button className="wc-btn wc-out" onClick={() => { setModal('withdraw'); setAmount('') }}>⬆ ВЫВЕСТИ</button>
+          <button className="wc-btn wc-out" onClick={() => { setModal('withdraw'); setAmount(''); setWalletAddr(wallet?.account?.address || '') }}>⬆ ВЫВЕСТИ</button>
         </div>
       </div>
 
