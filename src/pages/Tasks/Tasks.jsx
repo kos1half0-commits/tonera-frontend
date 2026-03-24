@@ -39,7 +39,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
 
   const showToast = (msg, err=false) => {
     setToast(msg); setToastErr(err)
-    setTimeout(() => setToast(''), 2500)
+    setTimeout(() => setToast(''), 5000)
   }
 
   useEffect(() => {
