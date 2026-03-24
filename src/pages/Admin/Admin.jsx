@@ -166,7 +166,7 @@ export default function Admin() {
       setUsers(prev => prev.filter(u => u.id !== user.id))
       setConfirmDelete(null)
       showToast('УДАЛЁН')
-    } catch { showToast('ОШИБКА', true) }
+    } catch (e) { showToast(e?.response?.data?.error || 'ОШИБКА', true) }
   }
 
   const currentGroup = SETTING_GROUPS.find(g => g.id === settingsTab)
