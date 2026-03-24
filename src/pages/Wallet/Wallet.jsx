@@ -143,7 +143,7 @@ export default function Wallet({ user }) {
               {TX_ICONS[tx.type] || '💫'}
             </div>
             <div className="tx-info">
-              <div className="tx-name">{tx.label}</div>
+              <div className="tx-name">{tx.label?.startsWith('tx:') ? 'Пополнение через TON' : tx.label}</div>
               <div className="tx-date">{new Date(tx.created_at || tx.date).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
             </div>
             <div className={`tx-amt ${parseFloat(tx.amount) > 0 ? 'pos' : 'neg'}`}>
