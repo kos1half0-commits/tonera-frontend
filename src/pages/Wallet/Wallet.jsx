@@ -213,8 +213,10 @@ export default function Wallet({ user }) {
                 Использовать подключённый кошелёк
               </div>
             )}
-            {withdrawFee > 0 && (
-              <div className="wm-fee">Комиссия: {withdrawFee} TON (фиксированная)</div>
+            {withdrawFee > 0 && amount && parseFloat(amount) > 0 && (
+              <div className="wm-fee">
+                Комиссия: {withdrawFee} TON → Получите: <b>{Math.max(0, parseFloat(amount) - withdrawFee).toFixed(4)} TON</b>
+              </div>
             )}
             <div className="wm-warn">⚠️ Обработка до 24 часов вручную</div>
             <button className="wm-btn" onClick={handleWithdraw} disabled={loading}>
