@@ -1,221 +1,309 @@
-import { Router } from 'express'
-import pool from '../db/index.js'
-import { getBot } from '../bot.js'
+import { useState, useEffect, useRef } from 'react'
+import { getTasks, completeTask, createTask, getMyTasks } from '../../api/index'
+import { useUserStore } from '../../store/userStore'
+import api from '../../api/index'
+import './Tasks.css'
 
-const router = Router()
+const COUNTS = [50, 100, 200, 500, 1000]
+const PRICE_PER = 0.002
 
-// GET /api/tasks — задания для исполнителя
-router.get('/', async (req, res) => {
-  try {
-    const tgId = req.telegramUser.id
-    const { rows } = await pool.query(
-      `SELECT t.*,
-         CASE WHEN ut.id IS NOT NULL THEN true ELSE false END as completed
-       FROM tasks t
-       LEFT JOIN users u ON u.telegram_id = $1
-       LEFT JOIN user_tasks ut ON ut.task_id = t.id AND ut.user_id = u.id
-       WHERE t.active = true
-         AND (t.max_executions = 0 OR t.executions < t.max_executions)
-       ORDER BY t.created_at DESC`,
-      [tgId]
-    )
-    res.json(rows)
-  } catch (e) {
-    res.status(500).json({ error: 'Server error' })
+const TYPE_LABEL = { subscribe:'ПОДПИСКА', bot:'БОТ' }
+const TYPE_CLS   = { subscribe:'t-sub', bot:'t-bot' }
+const TYPE_BADGE = { subscribe:'b-sub', bot:'b-bot' }
+
+export default function Tasks({ initialView = 'list', onViewChange }) {
+  const { user, updateBalance } = useUserStore()
+  const [view, setView] = useState(initialView)
+  const [myTasks, setMyTasks] = useState([])
+
+  const changeView = (v) => { setView(v); onViewChange?.(v) }
+
+  useEffect(() => { setView(initialView) }, [initialView])
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [completing, setCompleting] = useState(null)
+  const [toast, setToast] = useState('')
+  const [toastErr, setToastErr] = useState(false)
+
+  // Create form
+  const [form, setForm] = useState({ type:'subscribe', link:'', title:'', channel_title:'', channel_photo:'', count:100 })
+  const [loadingCh, setLoadingCh] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [botCheck, setBotCheck] = useState(null)
+  const linkTimer = useRef(null)
+
+  const [pricing, setPricing] = useState({ task_price: 0.002, task_reward: 0.001, task_ref_bonus: 0.0005, task_project_fee: 0.0005 })
+  const balance = parseFloat(user?.balance_ton ?? 0)
+  const pricePerExec = parseFloat(pricing.task_price)
+  const totalCost = form.count * pricePerExec
+
+  const showToast = (msg, err=false) => {
+    setToast(msg); setToastErr(err)
+    setTimeout(() => setToast(''), 5000)
   }
-})
 
-// POST /api/tasks/create — создать задание (заказчик)
-router.post('/create', async (req, res) => {
-  const client = await pool.connect()
-  try {
-    const tgId = req.telegramUser.id
-    const { type, title, link, channel_title, channel_photo, max_executions } = req.body
-
-    const ALLOWED_COUNTS = [50, 100, 200, 500, 1000]
-    if (!ALLOWED_COUNTS.includes(Number(max_executions))) {
-      return res.status(400).json({ error: 'Invalid max_executions. Choose: 50,100,200,500,1000' })
-    }
-
-    await client.query('BEGIN')
-
-    const { rows: [user] } = await client.query('SELECT * FROM users WHERE telegram_id = $1', [tgId])
-    if (!user) return res.status(404).json({ error: 'User not found' })
-
-    // Получаем цены из настроек
-    const { rows: settings } = await client.query("SELECT key, value FROM settings WHERE key IN ('task_price','task_reward','task_ref_bonus','task_project_fee')")
-    const s = {}
-    settings.forEach(r => s[r.key] = parseFloat(r.value))
-
-    const pricePerExec = s.task_price    || 0.002
-    const reward       = s.task_reward   || 0.001
-    const refBonus     = s.task_ref_bonus  || 0.0005
-    const projectFee   = s.task_project_fee || 0.0005
-    const budget       = pricePerExec * Number(max_executions)
-
-    // Проверяем баланс
-    if (parseFloat(user.balance_ton) < budget) {
-      return res.status(400).json({
-        error: 'Insufficient balance',
-        required: budget,
-        available: user.balance_ton
+  useEffect(() => {
+    api.get('/api/admin/settings').then(r => {
+      const s = r.data || {}
+      setPricing({
+        task_price:       parseFloat(s.task_price      || 0.002),
+        task_reward:      parseFloat(s.task_reward     || 0.001),
+        task_ref_bonus:   parseFloat(s.task_ref_bonus  || 0.0005),
+        task_project_fee: parseFloat(s.task_project_fee|| 0.0005),
       })
+    }).catch(() => {})
+
+    getTasks()
+      .then(r => setTasks(r.data || []))
+      .catch(() => setTasks([]))
+      .finally(() => setLoading(false))
+    getMyTasks().then(r => setMyTasks(r.data || [])).catch(() => {})
+    // Загружаем цены из настроек стейкинга (публичный эндпоинт)
+    api.get('/api/staking/info').then(r => {
+      if (r.data?.prices) setPrices(r.data.prices)
+    }).catch(() => {})
+  }, [])
+
+  const handleClaim = async (task) => {
+    if (task.completed || completing === task.id) return
+    setCompleting(task.id)
+    if (task.link) {
+      const tg = window.Telegram?.WebApp
+      if (tg) tg.openTelegramLink(task.link)
+      else window.open(task.link, '_blank')
     }
-
-    // Списываем бюджет
-    await client.query('UPDATE users SET balance_ton = balance_ton - $1 WHERE id = $2', [budget, user.id])
-
-    // Создаём задание
-    const { rows: [task] } = await client.query(
-      `INSERT INTO tasks
-         (creator_id, type, title, link, channel_title, channel_photo, icon,
-          max_executions, executions, budget, reward, price_per_exec, ref_bonus, project_fee, active)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,0,$9,$10,$11,$12,$13,true) RETURNING *`,
-      [
-        user.id, type || 'subscribe', title, link || null,
-        channel_title || null, channel_photo || null,
-        type === 'bot' ? '🤖' : '✈️',
-        Number(max_executions), budget,
-        reward, pricePerExec, refBonus, projectFee
-      ]
-    )
-
-    // Лог транзакции
-    await client.query(
-      `INSERT INTO transactions (user_id, type, amount, label) VALUES ($1,'task_budget',$2,$3)`,
-      [user.id, -budget, `Бюджет задания: ${title}`]
-    )
-
-    await client.query('COMMIT')
-    res.json({ task })
-  } catch (e) {
-    await client.query('ROLLBACK')
-    console.error(e)
-    res.status(500).json({ error: 'Server error' })
-  } finally {
-    client.release()
+    try {
+      const res = await completeTask(task.id)
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, completed: true } : t))
+      updateBalance(parseFloat(res.data?.reward || task.reward))
+      showToast(`+${res.data?.reward || task.reward} TON ЗАЧИСЛЕНО`)
+    } catch (e) {
+      showToast(e?.response?.data?.message || 'ОШИБКА', true)
+    }
+    setCompleting(null)
   }
-})
 
-// GET /api/tasks/my — мои задания как заказчика
-router.get('/my', async (req, res) => {
-  try {
-    const tgId = req.telegramUser.id
-    const { rows } = await pool.query(
-      `SELECT t.* FROM tasks t
-       JOIN users u ON t.creator_id = u.id
-       WHERE u.telegram_id = $1
-       ORDER BY t.created_at DESC`,
-      [tgId]
-    )
-    res.json(rows)
-  } catch (e) {
-    res.status(500).json({ error: 'Server error' })
+  const handleLinkChange = async (link) => {
+    if (!link) return
+    // Нормализуем ссылку — принимаем @username, username, t.me/username, https://t.me/username
+    let normalizedLink = link.trim()
+    if (normalizedLink.startsWith('@')) {
+      normalizedLink = 'https://t.me/' + normalizedLink.slice(1)
+    } else if (!normalizedLink.includes('t.me/')) {
+      normalizedLink = 'https://t.me/' + normalizedLink
+    } else if (!normalizedLink.startsWith('http')) {
+      normalizedLink = 'https://' + normalizedLink
+    }
+    link = normalizedLink
+    setForm(p => ({...p, link}))
+    setLoadingCh(true)
+    setBotCheck(null)
+    try {
+      const infoRes = await api.get(`/api/channels/info?link=${encodeURIComponent(link)}`)
+      setForm(p => ({ ...p, title: infoRes.data.title || p.title, channel_title: infoRes.data.title || '', channel_photo: infoRes.data.photo || '' }))
+      if (form.type === 'subscribe') {
+        const checkRes = await api.get(`/api/channels/check?link=${encodeURIComponent(link)}`)
+        setBotCheck(checkRes.data)
+      }
+    } catch {}
+    setLoadingCh(false)
   }
-})
 
-// POST /api/tasks/:id/complete — выполнить задание
-router.post('/:id/complete', async (req, res) => {
-  const client = await pool.connect()
-  try {
-    const tgId = req.telegramUser.id
-    const taskId = parseInt(req.params.id)
-
-    await client.query('BEGIN')
-
-    const { rows: [user] } = await client.query('SELECT * FROM users WHERE telegram_id = $1', [tgId])
-    if (!user) return res.status(404).json({ error: 'User not found' })
-
-    const { rows: [task] } = await client.query('SELECT * FROM tasks WHERE id = $1 AND active = true', [taskId])
-    if (!task) return res.status(404).json({ error: 'Task not found' })
-
-    // Проверка лимита
-    if (task.max_executions > 0 && task.executions >= task.max_executions) {
-      return res.status(400).json({ error: 'Task limit reached' })
+  const handleCreate = async () => {
+    if (!form.link) { showToast('ВВЕДИ ССЫЛКУ', true); return }
+    if (!form.title) { showToast('ВВЕДИ НАЗВАНИЕ', true); return }
+    if (balance < totalCost) { showToast('НЕДОСТАТОЧНО СРЕДСТВ', true); return }
+    setCreating(true)
+    try {
+      await createTask({ type: form.type, title: form.title, link: form.link, channel_title: form.channel_title, channel_photo: form.channel_photo, max_executions: form.count, price_per_exec: pricePerExec })
+      updateBalance(-totalCost)
+      showToast('ЗАДАНИЕ СОЗДАНО!')
+      setForm({ type:'subscribe', link:'', title:'', channel_title:'', channel_photo:'', count:100 })
+      changeView('list')
+      const r = await getTasks()
+      setTasks(r.data || [])
+    } catch (e) {
+      showToast(e?.response?.data?.error || 'ОШИБКА', true)
     }
-
-    // Не выполнять своё задание
-    if (task.creator_id === user.id) {
-      return res.status(400).json({ error: 'Cannot complete your own task' })
-    }
-
-    const { rows: [existing] } = await client.query(
-      'SELECT id FROM user_tasks WHERE user_id = $1 AND task_id = $2', [user.id, taskId]
-    )
-    if (existing) return res.status(400).json({ error: 'Already completed' })
-
-    // Проверка подписки
-    if (task.type === 'subscribe' && task.link) {
-      const bot = getBot()
-      if (bot) {
-        try {
-          const match = task.link.match(/t\.me\/([^/?]+)/)
-          if (match) {
-            const member = await bot.getChatMember('@' + match[1], tgId)
-            if (!['member','administrator','creator'].includes(member.status)) {
-              await client.query('ROLLBACK')
-              return res.status(400).json({ error: 'Not subscribed', message: 'Подпишись на канал сначала' })
-            }
-          }
-        } catch {}
-      }
-    }
-
-    const reward    = parseFloat(task.reward)
-    const refBonus  = parseFloat(task.ref_bonus)
-    const projFee   = parseFloat(task.project_fee)
-
-    // 1. Начислить исполнителю
-    await client.query('UPDATE users SET balance_ton = balance_ton + $1 WHERE id = $2', [reward, user.id])
-    await client.query(
-      `INSERT INTO transactions (user_id, type, amount, label) VALUES ($1,'task',$2,$3)`,
-      [user.id, reward, task.title]
-    )
-
-    // 2. Реферальный бонус исполнителя
-    if (user.referred_by && refBonus > 0) {
-      const { rows: [referrer] } = await client.query('SELECT * FROM users WHERE telegram_id = $1', [user.referred_by])
-      if (referrer) {
-        await client.query('UPDATE users SET balance_ton = balance_ton + $1 WHERE id = $2', [refBonus, referrer.id])
-        await client.query(
-          `INSERT INTO transactions (user_id, type, amount, label) VALUES ($1,'ref_task',$2,$3)`,
-          [referrer.id, refBonus, `Реф. бонус за задание`]
-        )
-      }
-    }
-
-    // 3. Комиссия проекта — на аккаунт админа
-    if (projFee > 0) {
-      const { rows: [admin] } = await client.query('SELECT * FROM users WHERE telegram_id = 5651190404')
-      if (admin) {
-        await client.query('UPDATE users SET balance_ton = balance_ton + $1 WHERE id = $2', [projFee, admin.id])
-        await client.query(
-          `INSERT INTO transactions (user_id, type, amount, label) VALUES ($1,'fee',$2,$3)`,
-          [admin.id, projFee, `Комиссия: ${task.title}`]
-        )
-      }
-    }
-
-    // 4. Обновить счётчик задания
-    await client.query('UPDATE tasks SET executions = executions + 1 WHERE id = $1', [taskId])
-
-    // 5. Деактивировать если лимит достигнут
-    if (task.executions + 1 >= task.max_executions) {
-      await client.query('UPDATE tasks SET active = false WHERE id = $1', [taskId])
-    }
-
-    // 6. Отметить выполнение
-    await client.query('INSERT INTO user_tasks (user_id, task_id) VALUES ($1, $2)', [user.id, taskId])
-
-    await client.query('COMMIT')
-    res.json({ success: true, reward })
-  } catch (e) {
-    try { await client.query('ROLLBACK') } catch {}
-    console.error('TASK COMPLETE ERROR:', e.message, e.stack)
-    res.status(500).json({ error: e.message || 'Server error' })
-  } finally {
-    client.release()
+    setCreating(false)
   }
-})
 
-export default router
+  return (
+    <div className="tasks-wrap">
+      {toast && <div className={`tasks-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
+
+      <div className="tasks-tabs">
+        <button className={`ttab ${view==='list'?'on':''}`} onClick={() => changeView('list')}>ЗАДАНИЯ</button>
+        <button className={`ttab ${view==='create'?'on':''}`} onClick={() => changeView('create')}>ЗАКАЗАТЬ</button>
+        <button className={`ttab ${view==='my'?'on':''}`} onClick={() => changeView('my')}>МОИ</button>
+      </div>
+
+      {/* LIST VIEW */}
+      {view === 'list' && (
+        <>
+          {loading ? (
+            <div className="tasks-empty"><div className="spinner"></div></div>
+          ) : tasks.length === 0 ? (
+            <div className="tasks-empty">
+              <div className="empty-icon">📋</div>
+              <div className="empty-text">Заданий пока нет</div>
+            </div>
+          ) : (
+            <div className="tasks-list">
+              {tasks.map(task => (
+                <div key={task.id} className={`task-card ${task.completed ? 'done' : ''}`}>
+                  {task.channel_photo
+                    ? <img src={task.channel_photo} className="task-photo" onError={e => e.target.style.display='none'}/>
+                    : <div className={`task-ico ${TYPE_CLS[task.type] || 't-sub'}`}>
+                        {task.icon || (task.type === 'bot' ? '🤖' : '✈️')}
+                      </div>
+                  }
+                  <div className="task-body">
+                    <div className="task-name">{task.channel_title || task.title}</div>
+                    <div className="task-rew">+{task.reward} TON</div>
+                    {task.link && <div className="task-link">{task.link.replace('https://', '')}</div>}
+                    <div className="task-meta">
+                      <span className={`task-badge ${TYPE_BADGE[task.type] || 'b-sub'}`}>
+                        {TYPE_LABEL[task.type] || 'ЗАДАНИЕ'}
+                      </span>
+                      <button
+                        className={`claim-btn ${task.completed ? 'claimed' : ''}`}
+                        onClick={() => handleClaim(task)}
+                        disabled={task.completed || completing === task.id}
+                      >
+                        {task.completed ? '✓ Готово' : completing === task.id ? '...' : task.type === 'bot' ? 'Запустить' : 'Подписаться'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* CREATE VIEW */}
+      {view === 'create' && (
+        <div className="create-form">
+          <div className="cf-balance">
+            Баланс: <span>{balance.toFixed(4)} TON</span>
+          </div>
+
+          <div className="cf-row">
+            <div className="cf-label">ТИП ЗАДАНИЯ</div>
+            <div className="type-btns">
+              <button className={`type-btn ${form.type==='subscribe'?'on':''}`} onClick={() => { setForm({ type:'subscribe', link:'', title:'', channel_title:'', channel_photo:'', count:form.count }); setBotCheck(null) }}>✈️ Подписка</button>
+              <button className={`type-btn ${form.type==='bot'?'on':''}`} onClick={() => { setForm({ type:'bot', link:'', title:'', channel_title:'', channel_photo:'', count:form.count }); setBotCheck(null) }}>🤖 Бот</button>
+            </div>
+          </div>
+
+          <div className="cf-row">
+            <div className="cf-label">ССЫЛКА</div>
+            <input className="cf-input" placeholder="https://t.me/username" value={form.link} onChange={e => setForm(p=>({...p,link:e.target.value}))}/>
+            <button className="cf-load-btn" onClick={() => handleLinkChange(form.link)} disabled={loadingCh}>
+              {loadingCh ? 'ЗАГРУЗКА...' : '🔍 ЗАГРУЗИТЬ ДАННЫЕ'}
+            </button>
+          </div>
+
+          {form.channel_photo && (
+            <div className="ch-preview">
+              <img src={form.channel_photo} className="ch-img" onError={e => e.target.style.display='none'}/>
+              <div><div className="ch-name">{form.channel_title}</div><div className="ch-url">{form.link}</div></div>
+            </div>
+          )}
+
+          {botCheck !== null && form.type === 'subscribe' && (
+            <div className={`task-bot-check ${botCheck.ok ? 'ok' : 'fail'}`}>
+              {botCheck.ok ? (
+                <span>✅ Бот добавлен в канал — проверка подписки работает</span>
+              ) : (
+                <div>
+                  <div>⚠️ Бот не является администратором канала</div>
+                  <div className="task-bot-hint">
+                    Без этого проверка подписки не будет работать.<br/>
+                    Добавь @tonera_bot в канал как администратора.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="cf-row">
+            <div className="cf-label">НАЗВАНИЕ</div>
+            <input className="cf-input" placeholder="Название задания" value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))}/>
+          </div>
+
+          <div className="cf-row">
+            <div className="cf-label">КОЛИЧЕСТВО ВЫПОЛНЕНИЙ</div>
+            <div className="count-btns">
+              {COUNTS.map(c => (
+                <button key={c} className={`count-btn ${form.count===c?'on':''}`} onClick={() => setForm(p=>({...p,count:c}))}>{c}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="price-card">
+            <div className="price-row"><span>Выполнений</span><span>{form.count}</span></div>
+            <div className="price-row"><span>Цена за выполнение</span><span>{pricePerExec.toFixed(4)} TON</span></div>
+            <div className="price-divider"/>
+            <div className="price-row total">
+              <span>ИТОГО</span>
+              <span className={balance < totalCost ? 'not-enough' : 'ok'}>{totalCost.toFixed(4)} TON</span>
+            </div>
+            {balance < totalCost && <div className="price-warn">Недостаточно средств</div>}
+          </div>
+
+          <div className="dist-card">
+            <div className="dist-title">РАСПРЕДЕЛЕНИЕ ЗА 1 ВЫПОЛНЕНИЕ</div>
+            <div className="dist-row"><span>💰 Цена заказчика</span><span>{pricePerExec.toFixed(4)} TON</span></div>
+            <div className="dist-row"><span>👤 Исполнитель</span><span>{parseFloat(pricing.task_reward).toFixed(4)} TON</span></div>
+            <div className="dist-row"><span>👥 Реферал</span><span>{parseFloat(pricing.task_ref_bonus).toFixed(4)} TON</span></div>
+            <div className="dist-row"><span>🏦 Комиссия</span><span>{parseFloat(pricing.task_project_fee).toFixed(4)} TON</span></div>
+          </div>
+
+          <button className="create-btn" onClick={handleCreate} disabled={creating || balance < totalCost || !form.link || !form.title || (form.type === 'subscribe' && botCheck !== null && !botCheck.ok)}>
+            {creating ? 'СОЗДАНИЕ...' : `СОЗДАТЬ ЗА ${totalCost.toFixed(4)} TON`}
+          </button>
+        </div>
+      )}
+      {/* MY TASKS VIEW */}
+      {view === 'my' && (
+        <div className="my-tasks">
+          {myTasks.length === 0 ? (
+            <div className="tasks-empty">
+              <div className="empty-icon">📋</div>
+              <div className="empty-text">Нет созданных заданий</div>
+            </div>
+          ) : (
+            myTasks.map(task => (
+              <div key={task.id} className="my-task-card">
+                <div className="mt-header">
+                  {task.channel_photo
+                    ? <img src={task.channel_photo} className="mt-photo" onError={e => e.target.style.display='none'}/>
+                    : <div className="mt-icon">{task.icon}</div>
+                  }
+                  <div className="mt-info">
+                    <div className="mt-title">{task.channel_title || task.title}</div>
+                    <div className="mt-link">{task.link}</div>
+                  </div>
+                  <div className={`mt-status ${task.active ? 'active' : 'done'}`}>
+                    {task.active ? 'АКТИВНО' : 'ЗАВЕРШЕНО'}
+                  </div>
+                </div>
+                <div className="mt-progress">
+                  <div className="mt-prog-bar">
+                    <div className="mt-prog-fill" style={{width:`${Math.min((task.executions/task.max_executions)*100,100)}%`}}/>
+                  </div>
+                  <div className="mt-prog-text">{task.executions} / {task.max_executions} выполнений</div>
+                </div>
+                <div className="mt-stats">
+                  <div className="mt-stat"><span>Бюджет</span><span>{parseFloat(task.budget).toFixed(4)} TON</span></div>
+                  <div className="mt-stat"><span>Потрачено</span><span>{(task.executions * 0.002).toFixed(4)} TON</span></div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
