@@ -142,10 +142,11 @@ export default function Staking({ user }) {
       }
       snap(); setAcc(0); setT0(Date.now())
       setDep(d => d - val)
-      setWal(w => w + val)
-      updateBalance(val)
       try {
-        await withdrawStake(stakeId, val)
+        const res = await withdrawStake(stakeId, val)
+        const net = res.data?.netWithdraw ?? val
+        setWal(w => w + net)
+        updateBalance(net)
         await reloadStake()
       } catch {}
       showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
