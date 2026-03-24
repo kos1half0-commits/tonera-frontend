@@ -22,6 +22,7 @@ export default function Wallet({ user }) {
   const [toastErr, setToastErr] = useState(false)
   const [projectWallet, setProjectWallet] = useState('')
   const [minDeposit, setMinDeposit] = useState(0.5)
+  const [withdrawFee, setWithdrawFee] = useState(0)
 
   const [tonConnectUI] = useTonConnectUI()
   const wallet = useTonWallet()
@@ -32,6 +33,7 @@ export default function Wallet({ user }) {
     api.get('/api/deposit/info').then(r => {
       setProjectWallet(r.data.wallet)
       setMinDeposit(r.data.min_amount || 0.5)
+      setWithdrawFee(r.data.withdraw_fee || 0)
     }).catch(() => {})
   }, [])
 
@@ -208,6 +210,9 @@ export default function Wallet({ user }) {
               <div className="wm-use-connected" onClick={() => setWalletAddr(wallet.account.address)}>
                 Использовать подключённый кошелёк
               </div>
+            )}
+            {withdrawFee > 0 && (
+              <div className="wm-fee">Комиссия: {withdrawFee}% = {(parseFloat(amount||0) * withdrawFee / 100).toFixed(4)} TON</div>
             )}
             <div className="wm-warn">⚠️ Обработка до 24 часов вручную</div>
             <button className="wm-btn" onClick={handleWithdraw} disabled={loading}>

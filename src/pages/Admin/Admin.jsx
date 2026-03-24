@@ -28,6 +28,7 @@ const SETTING_GROUPS = [
     settings: [
       { key: 'project_wallet',  label: 'Адрес кошелька (TON)' },
       { key: 'min_deposit_ton', label: 'Мин. сумма депозита (TON)' },
+      { key: 'withdraw_fee',    label: 'Комиссия за вывод (%)' },
     ]
   },
   {
