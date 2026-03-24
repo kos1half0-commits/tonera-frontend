@@ -188,12 +188,10 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
 
           <div className="cf-row">
             <div className="cf-label">ССЫЛКА</div>
-            <div className="cf-input-wrap">
-              <input className="cf-input" placeholder="https://t.me/username" value={form.link} onChange={e => setForm(p=>({...p,link:e.target.value}))}/>
-              <button className="cf-check-btn" onClick={() => handleLinkChange(form.link)} disabled={loadingCh || !form.link}>
-                {loadingCh ? '...' : '→'}
-              </button>
-            </div>
+            <input className="cf-input" placeholder="https://t.me/username" value={form.link} onChange={e => setForm(p=>({...p,link:e.target.value}))}/>
+            <button className="cf-load-btn" onClick={() => handleLinkChange(form.link)} disabled={loadingCh}>
+              {loadingCh ? 'ЗАГРУЗКА...' : '🔍 ЗАГРУЗИТЬ ДАННЫЕ'}
+            </button>
           </div>
 
           {form.channel_photo && (

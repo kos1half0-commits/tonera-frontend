@@ -118,3 +118,5 @@
 .task-bot-hint{margin-top:6px;color:rgba(232,242,255,0.5);font-size:11px;line-height:1.7;}
 .cf-check-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#1a5fff,#3d7fff);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cf-check-btn:disabled{opacity:.4;cursor:not-allowed;}
+.cf-load-btn{width:100%;margin-top:8px;padding:11px;background:#0e1c3a;border:1px solid rgba(26,95,255,0.4);border-radius:10px;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:#00d4ff;cursor:pointer;letter-spacing:.05em;}
+.cf-load-btn:disabled{opacity:.4;}
