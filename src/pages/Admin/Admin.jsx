@@ -331,22 +331,29 @@ export default function Admin() {
         <div className="admin-section">
           <div className="users-count">{withdrawals.filter(w=>w.status==='pending').length} ожидают обработки</div>
           {withdrawals.length === 0 && <div className="no-tasks">Нет заявок</div>}
-          {withdrawals.map(w => (
-            <div key={w.id} className={`withdrawal-item ${w.status}`}>
-              <div className="wi-info">
-                <div className="wi-user">{w.username || w.first_name || 'Пользователь'}</div>
-                <div className="wi-addr">{w.label?.replace('Вывод на ', '') || '—'}</div>
-                <div className="wi-date">{new Date(w.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+          {withdrawals.map(w => {
+            const addr = w.label?.replace('Вывод на ', '') || '—'
+            const amount = Math.abs(parseFloat(w.amount)).toFixed(4)
+            return (
+              <div key={w.id} className={`withdrawal-item ${w.status}`}>
+                <div className="wi-info">
+                  <div className="wi-user">{w.username || w.first_name || 'Пользователь'}</div>
+                  <div className="wi-date">{new Date(w.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                  <div className="wi-copy-row">
+                    <div className="wi-addr-short">{addr.slice(0,10)}...{addr.slice(-6)}</div>
+                    <button className="wi-copy-btn" onClick={() => { navigator.clipboard.writeText(addr); showToast('АДРЕС СКОПИРОВАН') }}>📋 Адрес</button>
+                    <button className="wi-copy-btn wi-copy-amt" onClick={() => { navigator.clipboard.writeText(amount); showToast('СУММА СКОПИРОВАНА') }}>📋 {amount}</button>
+                  </div>
+                </div>
+                <div className="wi-right">
+                  <div className={`wi-status ${w.status}`}>{w.status === 'pending' ? 'ОЖИДАЕТ' : 'ВЫПЛАЧЕНО'}</div>
+                  {w.status === 'pending' && (
+                    <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✓</button>
+                  )}
+                </div>
               </div>
-              <div className="wi-right">
-                <div className="wi-amount">{Math.abs(parseFloat(w.amount)).toFixed(4)} TON</div>
-                <div className={`wi-status ${w.status}`}>{w.status === 'pending' ? 'ОЖИДАЕТ' : w.status === 'completed' ? 'ВЫПЛАЧЕНО' : w.status}</div>
-                {w.status === 'pending' && (
-                  <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✓</button>
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
