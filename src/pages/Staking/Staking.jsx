@@ -184,15 +184,14 @@ export default function Staking({ user }) {
         </div>
       </div>
 
-      <div className="stake-row">
-        <div>
-          <div className="sr-label">ДОХОД В ДЕНЬ</div>
-          <div className="sr-val">
-            <span className="sr-num" style={{fontSize:22}}>1%</span>
-            <span className="sr-sub">~{(dep * 0.01).toFixed(4)} TON</span>
-          </div>
+      <div className="stake-row income-periods">
+        <div className="sr-label">ДОХОД</div>
+        <div className="income-grid">
+          <div className="ip-item"><div className="ip-val">{(dep * 0.01).toFixed(4)}</div><div className="ip-lbl">В ДЕНЬ</div></div>
+          <div className="ip-item"><div className="ip-val">{(dep * 0.01 * 7).toFixed(4)}</div><div className="ip-lbl">В НЕДЕЛЮ</div></div>
+          <div className="ip-item"><div className="ip-val">{(dep * 0.01 * 30).toFixed(4)}</div><div className="ip-lbl">В МЕСЯЦ</div></div>
+          <div className="ip-item"><div className="ip-val">{(dep * 0.01 * 365).toFixed(4)}</div><div className="ip-lbl">В ГОД</div></div>
         </div>
-        <button className="sbsq-po" onClick={() => { setModal('plus'); setAmount('') }}>+</button>
       </div>
 
       <div className="income-card">

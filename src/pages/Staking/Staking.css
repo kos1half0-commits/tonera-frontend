@@ -53,3 +53,9 @@
 .mbtn:active{transform:scale(.96);}
 .mb-c{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);}
 .mb-ok{background:linear-gradient(135deg,#1a5fff,#0930cc);box-shadow:0 4px 16px rgba(26,95,255,0.35);}
+
+.income-periods{flex-direction:column;gap:10px;}
+.income-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ip-item{background:#0b1630;border:1px solid rgba(26,95,255,0.2);border-radius:12px;padding:12px;text-align:center;}
+.ip-val{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#00d4ff;margin-bottom:4px;}
+.ip-lbl{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.08em;}
