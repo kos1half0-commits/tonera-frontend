@@ -233,13 +233,28 @@ export default function Admin() {
                 <div key={s.key} className="setting-item">
                   <div className="setting-label">{s.label}</div>
                   <div className="setting-row">
-                    <input
-                      className="setting-input"
-                      type="number"
-                      step="0.0001"
-                      value={settings[s.key] ?? ''}
-                      onChange={e => setSettings(p => ({...p, [s.key]: e.target.value}))}
-                    />
+                    {s.key === 'project_wallet' ? (
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+                        <div style={{padding:'10px 14px',background:'#0b1630',border:'1px solid rgba(26,95,255,0.4)',borderRadius:10,fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00d4ff',wordBreak:'break-all',lineHeight:1.6,minHeight:40}}>
+                          {settings[s.key] || 'Не задан'}
+                        </div>
+                        <button style={{padding:'9px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.4)',borderRadius:10,fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',cursor:'pointer'}}
+                          onClick={() => {
+                            const val = prompt('Введите адрес TON кошелька:', settings['project_wallet'] || '')
+                            if (val !== null) setSettings(p => ({...p, project_wallet: val.trim()}))
+                          }}>
+                          ✏️ ИЗМЕНИТЬ АДРЕС
+                        </button>
+                      </div>
+                    ) : (
+                      <input
+                        className="setting-input"
+                        type="number"
+                        step="0.0001"
+                        value={settings[s.key] ?? ''}
+                        onChange={e => setSettings(p => ({...p, [s.key]: e.target.value}))}
+                      />
+                    )}
                     <button
                       className="save-btn"
                       onClick={() => saveSetting(s.key)}
