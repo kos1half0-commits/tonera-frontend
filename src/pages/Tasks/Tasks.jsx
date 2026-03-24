@@ -66,7 +66,6 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
 
   const handleClaim = async (task) => {
     if (task.completed || completing === task.id) return
-    alert('claim task: ' + task.id + ' type: ' + task.type)
     setCompleting(task.id)
     if (task.link) {
       const tg = window.Telegram?.WebApp

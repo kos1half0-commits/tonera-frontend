@@ -24,7 +24,6 @@ export default function WelcomeBonus({ onClaim }) {
       setShow(false)
       onClaim()
     } catch (e) {
-      console.error(e)
     }
     setClaiming(false)
   }
