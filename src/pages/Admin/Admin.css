@@ -101,3 +101,16 @@
 .bot-check-hint{margin-top:8px;color:rgba(232,242,255,0.6);font-size:11px;line-height:1.7;}
 .atf-check-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1a5fff,#3d7fff);border:none;color:#fff;font-size:16px;cursor:pointer;}
 .atf-check-btn:disabled{opacity:.4;}
+
+.withdrawal-item{display:flex;justify-content:space-between;align-items:center;background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:12px;padding:12px;margin-bottom:8px;gap:10px;}
+.withdrawal-item.completed{opacity:.5;}
+.wi-info{flex:1;min-width:0;}
+.wi-user{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#e8f2ff;}
+.wi-addr{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(232,242,255,0.4);margin-top:2px;word-break:break-all;}
+.wi-date{font-size:10px;color:rgba(232,242,255,0.3);margin-top:4px;}
+.wi-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.wi-amount{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:#ff4d6a;}
+.wi-status{font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;padding:3px 7px;border-radius:6px;}
+.wi-status.pending{background:rgba(255,179,0,0.12);color:#ffb300;}
+.wi-status.completed{background:rgba(0,230,118,0.12);color:#00e676;}
+.wi-done-btn{width:28px;height:28px;border-radius:8px;background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:#00e676;font-size:14px;cursor:pointer;}

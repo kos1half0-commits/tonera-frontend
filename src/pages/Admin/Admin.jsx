@@ -55,6 +55,7 @@ export default function Admin() {
   const [botCheck, setBotCheck] = useState(null) // null | {ok, status}
   const [form, setForm] = useState({ title:'', link:'', type:'subscribe', icon:'✈️', channel_title:'', channel_photo:'' })
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [withdrawals, setWithdrawals] = useState([])
   const linkTimer = useRef(null)
 
   const showToast = (msg, err=false) => {
@@ -66,16 +67,18 @@ export default function Admin() {
 
   const loadAll = async () => {
     try {
-      const [s, se, t, u] = await Promise.all([
+      const [s, se, t, u, w] = await Promise.all([
         api.get('/api/admin/stats'),
         api.get('/api/admin/settings'),
         api.get('/api/admin/tasks'),
         api.get('/api/admin/users'),
+        api.get('/api/admin/withdrawals'),
       ])
       setStats(s.data)
       setSettings(se.data)
       setTasks(t.data)
       setUsers(u.data)
+      setWithdrawals(w.data || [])
     } catch {}
   }
 
@@ -149,6 +152,14 @@ export default function Admin() {
     } catch { showToast('ОШИБКА', true) }
   }
 
+  const markWithdrawalDone = async (id) => {
+    try {
+      await api.post(`/api/admin/withdrawals/${id}/complete`)
+      setWithdrawals(prev => prev.map(w => w.id === id ? {...w, status:'completed'} : w))
+      showToast('ОТМЕЧЕНО КАК ВЫПЛАЧЕНО')
+    } catch { showToast('ОШИБКА', true) }
+  }
+
   const deleteUser = async (user) => {
     try {
       await api.delete(`/api/admin/users/${user.id}`)
@@ -184,7 +195,7 @@ export default function Admin() {
       </div>
 
       <div className="admin-tabs">
-        {[{id:'stats',label:'📊 СТАТ'},{id:'settings',label:'⚙️ НАСТРОЙКИ'},{id:'tasks',label:'✅ ЗАДАНИЯ'},{id:'users',label:'👥 ЮЗЕРЫ'}].map(t => (
+        {[{id:'stats',label:'📊 СТАТ'},{id:'settings',label:'⚙️ НАСТРОЙКИ'},{id:'tasks',label:'✅ ЗАДАНИЯ'},{id:'users',label:'👥 ЮЗЕРЫ'},{id:'withdrawals',label:'💸 ЗАЯВКИ'}].map(t => (
           <button key={t.id} className={`atab ${tab===t.id?'on':''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </div>
@@ -312,6 +323,30 @@ export default function Admin() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* WITHDRAWALS */}
+      {tab === 'withdrawals' && (
+        <div className="admin-section">
+          <div className="users-count">{withdrawals.filter(w=>w.status==='pending').length} ожидают обработки</div>
+          {withdrawals.length === 0 && <div className="no-tasks">Нет заявок</div>}
+          {withdrawals.map(w => (
+            <div key={w.id} className={`withdrawal-item ${w.status}`}>
+              <div className="wi-info">
+                <div className="wi-user">{w.username || w.first_name || 'Пользователь'}</div>
+                <div className="wi-addr">{w.label?.replace('Вывод на ', '') || '—'}</div>
+                <div className="wi-date">{new Date(w.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+              </div>
+              <div className="wi-right">
+                <div className="wi-amount">{Math.abs(parseFloat(w.amount)).toFixed(4)} TON</div>
+                <div className={`wi-status ${w.status}`}>{w.status === 'pending' ? 'ОЖИДАЕТ' : w.status === 'completed' ? 'ВЫПЛАЧЕНО' : w.status}</div>
+                {w.status === 'pending' && (
+                  <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✓</button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
