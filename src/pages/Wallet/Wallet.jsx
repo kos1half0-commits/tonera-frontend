@@ -53,7 +53,6 @@ export default function Wallet({ user }) {
         messages: [{
           address: projectWallet,
           amount: amountNano,
-          payload: btoa(`deposit:${user?.telegram_id}`),
         }]
       }
       const result = await tonConnectUI.sendTransaction(tx)
