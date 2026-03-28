@@ -32,7 +32,6 @@ const SETTING_GROUPS = [
       { key: 'min_deposit_ton', label: 'Мин. сумма депозита (TON)' },
       { key: 'withdraw_fee',    label: 'Комиссия за вывод (TON)' },
       { key: 'min_withdraw_ton', label: 'Минимальный вывод (TON)' },
-      { key: 'launch_date',    label: 'Дата запуска проекта (ГГГГ-ММ-ДД)' },
     ]
   },
   {
@@ -337,7 +336,7 @@ export default function Admin() {
                 <div key={s.key} className="setting-item">
                   <div className="setting-label">{s.label}</div>
                   <div className="setting-row">
-                    {s.key === 'project_wallet' || s.key === 'launch_date' ? (
+                    {s.key === 'project_wallet' ? (
                       <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
                         <div style={{padding:'10px 14px',background:'#0b1630',border:'1px solid rgba(26,95,255,0.4)',borderRadius:10,fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00d4ff',wordBreak:'break-all',lineHeight:1.6,minHeight:40}}>
                           {settings[s.key] || 'Не задан'}
@@ -485,6 +484,12 @@ export default function Admin() {
           <div className="system-card">
             <div className="sys-title">⏱ ПРОЕКТ РАБОТАЕТ</div>
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:22,fontWeight:700,color:'#00d4ff',textAlign:'center',padding:'10px 0',letterSpacing:'.05em'}}>{uptime}</div>
+            <div style={{textAlign:'center',marginTop:4}}>
+              <button className="sys-btn" style={{width:'auto',padding:'8px 16px',fontSize:9}} onClick={() => {
+                const val = prompt('Дата запуска (ГГГГ-ММ-ДД):', settings?.launch_date || '2025-03-01')
+                if (val) { api.post('/api/admin/settings', { key: 'launch_date', value: val }).then(() => setSettings(p => ({...p, launch_date: val}))).catch(() => {}) }
+              }}>✏️ ИЗМЕНИТЬ ДАТУ</button>
+            </div>
           </div>
           <div className="system-card">
             <div className="sys-title">🔧 ТЕХ ОБСЛУЖИВАНИЕ</div>
