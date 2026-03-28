@@ -288,14 +288,6 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
             {balance < totalCost && <div className="price-warn">Недостаточно средств</div>}
           </div>
 
-          <div className="dist-card">
-            <div className="dist-title">РАСПРЕДЕЛЕНИЕ ЗА 1 ВЫПОЛНЕНИЕ</div>
-            <div className="dist-row"><span>💰 Цена заказчика</span><span>{pricePerExec.toFixed(4)} TON</span></div>
-            <div className="dist-row"><span>👤 Исполнитель</span><span>{parseFloat(pricing.task_reward).toFixed(4)} TON</span></div>
-            <div className="dist-row"><span>👥 Реферал</span><span>{parseFloat(pricing.task_ref_bonus).toFixed(4)} TON</span></div>
-            <div className="dist-row"><span>🏦 Комиссия</span><span>{parseFloat(pricing.task_project_fee).toFixed(4)} TON</span></div>
-          </div>
-
           <button className="create-btn" onClick={handleCreate} disabled={creating || balance < totalCost || !form.link || !form.title || (form.type === 'subscribe' && botCheck !== null && !botCheck.ok)}>
             {creating ? 'СОЗДАНИЕ...' : `СОЗДАТЬ ЗА ${totalCost.toFixed(4)} TON`}
           </button>
