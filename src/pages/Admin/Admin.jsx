@@ -251,8 +251,18 @@ export default function Admin() {
       </div>
 
       <div className="admin-tabs">
-        {[{id:'stats',label:'📊 СТАТ'},{id:'settings',label:'⚙️ НАСТРОЙКИ'},{id:'tasks',label:'✅ ЗАДАНИЯ'},{id:'users',label:'👥 ЮЗЕРЫ'},{id:'withdrawals',label:`💸 ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},{id:'system',label:'⚙️ СИСТЕМА'}].map(t => (
-          <button key={t.id} className={`atab ${tab===t.id?'on':''}`} onClick={() => setTab(t.id)}>{t.label}</button>
+        {[
+          {id:'stats',icon:'📊',label:'СТАТ'},
+          {id:'settings',icon:'⚙️',label:'НАСТР'},
+          {id:'tasks',icon:'✅',label:'ЗАДАНИЯ'},
+          {id:'users',icon:'👥',label:'ЮЗЕРЫ'},
+          {id:'withdrawals',icon:'💸',label:`ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},
+          {id:'system',icon:'🔧',label:'СИСТЕМА'},
+        ].map(t => (
+          <button key={t.id} className={`atab ${tab===t.id?'on':''}`} onClick={() => setTab(t.id)}>
+            <span style={{fontSize:18,display:'block',lineHeight:1}}>{t.icon}</span>
+            <span style={{fontSize:7,display:'block',marginTop:2,letterSpacing:'.05em'}}>{t.label}</span>
+          </button>
         ))}
       </div>
 
