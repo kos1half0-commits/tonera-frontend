@@ -5,7 +5,7 @@ import api from '../../api/index'
 import './Tasks.css'
 
 const COUNTS = [50, 100, 200, 500, 1000]
-const PRICE_PER = 0.002
+const PRICE_PER = 0.002 // fallback, реальное значение из prices
 
 const TYPE_LABEL = { subscribe:'ПОДПИСКА', bot:'БОТ' }
 const TYPE_CLS   = { subscribe:'t-sub', bot:'t-bot' }
@@ -32,6 +32,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
   const [botCheck, setBotCheck] = useState(null)
   const [buyModal, setBuyModal] = useState(null)
   const [buyCount, setBuyCount] = useState(100)
+  const [prices, setPrices] = useState({ task_price: 0.002, task_reward: 0.001, task_ref_bonus: 0.0005, task_project_fee: 0.0005 })
   const linkTimer = useRef(null)
 
   const [pricing, setPricing] = useState({ task_price: 0.002, task_reward: 0.001, task_ref_bonus: 0.0005, task_project_fee: 0.0005 })
@@ -60,6 +61,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
       .catch(() => setTasks([]))
       .finally(() => setLoading(false))
     getMyTasks().then(r => setMyTasks(r.data || [])).catch(() => {})
+    api.get('/api/staking/info').then(r => { if (r.data?.prices) setPrices(r.data.prices) }).catch(() => {})
     // Загружаем цены из настроек стейкинга (публичный эндпоинт)
     api.get('/api/staking/info').then(r => {
       if (r.data?.prices) setPrices(r.data.prices)
