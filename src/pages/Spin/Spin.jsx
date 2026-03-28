@@ -149,7 +149,12 @@ export default function Spin({ user }) {
 
       {result && (
         <div className={`spin-result ${result.type === 'nothing' ? 'nothing' : 'win'}`}>
-          {result.type === 'nothing' ? '😢 Не повезло в этот раз' : `🎉 ${result.label}!`}
+          {result.type === 'nothing'
+            ? '😢 Не повезло в этот раз'
+            : result.type === 'ton'
+              ? `🎉 +${result.value} TON на баланс!`
+              : `🎁 +${result.value} TON бонус!`
+          }
         </div>
       )}
 
