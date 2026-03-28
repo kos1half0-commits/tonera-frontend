@@ -106,6 +106,7 @@ export default function Wallet({ user }) {
   }
 
   return (
+    <>
     <div className="wallet-wrap">
       {toast && <div className={`wallet-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
 
@@ -168,9 +169,11 @@ export default function Wallet({ user }) {
         ))}
       </div>
 
+    </div>
+
       {/* DEPOSIT MODAL */}
       {modal === 'deposit' && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
+        <div className="wallet-modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="wmodal">
             <div className="wm-title">ПОПОЛНИТЬ</div>
             <div className="wm-info">
@@ -205,7 +208,7 @@ export default function Wallet({ user }) {
 
       {/* WITHDRAW MODAL */}
       {modal === 'withdraw' && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
+        <div className="wallet-modal-overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="wmodal">
             <div className="wm-title">ВЫВЕСТИ</div>
             <div className="wm-info">
@@ -240,6 +243,6 @@ export default function Wallet({ user }) {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
