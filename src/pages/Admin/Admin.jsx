@@ -175,16 +175,40 @@ export default function Admin() {
     } catch { showToast('ОШИБКА', true) }
   }
 
+  const restoreBackup = async (file) => {
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      if (!data.users) { showToast('НЕВЕРНЫЙ ФАЙЛ', true); return }
+      if (!window.confirm(`Восстановить из бэкапа от ${data.date?.slice(0,10)}? Данные будут перезаписаны.`)) return
+      const r = await api.post('/api/admin/restore', data)
+      showToast(`ВОССТАНОВЛЕНО: ${r.data.restored.users} юзеров, ${r.data.restored.stakes} стейков`)
+      await loadAll()
+    } catch (e) { showToast(e?.response?.data?.error || 'ОШИБКА', true) }
+  }
+
   const downloadBackup = async () => {
     try {
-      const r = await api.get('/api/admin/backup', { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([r.data]))
+      const r = await api.get('/api/admin/backup')
+      const url = URL.createObjectURL(new Blob([JSON.stringify(r.data, null, 2)], { type: 'application/json' }))
       const a = document.createElement('a')
       a.href = url
       a.download = `tonera-backup-${new Date().toISOString().slice(0,10)}.json`
       a.click()
       URL.revokeObjectURL(url)
+      showToast('БЭКАП СКАЧАН')
     } catch { showToast('ОШИБКА БЭКАПА', true) }
+  }
+
+  const restoreBackup = async (file) => {
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      if (!data.users) { showToast('НЕВЕРНЫЙ ФАЙЛ', true); return }
+      if (!window.confirm(`Восстановить ${data.users.length} пользователей из бэкапа ${data.date?.slice(0,10)}?`)) return
+      await api.post('/api/admin/restore', data)
+      showToast('ВОССТАНОВЛЕНО УСПЕШНО')
+    } catch (e) { showToast(e?.response?.data?.error || 'ОШИБКА', true) }
   }
 
   const openUserStats = async (user) => {
@@ -450,8 +474,42 @@ export default function Admin() {
           </div>
           <div className="system-card">
             <div className="sys-title">💾 РЕЗЕРВНАЯ КОПИЯ БД</div>
-            <div className="sys-desc">Скачать все данные проекта в формате JSON</div>
-            <button className="sys-btn" onClick={downloadBackup}>⬇ СКАЧАТЬ БЭКАП</button>
+            <div className="sys-desc">Скачать все данные проекта в формате JSON для переноса на другой сервер</div>
+            <button className="sys-btn" onClick={downloadBackup} style={{marginBottom:8}}>⬇ СКАЧАТЬ БЭКАП</button>
+            <label className="sys-btn" style={{display:'block',textAlign:'center',cursor:'pointer'}}>
+              ⬆ ВОССТАНОВИТЬ ИЗ ФАЙЛА
+              <input type="file" accept=".json" style={{display:'none'}} onChange={e => { if(e.target.files[0]) restoreBackup(e.target.files[0]) }}/>
+            </label>
+          </div>
+          <div className="system-card">
+            <div className="sys-title">📤 ВОССТАНОВИТЬ ИЗ БЭКАПА</div>
+            <div className="sys-desc">Загрузи JSON файл бэкапа для восстановления данных</div>
+            <input type="file" accept=".json" id="restore-file" style={{display:'none'}} onChange={async (e) => {
+              const file = e.target.files[0]
+              if (!file) return
+              try {
+                const text = await file.text()
+                const data = JSON.parse(text)
+                if (!window.confirm(`Восстановить из бэкапа от ${data.date?.slice(0,10)}?
+Юзеров: ${data.users?.length}, Стейков: ${data.stakes?.length}`)) return
+                const r = await api.post('/api/admin/restore', data)
+                showToast(`ВОССТАНОВЛЕНО: ${r.data.restored.users} юзеров, ${r.data.restored.stakes} стейков`)
+              } catch (err) {
+                showToast('ОШИБКА: ' + (err?.response?.data?.error || err.message), true)
+              }
+              e.target.value = ''
+            }}/>
+            <button className="sys-btn" style={{borderColor:'rgba(0,230,118,0.4)',color:'#00e676'}} onClick={() => document.getElementById('restore-file').click()}>
+              ⬆ ЗАГРУЗИТЬ БЭКАП
+            </button>
+          </div>
+          <div className="system-card">
+            <div className="sys-title">♻️ ВОССТАНОВЛЕНИЕ ИЗ БЭКАПА</div>
+            <div className="sys-desc">Загрузи JSON файл бэкапа для восстановления данных. Существующие данные будут перезаписаны.</div>
+            <label className="sys-btn" style={{display:'block',textAlign:'center',cursor:'pointer'}}>
+              ⬆ ЗАГРУЗИТЬ БЭКАП
+              <input type="file" accept=".json" style={{display:'none'}} onChange={e => e.target.files[0] && restoreBackup(e.target.files[0])}/>
+            </label>
           </div>
         </div>
       )}
