@@ -6,8 +6,8 @@
 .wc-row{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
 .wc-num{font-family:'DM Sans',sans-serif;font-size:36px;font-weight:700;color:#e8f2ff;line-height:1;}
 .wc-usd{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.3);margin-bottom:16px;}
-.wc-btns{display:flex;gap:8px;}
-.wc-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:12px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;border:none;letter-spacing:.04em;}
+.wc-btns{display:flex;gap:8px;width:100%;margin-top:12px;}
+.wc-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:12px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;border:none;letter-spacing:.04em;text-align:center;}
 .wc-in{background:linear-gradient(135deg,#1a5fff,#0930cc);color:#fff;box-shadow:0 4px 16px rgba(26,95,255,0.35);}
 .wc-out{background:rgba(0,212,255,0.1);color:#00d4ff;border:1px solid rgba(0,212,255,0.2);}
 .tx-label{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.22);letter-spacing:.12em;margin-bottom:10px;}
