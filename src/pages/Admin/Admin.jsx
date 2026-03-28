@@ -200,17 +200,6 @@ export default function Admin() {
     } catch { showToast('ОШИБКА БЭКАПА', true) }
   }
 
-  const restoreBackup = async (file) => {
-    try {
-      const text = await file.text()
-      const data = JSON.parse(text)
-      if (!data.users) { showToast('НЕВЕРНЫЙ ФАЙЛ', true); return }
-      if (!window.confirm(`Восстановить ${data.users.length} пользователей из бэкапа ${data.date?.slice(0,10)}?`)) return
-      await api.post('/api/admin/restore', data)
-      showToast('ВОССТАНОВЛЕНО УСПЕШНО')
-    } catch (e) { showToast(e?.response?.data?.error || 'ОШИБКА', true) }
-  }
-
   const openUserStats = async (user) => {
     setSelectedUser(user)
     try {
