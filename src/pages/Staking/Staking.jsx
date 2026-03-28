@@ -238,8 +238,10 @@ export default function Staking({ user }) {
               <input className="mi" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} autoFocus/>
               <span className="mi-cur">TON</span>
             </div>
-            {modal === 'minus' && stakingWithdrawFee > 0 && (
-              <div className="modal-bonus-note">Комиссия {stakingWithdrawFee}% = {((dep - bonusDep) * stakingWithdrawFee / 100).toFixed(4)} TON</div>
+            {modal === 'minus' && stakingWithdrawFee > 0 && amount && parseFloat(amount) > 0 && (
+              <div className="modal-bonus-note">
+                Комиссия {stakingWithdrawFee}% = {(parseFloat(amount) * stakingWithdrawFee / 100).toFixed(4)} TON → получите {(parseFloat(amount) - parseFloat(amount) * stakingWithdrawFee / 100).toFixed(4)} TON
+              </div>
             )}
             <div className="mhint">
               {modal === 'plus' ? 'Доступно в кошельке: ' : 'Доступно к выводу: '}
