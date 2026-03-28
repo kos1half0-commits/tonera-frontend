@@ -152,3 +152,10 @@
 .astat-card.green .astat-val{color:#00e676;}
 .astat-card.red{border-color:rgba(255,77,106,0.3);background:rgba(255,77,106,0.05);}
 .astat-card.red .astat-val{color:#ff4d6a;}
+
+.system-card{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;padding:18px;margin-bottom:12px;}
+.sys-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#e8f2ff;margin-bottom:6px;}
+.sys-desc{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.4);margin-bottom:14px;line-height:1.5;}
+.sys-toggle{width:100%;padding:12px;border-radius:12px;border:none;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);color:#00e676;}
+.sys-toggle.on{background:rgba(255,77,106,0.12);border-color:rgba(255,77,106,0.3);color:#ff4d6a;}
+.sys-btn{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(26,95,255,0.4);background:#0b1630;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:#00d4ff;cursor:pointer;}

@@ -66,6 +66,8 @@ export default function Admin() {
   const [userStats, setUserStats] = useState(null)
   const [usersTab, setUsersTab] = useState('all') // all | donors
   const [withdrawals, setWithdrawals] = useState([])
+  const [maintenance, setMaintenance] = useState(false)
+  const [dbBackup, setDbBackup] = useState(null)
   const linkTimer = useRef(null)
 
   const showToast = (msg, err=false) => {
@@ -77,18 +79,20 @@ export default function Admin() {
 
   const loadAll = async () => {
     try {
-      const [s, se, t, u, w] = await Promise.all([
+      const [s, se, t, u, w, maint] = await Promise.all([
         api.get('/api/admin/stats'),
         api.get('/api/admin/settings'),
         api.get('/api/admin/tasks'),
         api.get('/api/admin/users'),
         api.get('/api/admin/withdrawals'),
+        api.get('/api/admin/maintenance'),
       ])
       setStats(s.data)
       setSettings(se.data)
       setTasks(t.data)
       setUsers(u.data)
       setWithdrawals(w.data || [])
+      setMaintenance(maint.data?.maintenance === '1')
     } catch {}
   }
 
@@ -162,6 +166,27 @@ export default function Admin() {
     } catch { showToast('ОШИБКА', true) }
   }
 
+  const toggleMaintenance = async () => {
+    try {
+      const newVal = !maintenance
+      await api.post('/api/admin/maintenance', { value: newVal ? '1' : '0' })
+      setMaintenance(newVal)
+      showToast(newVal ? 'ТЕХ ОБСЛУЖИВАНИЕ ВКЛЮЧЕНО' : 'ПРОЕКТ АКТИВЕН')
+    } catch { showToast('ОШИБКА', true) }
+  }
+
+  const downloadBackup = async () => {
+    try {
+      const r = await api.get('/api/admin/backup', { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([r.data]))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `tonera-backup-${new Date().toISOString().slice(0,10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch { showToast('ОШИБКА БЭКАПА', true) }
+  }
+
   const openUserStats = async (user) => {
     setSelectedUser(user)
     try {
@@ -213,7 +238,7 @@ export default function Admin() {
       </div>
 
       <div className="admin-tabs">
-        {[{id:'stats',label:'📊 СТАТ'},{id:'settings',label:'⚙️ НАСТРОЙКИ'},{id:'tasks',label:'✅ ЗАДАНИЯ'},{id:'users',label:'👥 ЮЗЕРЫ'},{id:'withdrawals',label:`💸 ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`}].map(t => (
+        {[{id:'stats',label:'📊 СТАТ'},{id:'settings',label:'⚙️ НАСТРОЙКИ'},{id:'tasks',label:'✅ ЗАДАНИЯ'},{id:'users',label:'👥 ЮЗЕРЫ'},{id:'withdrawals',label:`💸 ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},{id:'system',label:'⚙️ СИСТЕМА'}].map(t => (
           <button key={t.id} className={`atab ${tab===t.id?'on':''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </div>
@@ -410,6 +435,24 @@ export default function Admin() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* SYSTEM */}
+      {tab === 'system' && (
+        <div className="admin-section">
+          <div className="system-card">
+            <div className="sys-title">🔧 ТЕХ ОБСЛУЖИВАНИЕ</div>
+            <div className="sys-desc">При включении юзеры не смогут зайти в приложение</div>
+            <button className={`sys-toggle ${maintenance ? 'on' : ''}`} onClick={toggleMaintenance}>
+              {maintenance ? '🔴 ВЫКЛЮЧИТЬ (сейчас активно)' : '🟢 ВКЛЮЧИТЬ'}
+            </button>
+          </div>
+          <div className="system-card">
+            <div className="sys-title">💾 РЕЗЕРВНАЯ КОПИЯ БД</div>
+            <div className="sys-desc">Скачать все данные проекта в формате JSON</div>
+            <button className="sys-btn" onClick={downloadBackup}>⬇ СКАЧАТЬ БЭКАП</button>
+          </div>
         </div>
       )}
 
