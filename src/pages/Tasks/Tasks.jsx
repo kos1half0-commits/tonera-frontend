@@ -151,7 +151,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
             </div>
           ) : (
             <div className="tasks-list">
-              {tasks.map(task => (
+              {tasks.filter(t => !t.completed).map(task => (
                 <div key={task.id} className={`task-card ${task.completed ? 'done' : ''}`}>
                   {task.channel_photo
                     ? <img src={task.channel_photo} className="task-photo" onError={e => e.target.style.display='none'}/>
