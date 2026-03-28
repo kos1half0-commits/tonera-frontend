@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getUserStakes, getTasks } from '../../api/index'
+import api from '../../api/index'
 import './Home.css'
 
 export default function Home({ user, onTab, onCreate, onMyTasks }) {
