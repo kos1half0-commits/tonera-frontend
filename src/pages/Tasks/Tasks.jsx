@@ -26,7 +26,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
   const [toastErr, setToastErr] = useState(false)
 
   // Create form
-  const [form, setForm] = useState({ type:'subscribe', link:'', title:'', channel_title:'', channel_photo:'', count:100 })
+  const [form, setForm] = useState({ type:'subscribe', link:'', title:'', description:'', channel_title:'', channel_photo:'', count:100 })
   const [loadingCh, setLoadingCh] = useState(false)
   const [creating, setCreating] = useState(false)
   const [botCheck, setBotCheck] = useState(null)
@@ -222,8 +222,8 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
           <div className="cf-row">
             <div className="cf-label">ТИП ЗАДАНИЯ</div>
             <div className="type-btns">
-              <button className={`type-btn ${form.type==='subscribe'?'on':''}`} onClick={() => { setForm({ type:'subscribe', link:'', title:'', channel_title:'', channel_photo:'', count:form.count }); setBotCheck(null) }}>✈️ Подписка</button>
-              <button className={`type-btn ${form.type==='bot'?'on':''}`} onClick={() => { setForm({ type:'bot', link:'', title:'', channel_title:'', channel_photo:'', count:form.count }); setBotCheck(null) }}>🤖 Бот</button>
+              <button className={`type-btn ${form.type==='subscribe'?'on':''}`} onClick={() => { setForm({ type:'subscribe', link:'', title:'', description:'', channel_title:'', channel_photo:'', count:form.count }); setBotCheck(null) }}>✈️ Подписка</button>
+              <button className={`type-btn ${form.type==='bot'?'on':''}`} onClick={() => { setForm({ type:'bot', link:'', title:'', description:'', channel_title:'', channel_photo:'', count:form.count }); setBotCheck(null) }}>🤖 Бот</button>
             </div>
           </div>
 
@@ -259,7 +259,11 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
           )}
           <div className="cf-row">
             <div className="cf-label">НАЗВАНИЕ</div>
-            <input className="cf-input" placeholder="Название задания" value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))}/>
+            <input className="cf-input" placeholder="Название канала или проекта" value={form.title} onChange={e => setForm(p=>({...p,title:e.target.value}))}/>
+          </div>
+          <div className="cf-row">
+            <div className="cf-label">ОПИСАНИЕ</div>
+            <textarea className="cf-input cf-textarea" placeholder="Описание задания (необязательно)" value={form.description} onChange={e => setForm(p=>({...p,description:e.target.value}))}/> 
           </div>
 
           <div className="cf-row">
