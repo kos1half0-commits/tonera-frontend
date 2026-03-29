@@ -8,7 +8,7 @@ import './Wallet.css'
 const TX_ICONS = {
   stake: '📈', reward: '🎁', deposit: '⬇️', withdraw: '⬆️',
   task: '✅', ref_task: '👥', ref_deposit: '👥', bonus: '🎁',
-  reinvest: '🔄', collect: '💰'
+  reinvest: '🔄', collect: '💰', spin_result: '🎰'
 }
 
 export default function Wallet({ user }) {
@@ -30,7 +30,7 @@ export default function Wallet({ user }) {
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   useEffect(() => {
-    getTransactions().then(r => setTxs((r.data || []).filter(t => t.type !== 'fee'))).catch(() => {})
+    getTransactions().then(r => setTxs((r.data || []).filter(t => t.type !== 'fee' && t.type !== 'spin'))).catch(() => {})
     api.get('/api/deposit/info').then(r => {
       setProjectWallet(r.data.wallet)
       setMinDeposit(r.data.min_amount || 0.5)
@@ -68,7 +68,7 @@ export default function Wallet({ user }) {
       updateBalance(val)
       // Перезагружаем транзакции
       const r = await getTransactions()
-      setTxs((r.data || []).filter(t => t.type !== 'fee'))
+      setTxs((r.data || []).filter(t => t.type !== 'fee' && t.type !== 'spin'))
       showToast(`+${val} TON ЗАЧИСЛЕНО`)
       setModal(null)
       setAmount('')
@@ -94,7 +94,7 @@ export default function Wallet({ user }) {
       await api.post('/api/deposit/withdraw', { amount: val, wallet_address: addr })
       updateBalance(-val)
       const r = await getTransactions()
-      setTxs((r.data || []).filter(t => t.type !== 'fee'))
+      setTxs((r.data || []).filter(t => t.type !== 'fee' && t.type !== 'spin'))
       showToast('ЗАЯВКА СОЗДАНА. ОБРАБОТКА ДО 24Ч')
       setModal(null)
       setAmount('')
