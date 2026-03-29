@@ -42,6 +42,8 @@ export default function Trading({ user, onBack }) {
   const offsetXRef = useRef(0)
   const isDragging = useRef(false)
   const lastX = useRef(0)
+  const CANDLE_W_REF = useRef(8)
+  const CANDLE_GAP_REF = useRef(2)
   const [, forceRedraw] = useState(0)
   const balance = parseFloat(user?.balance_ton ?? 0)
 
@@ -135,7 +137,7 @@ export default function Trading({ user, onBack }) {
     const all = candlesRef.current
     if (all.length === 0) return
 
-    const step = CANDLE_W + CANDLE_GAP
+    const step = CANDLE_W_REF.current + CANDLE_GAP_REF.current
     // Правый край: последняя свеча рисуется справа с отступом
     // offsetXRef.current = смещение влево в пикселях (0 = последняя свеча у правого края)
     const PRICE_PANEL = 52
@@ -249,28 +251,29 @@ export default function Trading({ user, onBack }) {
     }
   }
 
-  // Touch скролл как на бирже
+  // Touch скролл как на бирже — свайп вправо = смотрим историю (прошлое)
   const onTouchStart = e => {
+    // Только если тач на графике — блокируем скролл страницы
     isDragging.current = true
     lastX.current = e.touches[0].clientX
   }
   const onTouchMove = e => {
     if (!isDragging.current) return
-    const dx = lastX.current - e.touches[0].clientX // движение влево = dx > 0 = в прошлое
+    e.stopPropagation() // не мешаем скроллу страницы по вертикали
+    const dx = e.touches[0].clientX - lastX.current // вправо = положительный = в прошлое
     lastX.current = e.touches[0].clientX
-    const step = CANDLE_W + CANDLE_GAP
+    const step = CANDLE_W_REF.current + CANDLE_GAP_REF.current
     const maxOffset = (candlesRef.current.length - 5) * step
     offsetXRef.current = Math.max(0, Math.min(offsetXRef.current + dx, maxOffset))
-    forceRedraw(n => n + 1)
     drawChart()
   }
   const onTouchEnd = () => { isDragging.current = false }
   const onMouseDown = e => { isDragging.current = true; lastX.current = e.clientX; e.preventDefault() }
   const onMouseMove = e => {
     if (!isDragging.current) return
-    const dx = lastX.current - e.clientX
+    const dx = e.clientX - lastX.current // вправо = в прошлое
     lastX.current = e.clientX
-    const step = CANDLE_W + CANDLE_GAP
+    const step = CANDLE_W_REF.current + CANDLE_GAP_REF.current
     const maxOffset = (candlesRef.current.length - 5) * step
     offsetXRef.current = Math.max(0, Math.min(offsetXRef.current + dx, maxOffset))
     drawChart()
@@ -278,9 +281,22 @@ export default function Trading({ user, onBack }) {
   const onMouseUp = () => { isDragging.current = false }
   const onWheel = e => {
     e.preventDefault()
-    const step = CANDLE_W + CANDLE_GAP
+    const step = CANDLE_W_REF.current + CANDLE_GAP_REF.current
     const maxOffset = (candlesRef.current.length - 5) * step
-    offsetXRef.current = Math.max(0, Math.min(offsetXRef.current + e.deltaY * 0.5, maxOffset))
+    // Горизонтальный скролл — колесо влево/вправо
+    offsetXRef.current = Math.max(0, Math.min(offsetXRef.current - e.deltaY * 0.5, maxOffset))
+    drawChart()
+  }
+
+  // Зум кнопками
+  const zoomIn = () => {
+    CANDLE_W_REF.current = Math.min(CANDLE_W_REF.current + 2, 20)
+    CANDLE_GAP_REF.current = Math.max(CANDLE_GAP_REF.current - 0.5, 1)
+    drawChart()
+  }
+  const zoomOut = () => {
+    CANDLE_W_REF.current = Math.max(CANDLE_W_REF.current - 2, 3)
+    CANDLE_GAP_REF.current = Math.min(CANDLE_GAP_REF.current + 0.5, 4)
     drawChart()
   }
 
@@ -341,6 +357,11 @@ export default function Trading({ user, onBack }) {
         {currentPrice && <span className="tr-live-price">${currentPrice.toFixed(3)}</span>}
       </div>
 
+      <div className="tr-controls-row">
+        <button className="tr-ctrl-btn" onClick={zoomOut}>−</button>
+        <button className="tr-ctrl-btn" onClick={zoomIn}>+</button>
+        {offsetXRef.current > 0 && <button className="tr-ctrl-btn tr-live-btn" onClick={() => { offsetXRef.current = 0; drawChart() }}>▶ LIVE</button>}
+      </div>
       <div className="tr-chart-wrap" style={{cursor:isDragging.current?'grabbing':'grab'}}
         onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
         onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp}
