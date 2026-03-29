@@ -24,14 +24,7 @@ const SETTING_GROUPS = [
       { key: 'task_project_fee', label: 'Комиссия проекта (TON)' },
     ]
   },
-  {
-    id: 'spin',
-    title: '🎰 Спин',
-    settings: [
-      { key: 'spin_price',   label: 'Цена спина (TON)' },
-      { key: 'spin_enabled', label: 'Включён (1/0)' },
-    ]
-  },
+
   {
     id: 'wallet',
     title: '💎 Кошелёк проекта',
@@ -75,6 +68,8 @@ export default function Admin() {
   const [usersTab, setUsersTab] = useState('all') // all | donors
   const [withdrawals, setWithdrawals] = useState([])
   const [maintenance, setMaintenance] = useState(false)
+  const [spinSectors, setSpinSectors] = useState([])
+  const [editSector, setEditSector] = useState(null)
   const [uptime, setUptime] = useState('')
   const [dbBackup, setDbBackup] = useState(null)
   const linkTimer = useRef(null)
@@ -101,6 +96,10 @@ export default function Admin() {
       setTasks(t.data)
       setUsers(u.data)
       setWithdrawals(w.data || [])
+      try {
+        const spinInfo = await api.get('/api/spin/info')
+        setSpinSectors(spinInfo.data.sectors || [])
+      } catch {}
       setMaintenance(maint.data?.maintenance === '1')
     } catch {}
   }
@@ -483,6 +482,76 @@ export default function Admin() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* SPIN SETTINGS */}
+      {tab === 'settings' && settingsTab === 'spin_custom' && (
+        <div className="admin-section">
+          <div className="stats-section-title">🎰 НАСТРОЙКИ СПИНА</div>
+          <div className="setting-item">
+            <div className="setting-label">Цена спина (TON)</div>
+            <div className="setting-row">
+              <input className="setting-input" type="number" step="0.01" value={settings['spin_price']||''} onChange={e=>setSettings(p=>({...p,spin_price:e.target.value}))}/>
+              <button className="save-btn" onClick={()=>saveSetting('spin_price')}>{saving==='spin_price'?'...':'СОХР'}</button>
+            </div>
+          </div>
+          <div className="setting-item">
+            <div className="setting-label">Включён (1/0)</div>
+            <div className="setting-row">
+              <input className="setting-input" type="number" step="1" value={settings['spin_enabled']||''} onChange={e=>setSettings(p=>({...p,spin_enabled:e.target.value}))}/>
+              <button className="save-btn" onClick={()=>saveSetting('spin_enabled')}>{saving==='spin_enabled'?'...':'СОХР'}</button>
+            </div>
+          </div>
+          <div className="setting-item">
+            <div className="setting-label">% от спина в джекпот</div>
+            <div className="setting-row">
+              <input className="setting-input" type="number" step="1" value={settings['spin_jackpot_fee']||''} onChange={e=>setSettings(p=>({...p,spin_jackpot_fee:e.target.value}))}/>
+              <button className="save-btn" onClick={()=>saveSetting('spin_jackpot_fee')}>{saving==='spin_jackpot_fee'?'...':'СОХР'}</button>
+            </div>
+          </div>
+          <div className="stats-section-title" style={{marginTop:16}}>СЕКТОРЫ</div>
+          {spinSectors.map((s,i) => (
+            <div key={i} className="sector-item">
+              <div className="si-info">
+                <div className="si-label">{s.label}</div>
+                <div className="si-meta">Шанс: {s.chance}% · Приз: {s.type==='jackpot'?'ДЖЕКПОТ':`${s.value} TON`}</div>
+              </div>
+              <button className="si-edit" onClick={()=>setEditSector({...s,index:i})}>✏️</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* SECTOR EDIT MODAL */}
+      {editSector && (
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setEditSector(null)}>
+          <div className="modal-inner">
+            <div className="modal-title">РЕДАКТОР СЕКТОРА</div>
+            <div className="cf-row"><div className="cf-label">НАЗВАНИЕ</div>
+              <input className="cf-input" value={editSector.label} onChange={e=>setEditSector(p=>({...p,label:e.target.value}))}/>
+            </div>
+            <div className="cf-row"><div className="cf-label">ТИП (ton/nothing/jackpot)</div>
+              <input className="cf-input" value={editSector.type} onChange={e=>setEditSector(p=>({...p,type:e.target.value}))}/>
+            </div>
+            <div className="cf-row"><div className="cf-label">ПРИЗ (TON)</div>
+              <input className="cf-input" type="number" step="0.01" value={editSector.value} onChange={e=>setEditSector(p=>({...p,value:parseFloat(e.target.value)||0}))}/>
+            </div>
+            <div className="cf-row"><div className="cf-label">ШАНС (%)</div>
+              <input className="cf-input" type="number" step="1" value={editSector.chance} onChange={e=>setEditSector(p=>({...p,chance:parseFloat(e.target.value)||0}))}/>
+            </div>
+            <div className="mbtns" style={{marginTop:14}}>
+              <button className="mbtn mb-c" onClick={()=>setEditSector(null)}>Отмена</button>
+              <button className="mbtn mb-ok" onClick={async()=>{
+                const updated = [...spinSectors]
+                updated[editSector.index] = {label:editSector.label,type:editSector.type,value:editSector.value,chance:editSector.chance}
+                await api.post('/api/admin/settings',{key:'spin_sectors',value:JSON.stringify(updated)})
+                setSpinSectors(updated)
+                setEditSector(null)
+                showToast('СЕКТОР СОХРАНЁН')
+              }}>СОХРАНИТЬ</button>
+            </div>
+          </div>
         </div>
       )}
 
