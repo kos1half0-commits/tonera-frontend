@@ -4,10 +4,10 @@ import api from '../../api/index'
 import './Trading.css'
 
 const TF = [
-  { label: '1м', value: '1m' },
-  { label: '3м', value: '3m' },
-  { label: '5м', value: '5m' },
-  { label: '15м', value: '15m' },
+  { label: '1м', value: '1' },
+  { label: '3м', value: '3' },
+  { label: '5м', value: '5' },
+  { label: '15м', value: '15' },
 ]
 const BET_TIMES = [
   { label: '1м', seconds: 60 },
@@ -62,13 +62,14 @@ export default function Trading({ user, onBack }) {
 
   const loadCandles = async () => {
     try {
-      const r = await fetch(`https://api.binance.com/api/v3/klines?symbol=TONUSDT&interval=${tf.value}&limit=200`)
+      const r = await fetch(`https://api.bybit.com/v5/market/kline?category=spot&symbol=TONUSDT&interval=${tf.value}&limit=200`)
       const data = await r.json()
-      const c = data.map(k => ({
+      const raw = (data.result?.list || []).reverse()
+      const c = raw.map(k => ({
         open: parseFloat(k[1]), high: parseFloat(k[2]),
         low: parseFloat(k[3]), close: parseFloat(k[4]),
         isGreen: parseFloat(k[4]) >= parseFloat(k[1]),
-        time: k[0]
+        time: parseInt(k[0])
       }))
       candlesRef.current = c
       offsetXRef.current = 0
@@ -86,19 +87,19 @@ export default function Trading({ user, onBack }) {
 
   const connectWS = () => {
     wsRef.current?.close()
-    const ws = new WebSocket(`wss://stream.binance.com:9443/ws/tonusdt@kline_${tf.value}`)
+    const ws = new WebSocket(`wss://stream.bybit.com/v5/public/spot`)
     wsRef.current = ws
     ws.onmessage = (e) => {
       const d = JSON.parse(e.data), k = d.k
       const candle = {
-        open: parseFloat(k.o), high: parseFloat(k.h),
-        low: parseFloat(k.l), close: parseFloat(k.c),
-        isGreen: parseFloat(k.c) >= parseFloat(k.o), time: k.t
+        open: parseFloat(kk.o), high: parseFloat(kk.h),
+        low: parseFloat(kk.l), close: parseFloat(kk.c),
+        isGreen: parseFloat(kk.c) >= parseFloat(kk.o), time: parseInt(kk.t)
       }
-      const price = parseFloat(k.c)
+      const price = parseFloat(kk.c)
       setCurrentPrice(price)
       const arr = [...candlesRef.current]
-      if (k.x) { arr.push(candle); if (arr.length > 300) arr.shift() }
+      if (kk.x) { arr.push(candle); if (arr.length > 300) arr.shift() }
       else arr[arr.length - 1] = candle
       candlesRef.current = arr
       setCandles([...arr])
