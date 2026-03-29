@@ -24,6 +24,14 @@ export default function Spin({ user }) {
       setJackpot(parseFloat(r.data.spin_jackpot || 0))
       setSectors(r.data.sectors || [])
     }).catch(() => {})
+
+    // Обновляем джекпот каждые 10 секунд
+    const t = setInterval(() => {
+      api.get('/api/spin/info').then(r => {
+        setJackpot(parseFloat(r.data.spin_jackpot || 0))
+      }).catch(() => {})
+    }, 10000)
+    return () => clearInterval(t)
   }, [])
 
   useEffect(() => {
