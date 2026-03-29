@@ -10,7 +10,6 @@ import Wallet from './pages/Wallet/Wallet'
 import Admin from './pages/Admin/Admin'
 import Spin from './pages/Spin/Spin'
 import Games from './pages/Games/Games'
-import Games from './pages/Games/Games'
 import WelcomeBonus from './components/WelcomeBonus'
 import './App.css'
 
