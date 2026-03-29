@@ -99,14 +99,13 @@ export default function Spin({ user }) {
     try {
       const r = await api.post('/api/spin/play')
       const { result: res, sectorIndex } = r.data
-      alert(`idx=${sectorIndex} sector=${SECTORS[sectorIndex]?.label} result=${res.label} type=${res.type}`)
 
       const arc = (Math.PI * 2) / SECTORS.length
       // Стрелка сверху = -PI/2
       // Центр сектора i = arc*i + rot + arc/2 должен быть = -PI/2
       // rot = -PI/2 - arc*i - arc/2
       const targetRot = -Math.PI / 2 - arc * sectorIndex - arc / 2
-      const spins = 5 + Math.floor(Math.random() * 3)
+      const spins = 8 + Math.floor(Math.random() * 5)
       // Нормализуем текущий rotation чтобы считать от него
       const currentNorm = rotation % (Math.PI * 2)
       const finalRot = currentNorm + spins * Math.PI * 2 + (targetRot - currentNorm % (Math.PI * 2))
