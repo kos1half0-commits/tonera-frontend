@@ -117,11 +117,19 @@ export default function Trading({ user, onBack }) {
   const drawChart = () => {
     const canvas = canvasRef.current
     if (!canvas) return
+    const dpr = window.devicePixelRatio || 1
+    const rect = canvas.getBoundingClientRect()
+    if (canvas.width !== rect.width * dpr) {
+      canvas.width = rect.width * dpr
+      canvas.height = rect.height * dpr
+    }
     const W = canvas.width, H = canvas.height
     const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, W, H)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    const Wr = rect.width, Hr = rect.height
+    ctx.clearRect(0, 0, Wr, Hr)
     ctx.fillStyle = '#060f2a'
-    ctx.fillRect(0, 0, W, H)
+    ctx.fillRect(0, 0, Wr, Hr)
 
     const all = candlesRef.current
     if (all.length === 0) return
@@ -132,7 +140,7 @@ export default function Trading({ user, onBack }) {
     const PRICE_PANEL = 52
 
     // Какие свечи видны
-    const chartW = W - PRICE_PANEL
+    const chartW = Wr - PRICE_PANEL
     const rightPad = 20
     // Индекс последней видимой свечи
     const lastVisible = Math.floor((offsetXRef.current) / step)
@@ -149,7 +157,7 @@ export default function Trading({ user, onBack }) {
     const minP = Math.min(...prices), maxP = Math.max(...prices)
     const range = maxP - minP || 0.001
     const pad = range * 0.15
-    const pH = H - 18
+    const pH = Hr - 18
     const toY = p => pH - ((p - minP + pad) / (range + pad * 2)) * pH
 
     // Grid
