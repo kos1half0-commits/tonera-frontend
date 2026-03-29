@@ -104,6 +104,7 @@ export default function Spin({ user }) {
     try {
       const r = await api.post('/api/spin/play')
       const { result: res, sectorIndex } = r.data
+      alert(`idx=${sectorIndex} sector="${sectors[sectorIndex]?.label}" result="${res.label}" type=${res.type}`)
 
       const arc = (Math.PI * 2) / sectors.length
       const spins = 8 + Math.floor(Math.random() * 5)
