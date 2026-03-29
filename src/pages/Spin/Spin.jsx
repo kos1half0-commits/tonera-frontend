@@ -26,13 +26,15 @@ export default function Spin({ user }) {
       setSectors(r.data.sectors || [])
     }).catch(() => {})
 
-    api.get('/api/spin/history').then(r => setHistory(r.data || [])).catch(() => {})
+    const loadHistory = () => api.get('/api/spin/history').then(r => setHistory(r.data || [])).catch(() => {})
+    loadHistory()
 
-    // Обновляем джекпот каждые 10 секунд
+    // Обновляем джекпот и историю каждые 10 секунд
     const t = setInterval(() => {
       api.get('/api/spin/info').then(r => {
         setJackpot(parseFloat(r.data.spin_jackpot || 0))
       }).catch(() => {})
+      loadHistory()
     }, 10000)
     return () => clearInterval(t)
   }, [])
@@ -133,6 +135,8 @@ export default function Spin({ user }) {
           } else {
             updateBalance(-spinPrice)
           }
+          // Обновляем историю после спина
+          api.get('/api/spin/history').then(r => setHistory(r.data || [])).catch(() => {})
           setSpinning(false)
         }
       }
