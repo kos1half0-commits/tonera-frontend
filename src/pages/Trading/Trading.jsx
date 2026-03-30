@@ -93,7 +93,7 @@ export default function Trading({ user, onBack }) {
     const ws = new WebSocket(`wss://stream.bybit.com/v5/public/spot`)
     wsRef.current = ws
     ws.onopen = () => {
-      ws.send(JSON.stringify({ op: 'subscribe', args: [`kline.${tf.value}.TONUSDT`] }))
+      ws.send(JSON.stringify({ op: 'subscribe', args: [`kline.${tf.value}.BTCUSDT`] }))
     }
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data)
