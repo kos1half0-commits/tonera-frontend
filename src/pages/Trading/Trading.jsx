@@ -442,14 +442,47 @@ export default function Trading({ user, onBack }) {
       {history.length > 0 && (
         <div className="tr-history">
           <div className="tr-hist-title">МОИ СДЕЛКИ</div>
-          {history.map((h,i) => (
-            <div key={i} className={`tr-hist-item ${parseFloat(h.amount)>0?'win':parseFloat(h.amount)===0?'refund':'lose'}`}>
-              <span className="tr-hist-icon">{parseFloat(h.amount)>0?'📈':parseFloat(h.amount)===0?'🔄':'📉'}</span>
-              <span className="tr-hist-label">{h.label?.replace('Трейдинг TON: ','')}</span>
-              <span className="tr-hist-date">{new Date(h.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
-              <span className="tr-hist-amt">{parseFloat(h.amount)>0?'+':''}{parseFloat(h.amount).toFixed(4)}</span>
-            </div>
-          ))}
+          {history.map((h, i) => {
+            const amt = parseFloat(h.amount)
+            const lbl = h.label || ''
+            const isRefund = lbl.includes('refund') || lbl.includes('возврат')
+            const isWin = !isRefund && amt > 0
+            const parts = lbl.split(':')
+            const betAmt = isRefund ? amt : (lbl.includes('win') ? parseFloat(parts[3] || 0) : parseFloat(parts[1] || Math.abs(amt)))
+            const profit = isWin ? amt - betAmt : 0
+            const type = isRefund ? 'refund' : isWin ? 'win' : 'lose'
+            return (
+              <div key={i} className={`tr-hist-item ${type}`}>
+                <div className="tr-hist-badge">
+                  {isRefund ? '↩' : isWin ? '▲' : '▼'}
+                </div>
+                <div className="tr-hist-info">
+                  <div className="tr-hist-type">
+                    {isRefund ? 'ВОЗВРАТ' : isWin ? 'ВВЕРХ' : 'ВНИЗ'}
+                  </div>
+                  <div className="tr-hist-date">{new Date(h.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                </div>
+                <div className="tr-hist-right">
+                  {isRefund ? (
+                    <>
+                      <div className="tr-hist-amt refund">+{amt.toFixed(4)} TON</div>
+                      <div className="tr-hist-profit">возврат ставки</div>
+                    </>
+                  ) : isWin ? (
+                    <>
+                      <div className="tr-hist-amt win">+{amt.toFixed(4)} TON</div>
+                      <div className="tr-hist-profit">ставка {betAmt.toFixed(4)} · профит +{profit.toFixed(4)}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="tr-hist-amt lose">-{Math.abs(amt).toFixed(4)} TON</div>
+                      <div className="tr-hist-profit lose">ставка {betAmt.toFixed(4)}</div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
