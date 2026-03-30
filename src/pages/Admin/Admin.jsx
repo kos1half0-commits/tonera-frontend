@@ -13,7 +13,9 @@ const SETTING_GROUPS = [
     title: '📈 Трейдинг',
     settings: [
       { key: 'trading_enabled',    label: 'Включён (1/0)' },
-      { key: 'trading_multiplier', label: 'Процент выплаты от ставки (%, напр. 90)' },
+      { key: 'trading_multiplier', label: 'Процент выплаты (%, напр. 90)' },
+      { key: 'trading_bank',       label: 'Банк трейдинга (TON)' },
+      { key: 'trading_profit_fee', label: 'Чистая прибыль с каждой ставки (%)' },
     ]
   },
   {
@@ -325,6 +327,16 @@ export default function Admin() {
           <div className="stats-cards">
             <div className="astat-card"><div className="astat-val">{stats.active_tasks||0}</div><div className="astat-lbl">Активных заданий</div></div>
             <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.task_fee_earned||0).toFixed(4)}</div><div className="astat-lbl">Комиссия заданий</div></div>
+          </div>
+
+          <div className="stats-section-title">📈 ТРЕЙДИНГ</div>
+          <div className="stats-cards">
+            <div className="astat-card"><div className="astat-val">{stats.trading_total||0}</div><div className="astat-lbl">Всего ставок</div></div>
+            <div className="astat-card green"><div className="astat-val">{stats.trading_wins||0}</div><div className="astat-lbl">Выигрышей</div></div>
+            <div className="astat-card red"><div className="astat-val">{stats.trading_loses||0}</div><div className="astat-lbl">Проигрышей</div></div>
+            <div className="astat-card"><div className="astat-val">{stats.trading_refunds||0}</div><div className="astat-lbl">Возвратов</div></div>
+            <div className="astat-card" style={{borderColor:'rgba(0,212,255,0.3)',background:'rgba(0,212,255,0.05)'}}><div className="astat-val" style={{color:'#00d4ff'}}>{parseFloat(stats.trading_bank||0).toFixed(4)}</div><div className="astat-lbl">Банк трейдинга</div></div>
+            <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.trading_profit||0).toFixed(4)}</div><div className="astat-lbl">Чистая прибыль</div></div>
           </div>
 
           <div className="stats-section-title">🎰 СПИН</div>
