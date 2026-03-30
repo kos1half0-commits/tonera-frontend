@@ -398,6 +398,17 @@ export default function Trading({ user, onBack }) {
     <div className="trading-wrap">
       <div className="tr-header"><button className="tr-back" onClick={onBack}>←</button><div className="tr-title">💎 TON/USDT</div></div>
       <div className="tr-maintenance">
+        <div className="tr-maint-icon">🚫</div>
+        <div className="tr-maint-title">ТРЕЙДИНГ ОТКЛЮЧЁН</div>
+        <div className="tr-maint-text">Трейдинг недоступен.<br/>Обратитесь к администратору.</div>
+      </div>
+    </div>
+  )
+
+  if (config.trading_enabled === '2') return (
+    <div className="trading-wrap">
+      <div className="tr-header"><button className="tr-back" onClick={onBack}>←</button><div className="tr-title">💎 TON/USDT</div></div>
+      <div className="tr-maintenance">
         <div className="tr-maint-icon">🔧</div>
         <div className="tr-maint-title">ТЕХНИЧЕСКИЕ РАБОТЫ</div>
         <div className="tr-maint-text">Трейдинг временно недоступен.<br/>Скоро вернёмся!</div>

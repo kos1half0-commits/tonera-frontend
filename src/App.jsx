@@ -49,7 +49,9 @@ export default function App() {
   const goMyTasks = () => { setTasksView('my'); setTab('tasks') }
   const isAdmin = Number(user?.telegram_id) === ADMIN_ID
   const [spinEnabled, setSpinEnabled] = useState(true)
+  const [tradingStatus, setTradingStatus] = useState('1') // 0=откл,1=вкл,2=тех
   useEffect(() => { api.get('/api/spin/info').then(r => setSpinEnabled(r.data?.spin_enabled !== '0')).catch(()=>{}) }, [])
+  useEffect(() => { api.get('/api/trading/info').then(r => setTradingStatus(r.data?.trading_enabled || '1')).catch(()=>{}) }, [])
   const visibleTabs = TABS.filter(t => (t.id !== 'admin' || isAdmin) && t.id !== 'customer' && (t.id !== 'games' || true))
   const balance = parseFloat(user?.balance_ton ?? 0)
 
@@ -102,7 +104,7 @@ export default function App() {
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && <Referrals user={user} />}
         {tab === 'wallet'    && <Wallet    user={user} />}
-        {tab === 'games'     && <Games     user={user} onGame={setTab} />}
+        {tab === 'games'     && <Games     user={user} onGame={setTab} tradingStatus={tradingStatus} />}
         {tab === 'spin'      && <Spin      user={user} onBack={() => setTab('games')} />}
         {tab === 'trading'   && <Trading   user={user} onBack={() => setTab('games')} />}
         {tab === 'admin'     && <Admin     />}

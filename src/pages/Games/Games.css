@@ -6,3 +6,5 @@
 .gc-icon{font-size:42px;margin-bottom:10px;}
 .gc-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#e8f2ff;letter-spacing:.05em;margin-bottom:6px;}
 .gc-desc{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.4);line-height:1.4;}
+.game-card.maint{opacity:.6;cursor:not-allowed;border-color:rgba(255,179,0,0.2);}
+.gc-maint-badge{margin-top:8px;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:#ffb300;background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.3);border-radius:6px;padding:3px 8px;letter-spacing:.06em;}
