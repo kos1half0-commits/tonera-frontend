@@ -12,11 +12,7 @@ const SETTING_GROUPS = [
     id: 'trading',
     title: '📈 Трейдинг',
     settings: [
-      { key: 'trading_enabled',    label: 'Включён (1/0)' },
-      { key: 'trading_timer',      label: 'Таймер (секунды)' },
-      { key: 'trading_multiplier', label: 'Коэффициент выигрыша' },
-      { key: 'trading_min_bet',    label: 'Мин. ставка (TON)' },
-      { key: 'trading_win_chance', label: 'Шанс победы (%)' },
+      { key: 'trading_enabled', label: 'Включён (1/0)' },
     ]
   },
   {
