@@ -484,10 +484,6 @@ export default function Trading({ user, onBack }) {
             <button key={v} className={`tr-bet-btn ${amount===v?'on':''}`} onClick={()=>setAmount(v)}>{v}</button>
           ))}
         </div>
-        <div className="tr-custom">
-          <input className="tr-input" type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)}/>
-          <span className="tr-cur">TON</span>
-        </div>
         <div className="tr-bet-label" style={{marginTop:10}}>ВРЕМЯ СТАВКИ</div>
         <div className="tr-bet-inputs">
           {BET_TIMES.map(bt => (
