@@ -52,6 +52,27 @@ export default function Trading({ user, onBack }) {
     api.get('/api/trading/info').then(r => { setConfig(r.data); setConfigLoaded(true) }).catch(() => { setConfigLoaded(true) })
     loadHistory()
     const t = setInterval(() => loadHistory(), 30000)
+
+    // Восстанавливаем ставку после перезагрузки
+    try {
+      const saved = sessionStorage.getItem('tonera_bet')
+      if (saved) {
+        const b = JSON.parse(saved)
+        if (b.endTime > Date.now()) {
+          setBet(b); betRef.current = b
+          const remaining = Math.ceil((b.endTime - Date.now()) / 1000)
+          setCountdown(remaining)
+          const timer = setInterval(() => setCountdown(c => {
+            if (c <= 1) { clearInterval(timer); return 0 }
+            return c - 1
+          }), 1000)
+          timerRef.current = timer
+        } else {
+          sessionStorage.removeItem('tonera_bet')
+        }
+      }
+    } catch {}
+
     return () => clearInterval(t)
   }, [])
 
@@ -322,6 +343,7 @@ export default function Trading({ user, onBack }) {
 
   const finishBet = async (won, betAmount) => {
     clearInterval(timerRef.current); setCountdown(0)
+    try { sessionStorage.removeItem('tonera_bet') } catch {}
     try {
       if (won === null) {
         setResult({ won: null, amount: betAmount })
@@ -366,6 +388,7 @@ export default function Trading({ user, onBack }) {
     if (val > balance) { showToast('НЕДОСТАТОЧНО', true); return }
     const b = { direction: dir, amount: val, startPrice: currentPrice || 0, endTime: Date.now() + betTime.seconds * 1000 }
     setBet(b); betRef.current = b; setResult(null)
+    try { sessionStorage.setItem('tonera_bet', JSON.stringify(b)) } catch {}
     setCountdown(betTime.seconds)
     const t = setInterval(() => setCountdown(c => {
       if (c <= 1) {
