@@ -45,3 +45,19 @@
 .tr-hist-item.win .tr-hist-amt{color:#26a69a;}
 .tr-hist-item.lose .tr-hist-amt{color:#ef5350;}
 .tr-hist-item.refund .tr-hist-amt{color:#00d4ff;}
+
+.tr-hist-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin-bottom:6px;border:1px solid transparent;}
+.tr-hist-item.win{background:rgba(38,166,154,0.06);border-color:rgba(38,166,154,0.2);}
+.tr-hist-item.lose{background:rgba(239,83,80,0.06);border-color:rgba(239,83,80,0.15);}
+.tr-hist-item.refund{background:rgba(0,212,255,0.05);border-color:rgba(0,212,255,0.15);}
+.tr-hist-badge{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+.tr-hist-item.win .tr-hist-badge{background:rgba(38,166,154,0.15);color:#26a69a;}
+.tr-hist-item.lose .tr-hist-badge{background:rgba(239,83,80,0.15);color:#ef5350;}
+.tr-hist-item.refund .tr-hist-badge{background:rgba(0,212,255,0.12);color:#00d4ff;}
+.tr-hist-info{flex:1;}
+.tr-hist-type{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:#e8f2ff;letter-spacing:.05em;}
+.tr-hist-date{font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(232,242,255,0.35);margin-top:2px;}
+.tr-hist-amt{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;white-space:nowrap;}
+.tr-hist-amt.win{color:#26a69a;}
+.tr-hist-amt.lose{color:#ef5350;}
+.tr-hist-amt.refund{color:#00d4ff;}
