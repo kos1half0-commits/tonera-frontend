@@ -68,3 +68,7 @@
 .tr-payout-row{display:flex;justify-content:space-between;font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.45);}
 .tr-payout-row.total{border-top:1px solid rgba(26,95,255,0.15);padding-top:6px;margin-top:2px;font-weight:700;color:rgba(232,242,255,0.7);}
 .tr-payout-row .green{color:#26a69a;font-weight:700;}
+.tr-maintenance{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center;}
+.tr-maint-icon{font-size:52px;margin-bottom:16px;}
+.tr-maint-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:#e8f2ff;letter-spacing:.05em;margin-bottom:10px;}
+.tr-maint-text{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.45);line-height:1.6;}
