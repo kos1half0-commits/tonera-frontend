@@ -1,4 +1,4 @@
-.trading-wrap{padding:12px 12px 100px;max-width:420px;margin:0 auto;overflow-y:auto;height:100%;}
+.trading-wrap{padding:12px 12px 100px;max-width:420px;margin:0 auto;}
 .trading-toast{position:fixed;top:90px;left:50%;transform:translateX(-50%);background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);border-radius:12px;padding:10px 20px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e676;white-space:nowrap;z-index:100;}
 .trading-toast.err{background:rgba(255,77,106,0.12);border-color:rgba(255,77,106,0.3);color:#ff4d6a;}
 .tr-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
