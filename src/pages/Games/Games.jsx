@@ -11,11 +11,8 @@ export default function Games({ onGame, tradingStatus = '1' }) {
       <div className="games-title">🎮 ИГРЫ</div>
       <div className="games-grid">
         {GAMES.map(g => {
-          // Трейдинг со статусом 0 — скрываем полностью
-          if (g.id === 'trading' && tradingStatus === '0') return null
-
-          // Трейдинг со статусом 2 — показываем с плашкой тех обслуживания
-          const isMaint = g.id === 'trading' && tradingStatus === '2'
+          if (g.id === 'trading' && String(tradingStatus) === '0') return null
+          const isMaint = g.id === 'trading' && String(tradingStatus) === '2'
 
           return (
             <div key={g.id} className={`game-card ${isMaint ? 'maint' : ''}`}
