@@ -389,14 +389,14 @@ export default function Trading({ user, onBack }) {
 
   if (!configLoaded) return (
     <div className="trading-wrap">
-      <div className="tr-header"><button className="tr-back" onClick={onBack}>←</button><div className="tr-title">₿ BTC/USDT</div></div>
+      <div className="tr-header"><button className="tr-back" onClick={onBack}>← ИГРЫ</button><div className="tr-title">₿ BTC/USDT</div></div>
       <div className="tr-maintenance"><div className="tr-maint-icon">⏳</div><div className="tr-maint-text">Загрузка...</div></div>
     </div>
   )
 
   if (config.trading_enabled === '0') return (
     <div className="trading-wrap">
-      <div className="tr-header"><button className="tr-back" onClick={onBack}>←</button><div className="tr-title">₿ BTC/USDT</div></div>
+      <div className="tr-header"><button className="tr-back" onClick={onBack}>← ИГРЫ</button><div className="tr-title">₿ BTC/USDT</div></div>
       <div className="tr-maintenance">
         <div className="tr-maint-icon">🚫</div>
         <div className="tr-maint-title">ТРЕЙДИНГ ОТКЛЮЧЁН</div>
@@ -407,7 +407,7 @@ export default function Trading({ user, onBack }) {
 
   if (config.trading_enabled === '2') return (
     <div className="trading-wrap">
-      <div className="tr-header"><button className="tr-back" onClick={onBack}>←</button><div className="tr-title">₿ BTC/USDT</div></div>
+      <div className="tr-header"><button className="tr-back" onClick={onBack}>← ИГРЫ</button><div className="tr-title">₿ BTC/USDT</div></div>
       <div className="tr-maintenance">
         <div className="tr-maint-icon">🔧</div>
         <div className="tr-maint-title">ТЕХНИЧЕСКИЕ РАБОТЫ</div>
@@ -420,7 +420,7 @@ export default function Trading({ user, onBack }) {
     <div className="trading-wrap">
       {toast && <div className={`trading-toast ${toastErr?'err':''}`}>{toast}</div>}
       <div className="tr-header">
-        <button className="tr-back" onClick={onBack}>←</button>
+        <button className="tr-back" onClick={onBack}>← ИГРЫ</button>
         <div className="tr-title">₿ BTC / USDT</div>
       </div>
 
