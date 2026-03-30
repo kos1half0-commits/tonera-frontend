@@ -336,7 +336,25 @@ export default function Trading({ user, onBack }) {
     const b = { direction: dir, amount: val, startPrice: currentPrice || 0, endTime: Date.now() + betTime.seconds * 1000 }
     setBet(b); betRef.current = b; setResult(null)
     setCountdown(betTime.seconds)
-    const t = setInterval(() => setCountdown(c => { if (c <= 1) { clearInterval(t); return 0 } return c - 1 }), 1000)
+    const t = setInterval(() => setCountdown(c => {
+      if (c <= 1) {
+        clearInterval(t)
+        // Принудительно закрываем позицию если WS не закрыл
+        setTimeout(() => {
+          if (betRef.current) {
+            const b = betRef.current
+            const price = candlesRef.current[candlesRef.current.length - 1]?.close || b.startPrice
+            const diff = Math.abs(price - b.startPrice) / b.startPrice
+            const won = diff < 0.00005 ? null : (b.direction === 'up' ? price > b.startPrice : price < b.startPrice)
+            betRef.current = null
+            setBet(null)
+            finishBet(won, b.amount)
+          }
+        }, 1500) // даём 1.5с на последнее сообщение WS
+        return 0
+      }
+      return c - 1
+    }), 1000)
     timerRef.current = t
   }
 
