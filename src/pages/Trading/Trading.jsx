@@ -189,12 +189,12 @@ export default function Trading({ user, onBack }) {
 
       ctx.strokeStyle = color + '99'
       ctx.lineWidth = 1
-      ctx.beginPath(); ctx.moveTo(x + CANDLE_W/2, highY); ctx.lineTo(x + CANDLE_W/2, lowY); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(x + CANDLE_W_REF.current/2, highY); ctx.lineTo(x + CANDLE_W_REF.current/2, lowY); ctx.stroke()
 
       ctx.fillStyle = color
       const top = Math.min(openY, closeY)
       const h = Math.max(Math.abs(closeY - openY), 1.5)
-      ctx.fillRect(x, top, CANDLE_W, h)
+      ctx.fillRect(x, top, Math.max(CANDLE_W_REF.current, 1.5), h)
 
       // Время
       if (distFromRight % Math.ceil(visCount / 5) === 0) {
@@ -202,7 +202,7 @@ export default function Trading({ user, onBack }) {
         ctx.fillStyle = 'rgba(232,242,255,0.2)'
         ctx.font = '7px sans-serif'
         ctx.textAlign = 'center'
-        ctx.fillText(`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`, x + CANDLE_W/2, H - 4)
+        ctx.fillText(`${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`, x + CANDLE_W_REF.current/2, H - 4)
       }
     })
 
@@ -351,7 +351,7 @@ export default function Trading({ user, onBack }) {
 
       <div className="tr-tf-row">
         {TF.map(t => (
-          <button key={t.value} className={`tr-iv-btn ${tf.value===t.value?'on':''}`}
+          <button key={t.value} className={`tr-tf-btn ${tf.value===t.value?'on':''}`}
             onClick={() => { setTf(t); offsetXRef.current = 0 }}>{t.label}</button>
         ))}
         {currentPrice && <span className="tr-live-price">${currentPrice.toFixed(3)}</span>}
