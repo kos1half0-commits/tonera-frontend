@@ -475,12 +475,18 @@ export default function Trading({ user, onBack }) {
           const val = parseFloat(amount) || 0
           const pct = parseFloat(config.trading_multiplier) || 90
           const multiplier = pct > 10 ? 1 + pct / 100 : pct
+          const commPct = parseFloat(config.trading_commission) || 5
+          const commission = val * commPct / 100
+          const betNet = val - commission
           const payout = val * multiplier
           const profit = payout - val
           return val > 0 ? (
             <div className="tr-payout-info">
               <div className="tr-payout-row">
                 <span>Ставка</span><span>{val.toFixed(4)} TON</span>
+              </div>
+              <div className="tr-payout-row">
+                <span>Комиссия ({commPct}%)</span><span style={{color:'rgba(239,83,80,0.7)'}}>-{commission.toFixed(4)} TON</span>
               </div>
               <div className="tr-payout-row">
                 <span>Профит при выигрыше</span><span className="green">+{profit.toFixed(4)} TON</span>
