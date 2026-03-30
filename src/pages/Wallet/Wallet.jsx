@@ -5,10 +5,43 @@ import api from '../../api/index'
 import { TonConnectButton, useTonConnectUI, useTonWallet, toUserFriendlyAddress } from '@tonconnect/ui-react'
 import './Wallet.css'
 
-const TX_ICONS = {
-  stake: '📈', reward: '🎁', deposit: '⬇️', withdraw: '⬆️',
-  task: '✅', ref_task: '👥', ref_deposit: '👥', bonus: '🎁',
-  reinvest: '🔄', collect: '💰', spin_result: '🎰'
+const TX_LABELS = {
+  stake:        { icon: '📈', label: 'Пополнение стейка' },
+  reward:       { icon: '🎁', label: 'Награда' },
+  deposit:      { icon: '⬇️', label: 'Пополнение' },
+  withdraw:     { icon: '⬆️', label: 'Вывод' },
+  task:         { icon: '✅', label: 'Задание' },
+  ref_task:     { icon: '👥', label: 'Реф. с задания' },
+  ref_deposit:  { icon: '👥', label: 'Реф. с пополнения' },
+  bonus:        { icon: '🎁', label: 'Бонус' },
+  reinvest:     { icon: '🔄', label: 'Реинвест' },
+  collect:      { icon: '💰', label: 'Сбор дохода' },
+  spin_result:  { icon: '🎰', label: 'Спин' },
+  trading:      { icon: '📊', label: 'Трейдинг' },
+  trading_profit: { icon: '💹', label: 'Прибыль трейдинга' },
+}
+
+function getTxInfo(tx) {
+  const lbl = tx.label || ''
+  const info = TX_LABELS[tx.type] || { icon: '💫', label: '' }
+  // Трейдинг
+  if (tx.type === 'trading') {
+    if (lbl.includes('refund') && lbl.includes('tech')) return { icon: '↩️', label: 'Возврат (техн. сбой)', color: 'gray' }
+    if (lbl.includes('refund')) return { icon: '↩️', label: 'Возврат ставки', color: 'gray' }
+    if (lbl.startsWith('📈')) return { icon: '📈', label: 'Трейдинг — выигрыш', color: 'win' }
+    if (lbl.startsWith('📉')) return { icon: '📉', label: 'Трейдинг — проигрыш', color: 'lose' }
+  }
+  // Спин
+  if (tx.type === 'spin_result') {
+    if (lbl.includes('Ничего') || parseFloat(tx.amount) < 0) return { icon: '🎰', label: 'Спин — не повезло', color: 'lose' }
+    if (lbl.includes('ДЖЕКПОТ')) return { icon: '🎰', label: 'Спин — ДЖЕКПОТ!', color: 'win' }
+    if (parseFloat(tx.amount) > 0) return { icon: '🎰', label: 'Спин — выигрыш', color: 'win' }
+  }
+  if (lbl.startsWith('tx:') || lbl.startsWith('Пополнение через')) return { icon: '⬇️', label: 'Пополнение через TON', color: '' }
+  if (lbl.includes('Реф. бонус')) return { icon: '👥', label: 'Реф. бонус', color: '' }
+  if (lbl.includes('Комиссия трейдинг')) return { icon: '💹', label: 'Комиссия трейдинга', color: '' }
+  if (lbl.includes('Прибыль трейдинг')) return { icon: '💹', label: 'Прибыль трейдинга', color: '' }
+  return { ...info, color: '' }
 }
 
 export default function Wallet({ user }) {
@@ -153,20 +186,25 @@ export default function Wallet({ user }) {
       <div className="tx-label">ИСТОРИЯ</div>
       <div className="tx-list">
         {txs.length === 0 && <div className="tx-empty">Нет транзакций</div>}
-        {txs.map(tx => (
-          <div className="tx-item" key={tx.id}>
-            <div className={`tx-icon ${parseFloat(tx.amount) > 0 ? 'ti-g' : 'ti-b'}`}>
-              {TX_ICONS[tx.type] || '💫'}
+        {txs.map(tx => {
+          const amt = parseFloat(tx.amount)
+          const info = getTxInfo(tx)
+          const isPos = amt > 0
+          const isNeg = amt < 0
+          const colorClass = info.color === 'win' ? 'win' : info.color === 'lose' ? 'lose' : info.color === 'gray' ? 'gray' : isPos ? 'win' : isNeg ? 'lose' : 'gray'
+          return (
+            <div className={`tx-item2 ${colorClass}`} key={tx.id}>
+              <div className={`tx-badge2 ${colorClass}`}>{info.icon}</div>
+              <div className="tx-info2">
+                <div className="tx-name2">{info.label}</div>
+                <div className="tx-date2">{new Date(tx.created_at || tx.date).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+              </div>
+              <div className={`tx-amt2 ${colorClass}`}>
+                {isPos ? '+' : ''}{amt.toFixed(4)} TON
+              </div>
             </div>
-            <div className="tx-info">
-              <div className="tx-name">{tx.label?.startsWith('tx:') ? 'Пополнение через TON' : tx.label}</div>
-              <div className="tx-date">{new Date(tx.created_at || tx.date).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-            </div>
-            <div className={`tx-amt ${parseFloat(tx.amount) > 0 ? 'pos' : 'neg'}`}>
-              {parseFloat(tx.amount) > 0 ? '+' : ''}{parseFloat(tx.amount).toFixed(4)} TON
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
     </div>
