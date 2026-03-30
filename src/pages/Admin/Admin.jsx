@@ -12,7 +12,8 @@ const SETTING_GROUPS = [
     id: 'trading',
     title: '📈 Трейдинг',
     settings: [
-      { key: 'trading_enabled', label: 'Включён (1/0)' },
+      { key: 'trading_enabled',    label: 'Включён (1/0)' },
+      { key: 'trading_multiplier', label: 'Процент выплаты от ставки (%, напр. 90)' },
     ]
   },
   {
