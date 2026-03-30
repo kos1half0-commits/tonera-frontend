@@ -421,8 +421,7 @@ export default function Trading({ user, onBack }) {
       {toast && <div className={`trading-toast ${toastErr?'err':''}`}>{toast}</div>}
       <div className="tr-header">
         <button className="tr-back" onClick={onBack}>←</button>
-        <div className="tr-title">💎 TON / USDT</div>
-        <div className="tr-balance">{balance.toFixed(4)} TON</div>
+        <div className="tr-title">₿ BTC / USDT</div>
       </div>
 
       <div className="tr-tf-row">

@@ -2,7 +2,7 @@
 .trading-toast{position:fixed;top:90px;left:50%;transform:translateX(-50%);background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);border-radius:12px;padding:10px 20px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e676;white-space:nowrap;z-index:100;}
 .trading-toast.err{background:rgba(255,77,106,0.12);border-color:rgba(255,77,106,0.3);color:#ff4d6a;}
 .tr-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.tr-back{background:transparent;border:none;color:#00d4ff;font-size:22px;cursor:pointer;padding:4px 8px;}
+.tr-back{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:10px;color:#00d4ff;font-size:16px;font-weight:700;cursor:pointer;padding:6px 12px;font-family:'Orbitron',sans-serif;}
 .tr-title{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:#e8f2ff;flex:1;}
 .tr-balance{font-family:'Orbitron',sans-serif;font-size:11px;color:#00d4ff;font-weight:700;}
 .tr-tf-row{display:flex;gap:4px;align-items:center;margin-bottom:8px;background:#0a1528;border:1px solid rgba(26,95,255,0.15);border-radius:10px;padding:4px 6px;}
