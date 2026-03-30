@@ -51,6 +51,8 @@ export default function Trading({ user, onBack }) {
   useEffect(() => {
     api.get('/api/trading/info').then(r => { setConfig(r.data); setConfigLoaded(true) }).catch(() => { setConfigLoaded(true) })
     loadHistory()
+    const t = setInterval(() => loadHistory(), 30000)
+    return () => clearInterval(t)
   }, [])
 
   useEffect(() => {
