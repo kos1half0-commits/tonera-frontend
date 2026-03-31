@@ -163,3 +163,7 @@
 .admin-tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;min-width:48px;}
 .at-icon{font-size:18px;line-height:1;}
 .at-hint{font-size:7px;font-weight:700;letter-spacing:.06em;opacity:.7;}
+.chart-controls{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+.chart-day-btn{padding:5px 10px;border-radius:8px;border:1px solid rgba(26,95,255,0.3);background:#0b1630;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:rgba(232,242,255,0.5);cursor:pointer;}
+.chart-day-btn.on{background:rgba(26,95,255,0.2);border-color:#00d4ff;color:#00d4ff;}
+.chart-metric-sel{flex:1;padding:6px 10px;background:#0b1630;border:1px solid rgba(26,95,255,0.3);border-radius:8px;color:#e8f2ff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;min-width:120px;}

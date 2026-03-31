@@ -62,6 +62,75 @@ const SETTING_GROUPS = [
   },
 ]
 
+function AdminChart({ data, metric }) {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !data.length) return
+    const ctx = canvas.getContext('2d')
+    const W = canvas.width, H = canvas.height
+    ctx.clearRect(0, 0, W, H)
+    ctx.fillStyle = '#060f2a'
+    ctx.fillRect(0, 0, W, H)
+
+    const values = data.map(d => parseFloat(d[metric]) || 0)
+    const maxV = Math.max(...values, 1)
+    const pad = { l: 36, r: 12, t: 16, b: 28 }
+    const chartW = W - pad.l - pad.r
+    const chartH = H - pad.t - pad.b
+
+    // Grid
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.t + chartH * i / 4
+      ctx.strokeStyle = 'rgba(26,95,255,0.1)'
+      ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke()
+      ctx.fillStyle = 'rgba(232,242,255,0.3)'
+      ctx.font = '8px Orbitron,sans-serif'
+      ctx.textAlign = 'right'
+      const lbl = maxV * (1 - i/4)
+      ctx.fillText(lbl >= 1 ? Math.round(lbl) : lbl.toFixed(2), pad.l - 4, y + 3)
+    }
+
+    // Bars
+    const bw = chartW / data.length * 0.6
+    const gap = chartW / data.length
+
+    data.forEach((d, i) => {
+      const v = parseFloat(d[metric]) || 0
+      const x = pad.l + i * gap + gap * 0.2
+      const bh = (v / maxV) * chartH
+      const y = pad.t + chartH - bh
+
+      const grad = ctx.createLinearGradient(0, y, 0, pad.t + chartH)
+      grad.addColorStop(0, '#1a5fff')
+      grad.addColorStop(1, 'rgba(26,95,255,0.2)')
+      ctx.fillStyle = grad
+      ctx.beginPath()
+      ctx.roundRect(x, y, bw, bh, 3)
+      ctx.fill()
+
+      // Date label
+      const date = new Date(d.date)
+      ctx.fillStyle = 'rgba(232,242,255,0.4)'
+      ctx.font = '7px DM Sans,sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText(`${date.getDate()}.${date.getMonth()+1}`, x + bw/2, H - 6)
+
+      // Value on top
+      if (v > 0) {
+        ctx.fillStyle = '#00d4ff'
+        ctx.font = '8px Orbitron,sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText(v >= 1 ? Math.round(v) : v.toFixed(2), x + bw/2, y - 4)
+      }
+    })
+  }, [data, metric])
+
+  return <canvas ref={canvasRef} width={340} height={180} style={{width:'100%',height:'auto',borderRadius:12,display:'block'}} />
+}
+
 export default function Admin() {
   const [tab, setTab] = useState('stats')
   const [settingsTab, setSettingsTab] = useState('staking')
@@ -82,6 +151,10 @@ export default function Admin() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [userStats, setUserStats] = useState(null)
   const [usersTab, setUsersTab] = useState('all') // all | donors
+  const [chartData, setChartData] = useState([])
+  const [chartDays, setChartDays] = useState(7)
+  const [chartMetric, setChartMetric] = useState('new_users')
+  const chartRef = useRef(null)
   const [withdrawals, setWithdrawals] = useState([])
   const [maintenance, setMaintenance] = useState(false)
   const [spinSectors, setSpinSectors] = useState([])
@@ -117,6 +190,8 @@ export default function Admin() {
         setSpinSectors(spinInfo.data.sectors || [])
       } catch {}
       setMaintenance(maint.data?.maintenance === '1')
+      const chart = await api.get('/api/admin/chart?days=7')
+      setChartData(chart.data || [])
     } catch {}
   }
 
@@ -329,6 +404,29 @@ export default function Admin() {
             <div className="astat-card"><div className="astat-val">{stats.active_tasks||0}</div><div className="astat-lbl">Активных заданий</div></div>
             <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.task_fee_earned||0).toFixed(4)}</div><div className="astat-lbl">Комиссия заданий</div></div>
           </div>
+
+          {/* CHART */}
+          <div className="stats-section-title">📊 ГРАФИК</div>
+          <div className="chart-controls">
+            {[7,14,30].map(d => (
+              <button key={d} className={`chart-day-btn ${chartDays===d?'on':''}`} onClick={async()=>{
+                setChartDays(d)
+                const r = await api.get(`/api/admin/chart?days=${d}`)
+                setChartData(r.data || [])
+              }}>{d}д</button>
+            ))}
+            <select className="chart-metric-sel" value={chartMetric} onChange={e=>setChartMetric(e.target.value)}>
+              <option value="new_users">Новые юзеры</option>
+              <option value="active_users">Активные юзеры</option>
+              <option value="deposits">Депозиты (TON)</option>
+              <option value="withdrawals">Выводы (TON)</option>
+              <option value="profit">Доход проекта</option>
+              <option value="trading_bets">Ставки трейдинга</option>
+              <option value="spins">Спины</option>
+              <option value="ads_viewed">Просмотры рекламы</option>
+            </select>
+          </div>
+          <AdminChart data={chartData} metric={chartMetric} />
 
           <div className="stats-section-title">📈 ТРЕЙДИНГ</div>
           <div className="stats-cards">
