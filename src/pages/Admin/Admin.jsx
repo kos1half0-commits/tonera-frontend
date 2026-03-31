@@ -681,7 +681,7 @@ export default function Admin() {
           <div className="users-count">{users.length} пользователей</div>
           {users
             .filter(u => {
-              if (usersTab === 'donors') return parseFloat(u.balance_ton) > 0
+              if (usersTab === 'donors') return parseFloat(u.total_deposited || 0) > 0
               const q = search.toLowerCase()
               return !q || (u.username||'').toLowerCase().includes(q) || (u.first_name||'').toLowerCase().includes(q) || String(u.telegram_id).includes(q)
             })
@@ -699,6 +699,9 @@ export default function Admin() {
                   {u.is_blocked && <span className="blocked-badge">БЛОК</span>}
                 </div>
                 <div className="aui-meta">ID: {u.telegram_id} · Рефов: {u.referral_count}</div>
+                {usersTab === 'donors' && parseFloat(u.total_deposited||0) > 0 && (
+                  <div className="aui-meta" style={{color:'#00d4ff',marginTop:2}}>💎 Депозит: {parseFloat(u.total_deposited).toFixed(4)} TON</div>
+                )}
               </div>
               <div className="aui-balance">{parseFloat(u.balance_ton).toFixed(4)}</div>
               <div className="aui-actions" onClick={e => e.stopPropagation()}>
