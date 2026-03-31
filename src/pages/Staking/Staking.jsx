@@ -84,6 +84,11 @@ export default function Staking({ user }) {
         setStakeId(s.id)
         setAcc(parseFloat(s.earned) || 0)
         setT0(new Date(s.started_at).getTime())
+      } else {
+        setDep(0)
+        setStakeId(null)
+        setAcc(0)
+        setT0(Date.now())
       }
     } catch {}
   }
@@ -170,8 +175,14 @@ export default function Staking({ user }) {
         const res = await withdrawStake(stakeId, val)
         await reloadUser()
         await reloadStake()
-      } catch {}
-      showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
+        showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
+      } catch (e) {
+        // Откатываем UI если ошибка
+        await reloadStake()
+        await reloadUser()
+        showToast(e?.response?.data?.error || 'ОШИБКА ВЫВОДА')
+        return
+      }
     }
     setModal(null); setAmount('')
     setConfirming(false)
