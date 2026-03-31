@@ -11,7 +11,6 @@ import Admin from './pages/Admin/Admin'
 import Spin from './pages/Spin/Spin'
 import Games from './pages/Games/Games'
 import Support from './pages/Support/Support'
-import Support from './pages/Support/Support'
 import Trading from './pages/Trading/Trading'
 import WelcomeBonus from './components/WelcomeBonus'
 import './App.css'
@@ -32,7 +31,6 @@ export default function App() {
   const [tab, setTab] = useState('home')
   const [tasksView, setTasksView] = useState('list')
   const [blockMsg, setBlockMsg] = useState(null)
-  const [showSupport, setShowSupport] = useState(false)
   const [showSupport, setShowSupport] = useState(false)
   const [gameScreen, setGameScreen] = useState(null) // null | 'spin'
   const { user, setUser } = useUserStore()
