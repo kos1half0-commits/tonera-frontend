@@ -767,6 +767,8 @@ export default function Admin() {
             <div className="users-tabs">
               <button className={`utab ${usersTab==='all'?'on':''}`} onClick={() => setUsersTab('all')}>ВСЕ</button>
               <button className={`utab ${usersTab==='donors'?'on':''}`} onClick={() => setUsersTab('donors')}>💎 ДОНАТОРЫ</button>
+              <button className={`utab ${usersTab==='traders'?'on':''}`} onClick={() => setUsersTab('traders')}>📊 ТРЕЙДЕРЫ</button>
+              <button className={`utab ${usersTab==='spinners'?'on':''}`} onClick={() => setUsersTab('spinners')}>🎰 СПИНЕРЫ</button>
             </div>
             <div className="sort-btns">
               {[{k:'created_at',l:'ДАТА'},{k:'balance_ton',l:'БАЛАНС'},{k:'referral_count',l:'РЕФЫ'}].map(s => (
@@ -780,6 +782,8 @@ export default function Admin() {
           {users
             .filter(u => {
               if (usersTab === 'donors') return parseFloat(u.total_deposited || 0) > 0
+              if (usersTab === 'traders') return parseInt(u.trading_count || 0) > 0
+              if (usersTab === 'spinners') return parseInt(u.spin_count || 0) > 0
               const q = search.toLowerCase()
               return !q || (u.username||'').toLowerCase().includes(q) || (u.first_name||'').toLowerCase().includes(q) || String(u.telegram_id).includes(q)
             })
@@ -799,6 +803,12 @@ export default function Admin() {
                 <div className="aui-meta">ID: {u.telegram_id} · Рефов: {u.referral_count}</div>
                 {usersTab === 'donors' && parseFloat(u.total_deposited||0) > 0 && (
                   <div className="aui-meta" style={{color:'#00d4ff',marginTop:2}}>💎 Депозит: {parseFloat(u.total_deposited).toFixed(4)} TON</div>
+                )}
+                {usersTab === 'traders' && parseInt(u.trading_count||0) > 0 && (
+                  <div className="aui-meta" style={{color:'#26a69a',marginTop:2}}>📊 Ставок: {u.trading_count} · Объём: {parseFloat(u.trading_volume||0).toFixed(4)} TON</div>
+                )}
+                {usersTab === 'spinners' && parseInt(u.spin_count||0) > 0 && (
+                  <div className="aui-meta" style={{color:'#ffb300',marginTop:2}}>🎰 Спинов: {u.spin_count} · Потрачено: {parseFloat(u.spin_volume||0).toFixed(4)} TON</div>
                 )}
               </div>
               <div className="aui-balance">{parseFloat(u.balance_ton).toFixed(4)}</div>
