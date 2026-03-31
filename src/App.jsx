@@ -14,7 +14,7 @@ import Trading from './pages/Trading/Trading'
 import WelcomeBonus from './components/WelcomeBonus'
 import './App.css'
 
-const ADMIN_ID = 5651190404
+const ADMIN_ID = parseInt(import.meta.env.VITE_ADMIN_ID || "0")
 
 const TABS = [
   { id: 'home',      label: 'ГЛАВНАЯ',   icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
@@ -47,7 +47,7 @@ export default function App() {
 
   const goCreate = () => { setTasksView('create'); setTab('tasks') }
   const goMyTasks = () => { setTasksView('my'); setTab('tasks') }
-  const isAdmin = Number(user?.telegram_id) === ADMIN_ID
+  const isAdmin = user?.is_admin === true
   const [spinEnabled, setSpinEnabled] = useState(true)
   const [tradingStatus, setTradingStatus] = useState('1') // 0=откл,1=вкл,2=тех
   useEffect(() => { api.get('/api/spin/info').then(r => setSpinEnabled(r.data?.spin_enabled !== '0')).catch(()=>{}) }, [])
