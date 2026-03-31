@@ -155,7 +155,6 @@ export default function Admin() {
   const [activeTicket, setActiveTicket] = useState(null)
   const [replyMsg, setReplyMsg] = useState('') // all | donors
   const [chartData, setChartData] = useState([])
-  const [tickets, setTickets] = useState([])
   const [replyText, setReplyText] = useState('')
   const [replyId, setReplyId] = useState(null)
   const [chartDays, setChartDays] = useState(7)
@@ -198,8 +197,6 @@ export default function Admin() {
       setMaintenance(maint.data?.maintenance === '1')
       const chart = await api.get('/api/admin/chart?days=7')
       setChartData(chart.data || [])
-      const sup = await api.get('/api/support/admin/all')
-      setTickets(sup.data || [])
       const sup = await api.get('/api/support/all')
       setTickets(sup.data || [])
     } catch {}
