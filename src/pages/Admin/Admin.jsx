@@ -150,8 +150,14 @@ export default function Admin() {
   const [sortDir, setSortDir] = useState('desc')
   const [selectedUser, setSelectedUser] = useState(null)
   const [userStats, setUserStats] = useState(null)
-  const [usersTab, setUsersTab] = useState('all') // all | donors
+  const [usersTab, setUsersTab] = useState('all')
+  const [tickets, setTickets] = useState([])
+  const [activeTicket, setActiveTicket] = useState(null)
+  const [replyMsg, setReplyMsg] = useState('') // all | donors
   const [chartData, setChartData] = useState([])
+  const [tickets, setTickets] = useState([])
+  const [replyText, setReplyText] = useState('')
+  const [replyId, setReplyId] = useState(null)
   const [chartDays, setChartDays] = useState(7)
   const [chartMetric, setChartMetric] = useState('new_users')
   const chartRef = useRef(null)
@@ -192,6 +198,10 @@ export default function Admin() {
       setMaintenance(maint.data?.maintenance === '1')
       const chart = await api.get('/api/admin/chart?days=7')
       setChartData(chart.data || [])
+      const sup = await api.get('/api/support/admin/all')
+      setTickets(sup.data || [])
+      const sup = await api.get('/api/support/all')
+      setTickets(sup.data || [])
     } catch {}
   }
 
@@ -371,6 +381,7 @@ export default function Admin() {
           {id:'settings',icon:'⚙️',label:'НАСТР'},
           {id:'tasks',icon:'✅',label:'ЗАДАНИЯ'},
           {id:'users',icon:'👥',label:'ЮЗЕРЫ'},
+          {id:'support',icon:'💬',label:'ТИКЕТЫ'},
           {id:'withdrawals',icon:'💸',label:`ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (
@@ -692,6 +703,62 @@ export default function Admin() {
               }}>СОХРАНИТЬ</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SUPPORT */}
+      {tab === 'support' && !activeTicket && (
+        <div className="admin-section">
+          <div className="stats-section-title">💬 ОБРАЩЕНИЯ</div>
+          {tickets.length === 0 && <div style={{textAlign:'center',color:'rgba(232,242,255,0.3)',padding:20,fontFamily:'DM Sans'}}>Нет обращений</div>}
+          {tickets.map(t => (
+            <div key={t.id} className="sup-ticket" style={{cursor:'pointer'}} onClick={() => setActiveTicket(t)}>
+              <div className="sup-t-header">
+                <span className="sup-t-id">#{t.id} · {t.username ? '@'+t.username : t.first_name}</span>
+                <span className="sup-t-status" style={{color: t.status==='answered'?'#26a69a':t.status==='closed'?'#888':'#ffb300'}}>
+                  {t.status==='answered'?'Отвечено':t.status==='closed'?'Закрыто':'Открыт'}
+                </span>
+              </div>
+              <div className="sup-t-msg">{t.message}</div>
+              <div className="sup-t-date">{new Date(t.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'support' && activeTicket && (
+        <div className="admin-section">
+          <button className="sup-back" onClick={() => setActiveTicket(null)} style={{marginBottom:12}}>← Назад</button>
+          <div className="stats-section-title">Тикет #{activeTicket.id} · {activeTicket.username ? '@'+activeTicket.username : activeTicket.first_name}</div>
+          <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
+            <div className="sup-msg user"><div className="sup-msg-text">{activeTicket.message}</div></div>
+            {(activeTicket.replies||[]).map((r,i) => (
+              <div key={i} className={`sup-msg ${r.from_admin?'admin':'user'}`}>
+                {r.from_admin && <div className="sup-admin-label">Поддержка</div>}
+                <div className="sup-msg-text">{r.message}</div>
+              </div>
+            ))}
+          </div>
+          {activeTicket.status !== 'closed' && (
+            <>
+              <textarea className="sup-textarea" placeholder="Ответ..." value={replyMsg} onChange={e=>setReplyMsg(e.target.value)} rows={3}/>
+              <div className="mbtns" style={{marginTop:10}}>
+                <button className="mbtn mb-c" onClick={async()=>{
+                  await api.post('/api/support/admin/close',{ticket_id:activeTicket.id})
+                  setActiveTicket(null)
+                  const r = await api.get('/api/support/admin/all')
+                  setTickets(r.data||[])
+                }}>Закрыть</button>
+                <button className="mbtn mb-ok" disabled={!replyMsg.trim()} onClick={async()=>{
+                  await api.post('/api/support/admin/reply',{ticket_id:activeTicket.id,message:replyMsg})
+                  setReplyMsg('')
+                  const r = await api.get('/api/support/admin/all')
+                  setTickets(r.data||[])
+                  setActiveTicket(r.data?.find(t=>t.id===activeTicket.id)||null)
+                }}>Отправить</button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -3,7 +3,7 @@ import { getUserStakes, getTasks } from '../../api/index'
 import api from '../../api/index'
 import './Home.css'
 
-export default function Home({ user, onTab, onCreate, onMyTasks }) {
+export default function Home({ user, onTab, onCreate, onMyTasks, onSupport }) {
   const balance = parseFloat(user?.balance_ton ?? 0)
   const username = user?.username || user?.first_name || 'Пользователь'
   const [stakeTotal, setStakeTotal] = useState(null)
@@ -116,6 +116,10 @@ export default function Home({ user, onTab, onCreate, onMyTasks }) {
         <div className="qa" onClick={onMyTasks}>
           <div className="qa-icon si-green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
           <div className="qa-lbl">МОИ ЗАКАЗЫ</div>
+        </div>
+        <div className="qa" onClick={onSupport}>
+          <div className="qa-icon si-purple"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
+          <div className="qa-lbl">ПОДДЕРЖКА</div>
         </div>
       </div>
     </div>

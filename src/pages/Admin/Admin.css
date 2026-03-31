@@ -167,3 +167,11 @@
 .chart-day-btn{padding:5px 10px;border-radius:8px;border:1px solid rgba(26,95,255,0.3);background:#0b1630;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:rgba(232,242,255,0.5);cursor:pointer;}
 .chart-day-btn.on{background:rgba(26,95,255,0.2);border-color:#00d4ff;color:#00d4ff;}
 .chart-metric-sel{flex:1;padding:6px 10px;background:#0b1630;border:1px solid rgba(26,95,255,0.3);border-radius:8px;color:#e8f2ff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;min-width:120px;}
+.sup-admin-ticket{background:#0e1c3a;border:1px solid rgba(26,95,255,0.15);border-radius:12px;padding:12px;margin-bottom:8px;}
+.sup-admin-ticket.closed{border-color:rgba(0,230,118,0.15);opacity:.7;}
+.sup-admin-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.sup-admin-user{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;color:#e8f2ff;flex:1;}
+.sup-reply-form{margin-top:10px;}
+.sup-reply-input{width:100%;background:#0b1630;border:1px solid rgba(26,95,255,0.3);border-radius:8px;padding:8px 12px;color:#e8f2ff;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;resize:none;}
+.sup-reply-btn{padding:7px 14px;border:none;border-radius:8px;background:rgba(26,95,255,0.3);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;cursor:pointer;}
+.sup-reply-btn.cancel{background:rgba(255,77,106,0.15);color:#ff4d6a;}
