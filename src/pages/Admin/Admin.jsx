@@ -12,11 +12,19 @@ const SETTING_GROUPS = [
     id: 'trading',
     title: '📈 Трейдинг',
     settings: [
-      { key: 'trading_enabled', label: 'Статус (0=откл, 1=вкл, 2=тех.работы)' },
+      { key: 'trading_enabled', label: 'Статус (0=откл, 1=вкл, 2=тех.работы, 3=только админ)' },
       { key: 'trading_multiplier', label: 'Процент выплаты (%, напр. 90)' },
       { key: 'trading_bank',        label: 'Банк трейдинга (TON)' },
       { key: 'trading_commission',  label: 'Комиссия с каждой ставки (%)' },
       { key: 'trading_profit_fee',  label: '% с комиссии — чистая прибыль' },
+    ]
+  },
+  {
+    id: 'slots',
+    title: '🎰 Слоты',
+    settings: [
+      { key: 'slots_enabled', label: 'Статус (0=откл, 1=вкл, 2=тех.работы, 3=только админ)' },
+      { key: 'slots_min_bet', label: 'Мин. ставка (TON)' },
     ]
   },
   {

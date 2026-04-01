@@ -11,6 +11,7 @@ import Admin from './pages/Admin/Admin'
 import Spin from './pages/Spin/Spin'
 import Games from './pages/Games/Games'
 import Support from './pages/Support/Support'
+import Slots from './pages/Slots/Slots'
 import Trading from './pages/Trading/Trading'
 import WelcomeBonus from './components/WelcomeBonus'
 import './App.css'
@@ -98,9 +99,10 @@ export default function App() {
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && <Referrals user={user} />}
         {tab === 'wallet'    && <Wallet    user={user} />}
-        {tab === 'games'     && <Games     user={user} onGame={setTab} tradingStatus={tradingStatus} />}
+        {tab === 'games'     && <Games     onGame={setTab} isAdmin={isAdmin} />}
         {tab === 'spin'      && <Spin      user={user} onBack={() => setTab('games')} />}
         {tab === 'trading'   && <Trading   user={user} onBack={() => setTab('games')} />}
+        {tab === 'slots'     && <Slots     onBack={() => setTab('games')} />}
         {tab === 'admin'     && <Admin     />}
       </div>
 

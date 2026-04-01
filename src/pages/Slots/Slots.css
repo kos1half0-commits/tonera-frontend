@@ -1,0 +1,31 @@
+.slots-wrap{padding:12px 12px 100px;max-width:420px;margin:0 auto;overflow-y:auto;height:100%;}
+.slots-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);border-radius:12px;padding:10px 20px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e676;z-index:100;white-space:nowrap;}
+.slots-toast.err{background:rgba(255,77,106,0.12);border-color:rgba(255,77,106,0.3);color:#ff4d6a;}
+.slots-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.slots-back{background:transparent;border:1px solid rgba(26,95,255,0.3);border-radius:10px;padding:8px 14px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00d4ff;cursor:pointer;}
+.slots-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:#e8f2ff;flex:1;text-align:center;}
+.slots-balance{font-family:'Orbitron',sans-serif;font-size:10px;color:#00d4ff;font-weight:700;}
+.slots-machine{background:linear-gradient(145deg,#0a1830,#060f2a);border:2px solid rgba(0,212,255,0.3);border-radius:20px;padding:20px;margin-bottom:14px;position:relative;box-shadow:0 0 30px rgba(0,212,255,0.1);}
+.slots-reels{display:flex;gap:10px;justify-content:center;position:relative;z-index:2;}
+.slots-reel{display:flex;flex-direction:column;align-items:center;gap:4px;width:90px;background:#050a1a;border:1px solid rgba(26,95,255,0.3);border-radius:12px;padding:10px 6px;overflow:hidden;}
+.reel-sym{font-size:36px;line-height:1;transition:all .05s;}
+.reel-sym.main{font-size:48px;transform:scale(1);filter:drop-shadow(0 0 8px rgba(0,212,255,0.5));}
+.reel-sym.dim{opacity:.3;font-size:28px;}
+.slots-reel.spinning .reel-sym{filter:blur(2px);}
+.slots-line{position:absolute;left:10px;right:10px;height:2px;background:linear-gradient(90deg,transparent,#00d4ff,transparent);top:50%;transform:translateY(-50%);z-index:1;}
+.slots-result{text-align:center;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;padding:12px;border-radius:12px;margin-bottom:14px;letter-spacing:.04em;}
+.slots-result.win{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:#00e676;}
+.slots-result.lose{background:rgba(255,77,106,0.08);border:1px solid rgba(255,77,106,0.2);color:#ff4d6a;}
+.slots-paytable{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:14px;padding:12px;margin-bottom:14px;}
+.spt-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.1em;margin-bottom:8px;}
+.spt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.spt-row{display:flex;align-items:center;justify-content:space-between;padding:4px 8px;border-radius:8px;background:rgba(26,95,255,0.05);}
+.spt-row span:first-child{font-size:14px;}
+.spt-mult{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:#00d4ff;}
+.slots-bet-row{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:14px;padding:12px;margin-bottom:12px;}
+.slots-bet-label{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.1em;margin-bottom:8px;}
+.slots-bet-btns{display:flex;gap:6px;}
+.slots-bet-btn{flex:1;padding:9px 4px;border-radius:8px;border:1px solid rgba(26,95,255,0.3);background:#0b1630;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:rgba(232,242,255,0.5);cursor:pointer;}
+.slots-bet-btn.on{background:rgba(26,95,255,0.2);border-color:#00d4ff;color:#00d4ff;}
+.slots-spin-btn{width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,#1a5fff,#0930cc);color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.05em;box-shadow:0 4px 20px rgba(26,95,255,0.4);}
+.slots-spin-btn:disabled{opacity:.4;cursor:not-allowed;}
