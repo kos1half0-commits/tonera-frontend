@@ -162,6 +162,9 @@ export default function Admin() {
   const [userStats, setUserStats] = useState(null)
   const [usersTab, setUsersTab] = useState('all')
   const [tickets, setTickets] = useState([])
+  const [news, setNews] = useState([])
+  const [newsTitle, setNewsTitle] = useState('')
+  const [newsBody, setNewsBody] = useState('')
   const [activeTicket, setActiveTicket] = useState(null)
   const [replyMsg, setReplyMsg] = useState('') // all | donors
   const [chartData, setChartData] = useState([])
@@ -209,6 +212,8 @@ export default function Admin() {
       setChartData(chart.data || [])
       const sup = await api.get('/api/support/all')
       setTickets(sup.data || [])
+      const nws = await api.get('/api/news')
+      setNews(nws.data || [])
     } catch {}
   }
 
@@ -389,6 +394,7 @@ export default function Admin() {
           {id:'tasks',icon:'✅',label:'ЗАДАНИЯ'},
           {id:'users',icon:'👥',label:'ЮЗЕРЫ'},
           {id:'support',icon:'💬',label:'ТИКЕТЫ'},
+          {id:'news',icon:'📢',label:'НОВОСТИ'},
           {id:'withdrawals',icon:'💸',label:`ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (

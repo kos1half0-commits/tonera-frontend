@@ -4,6 +4,8 @@ import api from '../../api/index'
 import './Home.css'
 
 export default function Home({ user, onTab, onCreate, onMyTasks, onSupport }) {
+  const [news, setNews] = useState([])
+  useEffect(() => { import('../../api/index').then(m => m.default.get('/api/news').then(r => setNews(r.data || [])).catch(() => {})) }, [])
   const balance = parseFloat(user?.balance_ton ?? 0)
   const username = user?.username || user?.first_name || 'Пользователь'
   const [stakeTotal, setStakeTotal] = useState(null)
@@ -98,6 +100,19 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport }) {
           <div className="stat-arr">›</div>
         </div>
       </div>
+
+      {news.length > 0 && (
+        <div className="news-block">
+          <div className="news-block-title">📢 НОВОСТИ</div>
+          {news.slice(0,3).map(n => (
+            <div key={n.id} className="news-item">
+              <div className="news-item-title">{n.title}</div>
+              <div className="news-item-body">{n.body}</div>
+              <div className="news-item-date">{new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'})}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="section-title">Быстрые действия</div>
       <div className="qa-grid">
