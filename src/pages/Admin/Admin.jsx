@@ -25,6 +25,7 @@ const SETTING_GROUPS = [
     settings: [
       { key: 'slots_enabled', label: 'Статус (0=откл, 1=вкл, 2=тех.работы, 3=только админ)' },
       { key: 'slots_min_bet', label: 'Мин. ставка (TON)' },
+      { key: 'slots_bank',    label: 'Банк слотов (TON)' },
     ]
   },
   {
@@ -452,6 +453,13 @@ export default function Admin() {
             <div className="astat-card"><div className="astat-val">{stats.trading_refunds||0}</div><div className="astat-lbl">Возвратов</div></div>
             <div className="astat-card" style={{borderColor:'rgba(0,212,255,0.3)',background:'rgba(0,212,255,0.05)'}}><div className="astat-val" style={{color:'#00d4ff'}}>{parseFloat(stats.trading_bank||0).toFixed(4)}</div><div className="astat-lbl">Банк трейдинга</div></div>
             <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.trading_profit||0).toFixed(4)}</div><div className="astat-lbl">Чистая прибыль</div></div>
+          </div>
+
+          <div className="stats-section-title">🎰 СЛОТЫ</div>
+          <div className="stats-cards">
+            <div className="astat-card"><div className="astat-val">{stats.slots_total||0}</div><div className="astat-lbl">Всего спинов</div></div>
+            <div className="astat-card green"><div className="astat-val">{stats.slots_wins||0}</div><div className="astat-lbl">Выигрышей</div></div>
+            <div className="astat-card" style={{borderColor:'rgba(0,212,255,0.3)',background:'rgba(0,212,255,0.05)'}}><div className="astat-val" style={{color:'#00d4ff'}}>{parseFloat(stats.slots_bank||0).toFixed(4)}</div><div className="astat-lbl">Банк слотов</div></div>
           </div>
 
           <div className="stats-section-title">🎰 СПИН</div>
