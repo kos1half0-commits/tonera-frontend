@@ -39,7 +39,6 @@ export default function Slots({ onBack }) {
   const [toastErr, setToastErr] = useState(false)
   const [config, setConfig] = useState({ slots_enabled: '1', slots_min_bet: '0.01' })
   const [history, setHistory] = useState([])
-  const [history, setHistory] = useState([])
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   useEffect(() => {
