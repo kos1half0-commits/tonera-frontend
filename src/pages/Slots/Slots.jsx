@@ -154,17 +154,6 @@ export default function Slots({ onBack }) {
         </div>
       )}
 
-      <div className="slots-paytable">
-        <div className="spt-title">ТАБЛИЦА ВЫПЛАТ</div>
-        <div className="spt-grid">
-          {SYMBOLS.map(s => (
-            <div key={s.name} className="spt-row">
-              <span>{s.icon}{s.icon}{s.icon}</span>
-              <span className="spt-mult">x{s.mult}</span>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <div className="slots-bet-row">
         <div className="slots-bet-label">СТАВКА (TON)</div>
@@ -179,6 +168,18 @@ export default function Slots({ onBack }) {
       <button className="slots-spin-btn" onClick={spin} disabled={spinning}>
         {spinning ? '🎰 КРУТИТСЯ...' : `🎰 КРУТИТЬ за ${amount} TON`}
       </button>
+      <div className="slots-paytable">
+        <div className="spt-title">ТАБЛИЦА ВЫПЛАТ</div>
+        <div className="spt-note">Два одинаковых любых символа → x2</div>
+        <div className="spt-grid">
+          {SYMBOLS.map(s => (
+            <div key={s.name} className="spt-row">
+              <span>{s.icon}{s.icon}{s.icon}</span>
+              <span className="spt-mult">x{s.mult}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {history.length > 0 && (
         <div className="slots-history">
