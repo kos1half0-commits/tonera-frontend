@@ -727,6 +727,37 @@ export default function Admin() {
       )}
 
       {/* SUPPORT */}
+      {tab === 'news' && (
+        <div className="admin-section">
+          <div className="stats-section-title">📢 НОВОСТИ ПРОЕКТА</div>
+          <div className="news-admin-form">
+            <input className="news-admin-input" placeholder="Заголовок" value={newsTitle} onChange={e=>setNewsTitle(e.target.value)}/>
+            <textarea className="news-admin-textarea" placeholder="Текст новости..." value={newsBody} onChange={e=>setNewsBody(e.target.value)} rows={3}/>
+            <button className="news-admin-btn" onClick={async()=>{
+              if(!newsTitle.trim()||!newsBody.trim()) return
+              await api.post('/api/news',{title:newsTitle,body:newsBody})
+              setNewsTitle(''); setNewsBody('')
+              const r = await api.get('/api/news'); setNews(r.data||[])
+              showToast('НОВОСТЬ ОПУБЛИКОВАНА')
+            }}>📢 ОПУБЛИКОВАТЬ</button>
+          </div>
+          {news.length === 0 && <div style={{textAlign:'center',color:'rgba(232,242,255,0.3)',padding:20,fontFamily:'DM Sans'}}>Нет новостей</div>}
+          {news.map(n => (
+            <div key={n.id} className="news-admin-item">
+              <div className="news-admin-header">
+                <div className="news-admin-title">{n.title}</div>
+                <button className="news-del-btn" onClick={async()=>{
+                  await api.delete(`/api/news/${n.id}`)
+                  const r = await api.get('/api/news'); setNews(r.data||[])
+                }}>✕</button>
+              </div>
+              <div className="news-admin-body">{n.body}</div>
+              <div className="news-item-date">{new Date(n.created_at).toLocaleDateString('ru',{day:'numeric',month:'long'})}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {tab === 'support' && !activeTicket && (
         <div className="admin-section">
           <div className="stats-section-title">💬 ОБРАЩЕНИЯ</div>

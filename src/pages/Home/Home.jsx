@@ -5,7 +5,7 @@ import './Home.css'
 
 export default function Home({ user, onTab, onCreate, onMyTasks, onSupport }) {
   const [news, setNews] = useState([])
-  useEffect(() => { import('../../api/index').then(m => m.default.get('/api/news').then(r => setNews(r.data || [])).catch(() => {})) }, [])
+  useEffect(() => { api.get('/api/news').then(r => setNews(r.data || [])).catch(() => {}) }, [])
   const balance = parseFloat(user?.balance_ton ?? 0)
   const username = user?.username || user?.first_name || 'Пользователь'
   const [stakeTotal, setStakeTotal] = useState(null)
