@@ -38,10 +38,14 @@ export default function Slots({ onBack }) {
   const [toast, setToast] = useState('')
   const [toastErr, setToastErr] = useState(false)
   const [config, setConfig] = useState({ slots_enabled: '1', slots_min_bet: '0.01' })
+  const [history, setHistory] = useState([])
+  const [history, setHistory] = useState([])
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   useEffect(() => {
     api.get('/api/slots/info').then(r => setConfig(r.data)).catch(() => {})
+    api.get('/api/slots/history').then(r => setHistory(r.data || [])).catch(() => {})
+    api.get('/api/slots/history').then(r => setHistory(r.data || [])).catch(() => {})
   }, [])
 
   const showToast = (msg, err=false) => {
@@ -108,6 +112,7 @@ export default function Slots({ onBack }) {
                   showToast('😢 Не повезло', true)
                 }
                 setSpinning(false)
+                api.get('/api/slots/history').then(r => setHistory(r.data || [])).catch(() => {})
               }, 300)
             }
           }
@@ -175,6 +180,27 @@ export default function Slots({ onBack }) {
       <button className="slots-spin-btn" onClick={spin} disabled={spinning}>
         {spinning ? '🎰 КРУТИТСЯ...' : `🎰 КРУТИТЬ за ${amount} TON`}
       </button>
+
+      {history.length > 0 && (
+        <div className="slots-history">
+          <div className="slots-hist-title">МОИ РЕЗУЛЬТАТЫ</div>
+          {history.map((h, i) => {
+            const amt = parseFloat(h.amount)
+            const isWin = amt > 0
+            const mult = h.label?.match(/x(\d+)/)?.[1]
+            return (
+              <div key={i} className={`slots-hist-item ${isWin ? 'win' : 'lose'}`}>
+                <div className="slots-hist-icon">{isWin ? '🎰' : '💨'}</div>
+                <div className="slots-hist-info">
+                  <div className="slots-hist-label">{isWin ? `Выигрыш x${mult}` : 'Не повезло'}</div>
+                  <div className="slots-hist-date">{new Date(h.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                </div>
+                <div className={`slots-hist-amt ${isWin?'win':'lose'}`}>{isWin?'+':''}{amt.toFixed(4)} TON</div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
