@@ -25,7 +25,8 @@ const SETTING_GROUPS = [
     settings: [
       { key: 'slots_enabled', label: 'Статус (0=откл, 1=вкл, 2=тех.работы, 3=только админ)' },
       { key: 'slots_min_bet', label: 'Мин. ставка (TON)' },
-      { key: 'slots_bank',    label: 'Банк слотов (TON)' },
+      { key: 'slots_bank',       label: 'Банк слотов (TON)' },
+      { key: 'slots_win_chance', label: 'Шанс выигрыша (%)' },
     ]
   },
   {
