@@ -730,8 +730,8 @@ export default function Admin() {
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (
           <button key={t.id} className={`atab ${tab===t.id?'on':''}`} onClick={() => setTab(t.id)}>
-            <span style={{fontSize:18,display:'block',lineHeight:1}}>{t.icon}</span>
-            <span style={{fontSize:7,display:'block',marginTop:2,letterSpacing:'.05em'}}>{t.label}</span>
+            <span style={{fontSize:24,display:'block',lineHeight:1,marginBottom:4}}>{t.icon}</span>
+            <span style={{fontSize:7,display:'block',letterSpacing:'.05em'}}>{t.label}</span>
           </button>
         ))}
       </div>

@@ -4,8 +4,8 @@
 .admin-header{margin-bottom:14px;}
 .admin-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#e8f2ff;letter-spacing:.03em;}
 .admin-only-note{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(0,212,255,0.5);margin-top:4px;}
-.admin-tabs{display:flex;gap:5px;margin-bottom:16px;flex-wrap:wrap;}
-.atab{flex:1;min-width:0;padding:8px 4px;border-radius:10px;border:1px solid rgba(26,95,255,0.2);background:#0b1630;font-family:'Orbitron',sans-serif;font-size:7px;font-weight:700;letter-spacing:.03em;color:rgba(232,242,255,0.4);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.admin-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px;}
+.atab{padding:10px 4px;border-radius:12px;border:1px solid rgba(26,95,255,0.2);background:#0b1630;font-family:'Orbitron',sans-serif;font-size:7px;font-weight:700;letter-spacing:.03em;color:rgba(232,242,255,0.4);cursor:pointer;transition:all .2s;white-space:nowrap;text-align:center;}
 .atab.on{background:linear-gradient(135deg,rgba(26,95,255,0.3),rgba(0,212,255,0.1));border-color:#00d4ff;color:#00d4ff;}
 .admin-section{display:flex;flex-direction:column;gap:10px;}
 
