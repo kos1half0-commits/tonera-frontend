@@ -84,6 +84,10 @@ const SETTING_GROUPS = [
 function PartnershipAdmin() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [postId, setPostId] = useState(null)
+  const [postText, setPostText] = useState('')
+  const [posting, setPosting] = useState(false)
+  const [postToast, setPostToast] = useState('')
 
   const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
   useEffect(() => { load() }, [])
@@ -91,11 +95,26 @@ function PartnershipAdmin() {
   const approve = async (id) => { await api.post(`/api/partnership/approve/${id}`); load() }
   const reject  = async (id) => { await api.post(`/api/partnership/reject/${id}`);  load() }
 
+  const sendPost = async (id) => {
+    if (!postText.trim()) return
+    setPosting(true)
+    try {
+      await api.post(`/api/partnership/post/${id}`, { text: postText })
+      setPostToast('✅ Пост опубликован!')
+      setPostId(null); setPostText('')
+    } catch (e) {
+      setPostToast('❌ ' + (e?.response?.data?.error || 'Ошибка'))
+    }
+    setPosting(false)
+    setTimeout(() => setPostToast(''), 4000)
+  }
+
   if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
   if (!items.length) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>
 
   return (
     <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      {postToast && <div style={{background:'rgba(0,230,118,0.12)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:10,padding:'10px 14px',fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00e676',marginBottom:8}}>{postToast}</div>}
       {items.map(p => (
         <div key={p.id} style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:12}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
@@ -109,10 +128,29 @@ function PartnershipAdmin() {
           <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:4}}>📢 {p.channel_url}</div>
           <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:8}}>🔗 {p.post_url}</div>
           {p.status === 'pending' && (
-            <div style={{display:'flex',gap:8}}>
+            <div style={{display:'flex',gap:8,marginBottom:8}}>
               <button onClick={() => approve(p.id)} style={{flex:1,padding:'7px',border:'none',borderRadius:8,background:'rgba(0,230,118,0.2)',color:'#00e676',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>✅ ОДОБРИТЬ</button>
               <button onClick={() => reject(p.id)}  style={{flex:1,padding:'7px',border:'none',borderRadius:8,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>❌ ОТКЛОНИТЬ</button>
             </div>
+          )}
+          {p.status === 'approved' && (
+            postId === p.id ? (
+              <div style={{marginTop:8}}>
+                <textarea value={postText} onChange={e=>setPostText(e.target.value)} rows={4}
+                  placeholder="Текст поста (поддерживается HTML: <b>, <i>, <a href=''>)"
+                  style={{width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',resize:'none',marginBottom:6}}/>
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={() => sendPost(p.id)} disabled={posting} style={{flex:1,padding:'8px',border:'none',borderRadius:8,background:'rgba(26,95,255,0.3)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>
+                    {posting?'...':'📤 ОПУБЛИКОВАТЬ'}
+                  </button>
+                  <button onClick={()=>{setPostId(null);setPostText('')}} style={{padding:'8px 12px',border:'none',borderRadius:8,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>✕</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={()=>setPostId(p.id)} style={{width:'100%',padding:'7px',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,background:'transparent',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',marginTop:4}}>
+                📝 ОПУБЛИКОВАТЬ ПОСТ В КАНАЛЕ
+              </button>
+            )
           )}
         </div>
       ))}
