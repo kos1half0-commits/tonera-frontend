@@ -109,23 +109,15 @@ export default function Partnership({ onBack }) {
 
           <div className="post-example">
             <div className="pe-label">ПРИМЕР ПОСТА</div>
-            <div className="pe-text" id="post-example-text">
-              🚀 Зарабатывай TON каждый день!{'
+            <div className="pe-text" id="post-example-text">{`🚀 Зарабатывай TON каждый день!
 
-'}
-              💎 TonEra — платформа для заработка TON:{'
-'}
-              📈 Стейкинг — 1% в день{'
-'}
-              🎰 Игры — крути и выигрывай{'
-'}
-              ✅ Задания — выполняй и получай TON{'
+💎 TonEra — платформа для заработка TON:
+📈 Стейкинг — 1% в день
+🎰 Игры — крути и выигрывай
+✅ Задания — выполняй и получай TON
 
-'}
-              👇 Заходи прямо сейчас:{'
-'}
-              t.me/{botUsername}
-            </div>
+👇 Заходи прямо сейчас:
+t.me/${botUsername}`}</div>
             <button className="pe-copy-btn" onClick={() => {
               const text = `🚀 Зарабатывай TON каждый день!
 
