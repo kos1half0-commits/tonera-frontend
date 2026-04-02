@@ -1216,7 +1216,6 @@ export default function Admin() {
               <button className={`utab ${usersTab==='traders'?'on':''}`} onClick={() => setUsersTab('traders')}>📊 ТРЕЙДЕРЫ</button>
               <button className={`utab ${usersTab==='spinners'?'on':''}`} onClick={() => setUsersTab('spinners')}>🎰 СПИНЕРЫ</button>
               <button className={`utab ${usersTab==='sloters'?'on':''}`} onClick={() => setUsersTab('sloters')}>🎰 СЛОТЕРЫ</button>
-              <button className={`utab ${usersTab==='slotters'?'on':''}`} onClick={() => setUsersTab('slotters')}>🎲 СЛОТЕРЫ</button>
             </div>
             <div className="sort-btns">
               {[{k:'created_at',l:'ДАТА'},{k:'balance_ton',l:'БАЛАНС'},{k:'referral_count',l:'РЕФЫ'}].map(s => (
