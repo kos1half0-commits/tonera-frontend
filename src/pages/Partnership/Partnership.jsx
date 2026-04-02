@@ -119,8 +119,20 @@ export default function Partnership({ onBack }) {
 
 👇 Заходи прямо сейчас:
 t.me/${botUsername}`}</div>
-            <button className="pe-copy-btn" onClick={() => {
-              const text = `🚀 Зарабатывай TON каждый день!
+            <div className="pe-instructions">
+              <div className="pe-inst-title">📌 КАК ОПУБЛИКОВАТЬ</div>
+              <div className="pe-inst-step"><span>1</span> Скачайте логотип кнопкой ниже</div>
+              <div className="pe-inst-step"><span>2</span> Создайте новый пост в своём канале</div>
+              <div className="pe-inst-step"><span>3</span> Прикрепите логотип как фото</div>
+              <div className="pe-inst-step"><span>4</span> Скопируйте и вставьте текст поста</div>
+              <div className="pe-inst-step"><span>5</span> Опубликуйте и скопируйте ссылку на пост</div>
+            </div>
+            <div className="pe-btn-row">
+              <a className="pe-download-btn" href="/logo.png" download="tonera-logo.png">
+                ⬇️ СКАЧАТЬ ЛОГОТИП
+              </a>
+              <button className="pe-copy-btn" onClick={() => {
+                const text = `🚀 Зарабатывай TON каждый день!
 
 💎 TonEra — платформа для заработка TON:
 📈 Стейкинг — 1% в день
@@ -129,13 +141,14 @@ t.me/${botUsername}`}</div>
 
 👇 Заходи прямо сейчас:
 t.me/${botUsername}`
-              navigator.clipboard.writeText(text).then(() => {
-                setCopied(true)
-                setTimeout(() => setCopied(false), 3000)
-              })
-            }}>
-              {copied ? '✅ СКОПИРОВАНО!' : '📋 СКОПИРОВАТЬ ПОСТ'}
-            </button>
+                navigator.clipboard.writeText(text).then(() => {
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 3000)
+                })
+              }}>
+                {copied ? '✅ СКОПИРОВАНО!' : '📋 СКОПИРОВАТЬ ТЕКСТ'}
+              </button>
+            </div>
           </div>
 
           <div className="partner-form">

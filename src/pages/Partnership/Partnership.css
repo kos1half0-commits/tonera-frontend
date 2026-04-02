@@ -40,3 +40,10 @@
 .pe-copy-btn{width:100%;padding:11px;border:none;border-radius:10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.04em;}
 .pe-copy-btn:active{background:rgba(0,212,255,0.2);}
 .pe-logo{width:100%;border-radius:12px;margin-bottom:10px;display:block;}
+.pe-instructions{background:rgba(26,95,255,0.05);border:1px solid rgba(26,95,255,0.15);border-radius:10px;padding:12px;margin-bottom:10px;}
+.pe-inst-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00d4ff;letter-spacing:.08em;margin-bottom:8px;}
+.pe-inst-step{display:flex;align-items:center;gap:8px;font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.6);margin-bottom:5px;}
+.pe-inst-step span{width:18px;height:18px;border-radius:50%;background:rgba(26,95,255,0.3);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pe-btn-row{display:flex;gap:8px;}
+.pe-download-btn{flex:1;padding:11px;border:1px solid rgba(0,212,255,0.3);border-radius:10px;background:rgba(0,212,255,0.08);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;}
+.pe-copy-btn{flex:1;}
