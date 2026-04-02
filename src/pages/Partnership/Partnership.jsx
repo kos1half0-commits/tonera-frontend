@@ -55,6 +55,7 @@ export default function Partnership({ onBack }) {
   }
 
   const botUsername = info?.bot_username || 'tonera_bot'
+  const minSubs = info?.min_subs || 1000
   const refLink = info?.ref_code ? `t.me/${info.bot_username || 'tonera_bot'}?start=${info.ref_code}` : `t.me/${info?.bot_username || 'tonera_bot'}`
   const refPercent = info?.ref_percent || 30
   const p = info?.partnership
@@ -95,7 +96,7 @@ export default function Partnership({ onBack }) {
             <div className="pib-conditions">
               <div className="pib-cond">
                 <span className="pib-check">✅</span>
-                <span>Опубликуйте пост с упоминанием бота <b>@{botUsername}</b></span>
+                <span>Ваш канал должен иметь минимум <b>{minSubs.toLocaleString()}</b> подписчиков</span>
               </div>
               <div className="pib-cond">
                 <span className="pib-check">📢</span>
