@@ -743,7 +743,6 @@ export default function Admin() {
           <div className="stats-cards">
             <div className="astat-card"><div className="astat-val">{stats.total_users}</div><div className="astat-lbl">Всего</div></div>
             <div className="astat-card"><div className="astat-val">{stats.blocked_users}</div><div className="astat-lbl">Заблокировано</div></div>
-            <div className="astat-card"><div className="astat-val">{stats.total_referrals}</div><div className="astat-lbl">Рефералов</div></div>
             <div className="astat-card"><div className="astat-val">{stats.tasks_completed}</div><div className="astat-lbl">Заданий выполнено</div></div>
           </div>
 
