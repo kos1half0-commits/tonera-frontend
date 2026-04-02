@@ -741,22 +741,22 @@ export default function Admin() {
         <div className="admin-section">
           <div className="stats-section-title">👥 ПОЛЬЗОВАТЕЛИ</div>
           <div className="stats-cards">
-            <div className="astat-card"><div className="astat-val">{stats.total_users}</div><div className="astat-lbl">Всего</div></div>
-            <div className="astat-card"><div className="astat-val">{stats.blocked_users}</div><div className="astat-lbl">Заблокировано</div></div>
-            <div className="astat-card"><div className="astat-val">{stats.tasks_completed}</div><div className="astat-lbl">Заданий выполнено</div></div>
+            <div className="astat-card"><div className="astat-lbl">Всего</div><div className="astat-val">{stats.total_users}</div></div>
+            <div className="astat-card"><div className="astat-lbl">Заблокировано</div><div className="astat-val">{stats.blocked_users}</div></div>
+            <div className="astat-card"><div className="astat-lbl">Заданий выполнено</div><div className="astat-val">{stats.tasks_completed}</div></div>
           </div>
 
           <div className="stats-section-title">📈 СТЕЙКИНГ</div>
           <div className="stats-cards">
-            <div className="astat-card"><div className="astat-val">{stats.active_stakes}</div><div className="astat-lbl">Активных стейков</div></div>
-            <div className="astat-card"><div className="astat-val">{parseFloat(stats.total_staked).toFixed(2)}</div><div className="astat-lbl">TON в стейке</div></div>
-            <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.staking_fee_earned||0).toFixed(4)}</div><div className="astat-lbl">Комиссия стейкинга</div></div>
+            <div className="astat-card"><div className="astat-lbl">Активных стейков</div><div className="astat-val">{stats.active_stakes}</div></div>
+            <div className="astat-card"><div className="astat-lbl">TON в стейке</div><div className="astat-val">{parseFloat(stats.total_staked).toFixed(2)}</div></div>
+            <div className="astat-card fee"><div className="astat-lbl">Комиссия стейкинга</div><div className="astat-val">{parseFloat(stats.staking_fee_earned||0).toFixed(4)}</div></div>
           </div>
 
           <div className="stats-section-title">✅ ЗАДАНИЯ</div>
           <div className="stats-cards">
-            <div className="astat-card"><div className="astat-val">{stats.active_tasks||0}</div><div className="astat-lbl">Активных заданий</div></div>
-            <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.task_fee_earned||0).toFixed(4)}</div><div className="astat-lbl">Комиссия заданий</div></div>
+            <div className="astat-card"><div className="astat-lbl">Активных заданий</div><div className="astat-val">{stats.active_tasks||0}</div></div>
+            <div className="astat-card fee"><div className="astat-lbl">Комиссия заданий</div><div className="astat-val">{parseFloat(stats.task_fee_earned||0).toFixed(4)}</div></div>
           </div>
 
           {/* CHART */}
@@ -784,35 +784,35 @@ export default function Admin() {
 
           <div className="stats-section-title">📈 ТРЕЙДИНГ</div>
           <div className="stats-cards">
-            <div className="astat-card"><div className="astat-val">{stats.trading_total||0}</div><div className="astat-lbl">Всего ставок</div></div>
-            <div className="astat-card green"><div className="astat-val">{stats.trading_wins||0}</div><div className="astat-lbl">Выигрышей</div></div>
-            <div className="astat-card red"><div className="astat-val">{stats.trading_loses||0}</div><div className="astat-lbl">Проигрышей</div></div>
-            <div className="astat-card"><div className="astat-val">{stats.trading_refunds||0}</div><div className="astat-lbl">Возвратов</div></div>
+            <div className="astat-card"><div className="astat-lbl">Всего ставок</div><div className="astat-val">{stats.trading_total||0}</div></div>
+            <div className="astat-card green"><div className="astat-lbl">Выигрышей</div><div className="astat-val">{stats.trading_wins||0}</div></div>
+            <div className="astat-card red"><div className="astat-lbl">Проигрышей</div><div className="astat-val">{stats.trading_loses||0}</div></div>
+            <div className="astat-card"><div className="astat-lbl">Возвратов</div><div className="astat-val">{stats.trading_refunds||0}</div></div>
             <div className="astat-card" style={{borderColor:'rgba(0,212,255,0.3)',background:'rgba(0,212,255,0.05)'}}><div className="astat-val" style={{color:'#00d4ff'}}>{parseFloat(stats.trading_bank||0).toFixed(4)}</div><div className="astat-lbl">Банк трейдинга</div></div>
-            <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.trading_profit||0).toFixed(4)}</div><div className="astat-lbl">Чистая прибыль</div></div>
+            <div className="astat-card fee"><div className="astat-lbl">Чистая прибыль</div><div className="astat-val">{parseFloat(stats.trading_profit||0).toFixed(4)}</div></div>
           </div>
 
           <div className="stats-section-title">🎰 СЛОТЫ</div>
           <div className="stats-cards">
-            <div className="astat-card"><div className="astat-val">{stats.slots_total||0}</div><div className="astat-lbl">Всего спинов</div></div>
-            <div className="astat-card green"><div className="astat-val">{stats.slots_wins||0}</div><div className="astat-lbl">Выигрышей</div></div>
+            <div className="astat-card"><div className="astat-lbl">Всего спинов</div><div className="astat-val">{stats.slots_total||0}</div></div>
+            <div className="astat-card green"><div className="astat-lbl">Выигрышей</div><div className="astat-val">{stats.slots_wins||0}</div></div>
             <div className="astat-card" style={{borderColor:'rgba(0,212,255,0.3)',background:'rgba(0,212,255,0.05)'}}><div className="astat-val" style={{color:'#00d4ff'}}>{parseFloat(stats.slots_bank||0).toFixed(4)}</div><div className="astat-lbl">Банк слотов</div></div>
           </div>
 
           <div className="stats-section-title">🎰 СПИН</div>
           <div className="stats-cards">
-            <div className="astat-card"><div className="astat-val">{stats.total_spins||0}</div><div className="astat-lbl">Всего спинов</div></div>
-            <div className="astat-card fee"><div className="astat-val">{parseFloat(stats.spin_revenue||0).toFixed(4)}</div><div className="astat-lbl">Доход со спинов</div></div>
-            <div className="astat-card green"><div className="astat-val">{parseFloat(stats.spin_profit||0).toFixed(4)}</div><div className="astat-lbl">Чистая прибыль</div></div>
+            <div className="astat-card"><div className="astat-lbl">Всего спинов</div><div className="astat-val">{stats.total_spins||0}</div></div>
+            <div className="astat-card fee"><div className="astat-lbl">Доход со спинов</div><div className="astat-val">{parseFloat(stats.spin_revenue||0).toFixed(4)}</div></div>
+            <div className="astat-card green"><div className="astat-lbl">Чистая прибыль</div><div className="astat-val">{parseFloat(stats.spin_profit||0).toFixed(4)}</div></div>
             <div className="astat-card" style={{borderColor:'rgba(255,179,0,0.3)',background:'rgba(255,179,0,0.05)'}}><div className="astat-val" style={{color:'#ffb300'}}>{parseFloat(stats.current_jackpot||0).toFixed(4)}</div><div className="astat-lbl">Джекпот сейчас</div></div>
-            <div className="astat-card green"><div className="astat-val">{parseFloat(stats.spin_pool||0).toFixed(4)}</div><div className="astat-lbl">Пул выплат</div></div>
+            <div className="astat-card green"><div className="astat-lbl">Пул выплат</div><div className="astat-val">{parseFloat(stats.spin_pool||0).toFixed(4)}</div></div>
           </div>
 
           <div className="stats-section-title">💰 ФИНАНСЫ ПРОЕКТА</div>
           <div className="stats-cards">
-            <div className="astat-card green"><div className="astat-val">+{parseFloat(stats.total_deposited||0).toFixed(2)}</div><div className="astat-lbl">Пополнено</div></div>
-            <div className="astat-card red"><div className="astat-val">-{parseFloat(stats.total_withdrawn||0).toFixed(2)}</div><div className="astat-lbl">Выведено</div></div>
-            <div className="astat-card fee"><div className="astat-val">{(parseFloat(stats.total_deposited||0) - parseFloat(stats.total_withdrawn||0)).toFixed(2)}</div><div className="astat-lbl">Баланс проекта</div></div>
+            <div className="astat-card green"><div className="astat-lbl">Пополнено</div><div className="astat-val">+{parseFloat(stats.total_deposited||0).toFixed(2)}</div></div>
+            <div className="astat-card red"><div className="astat-lbl">Выведено</div><div className="astat-val">-{parseFloat(stats.total_withdrawn||0).toFixed(2)}</div></div>
+            <div className="astat-card fee"><div className="astat-lbl">Баланс проекта</div><div className="astat-val">{(parseFloat(stats.total_deposited||0) - parseFloat(stats.total_withdrawn||0)).toFixed(2)}</div></div>
           </div>
 
           <button className="reload-btn" onClick={loadAll}>↻ Обновить</button>
@@ -1292,12 +1292,12 @@ export default function Admin() {
           {userStats ? (
             <>
               <div className="stats-cards">
-                <div className="astat-card"><div className="astat-val">{parseFloat(selectedUser.balance_ton).toFixed(4)}</div><div className="astat-lbl">Баланс TON</div></div>
-                <div className="astat-card"><div className="astat-val">{userStats.stats.totalDeposit.toFixed(4)}</div><div className="astat-lbl">Депозитов</div></div>
-                <div className="astat-card"><div className="astat-val">{userStats.stats.totalWithdraw.toFixed(4)}</div><div className="astat-lbl">Выводов</div></div>
-                <div className="astat-card"><div className="astat-val">{userStats.stats.tasksCount}</div><div className="astat-lbl">Заданий</div></div>
-                <div className="astat-card"><div className="astat-val">{selectedUser.referral_count}</div><div className="astat-lbl">Рефералов</div></div>
-                <div className="astat-card"><div className="astat-val">{userStats.stats.totalStaked.toFixed(4)}</div><div className="astat-lbl">В стейке</div></div>
+                <div className="astat-card"><div className="astat-lbl">Баланс TON</div><div className="astat-val">{parseFloat(selectedUser.balance_ton).toFixed(4)}</div></div>
+                <div className="astat-card"><div className="astat-lbl">Депозитов</div><div className="astat-val">{userStats.stats.totalDeposit.toFixed(4)}</div></div>
+                <div className="astat-card"><div className="astat-lbl">Выводов</div><div className="astat-val">{userStats.stats.totalWithdraw.toFixed(4)}</div></div>
+                <div className="astat-card"><div className="astat-lbl">Заданий</div><div className="astat-val">{userStats.stats.tasksCount}</div></div>
+                <div className="astat-card"><div className="astat-lbl">Рефералов</div><div className="astat-val">{selectedUser.referral_count}</div></div>
+                <div className="astat-card"><div className="astat-lbl">В стейке</div><div className="astat-val">{userStats.stats.totalStaked.toFixed(4)}</div></div>
               </div>
               <div className="ut-section-title">ТРАНЗАКЦИИ</div>
               {userStats.txs.map(tx => (
