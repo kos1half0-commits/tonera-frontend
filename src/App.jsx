@@ -58,6 +58,7 @@ export default function App() {
   const [tradingStatus, setTradingStatus] = useState('1') // 0=откл,1=вкл,2=тех
   useEffect(() => { api.get('/api/spin/info').then(r => setSpinEnabled(r.data?.spin_enabled !== '0')).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/trading/info').then(r => setTradingStatus(String(r.data?.trading_enabled ?? '1'))).catch(()=>{}) }, [])
+  useEffect(() => { api.get('/api/partnership/status').then(r => setPartnershipStatus(String(r.data?.value ?? '1'))).catch(()=>{}) }, [])
   const visibleTabs = TABS.filter(t => (t.id !== 'admin' || isAdmin) && t.id !== 'customer' && (t.id !== 'games' || true))
   const balance = parseFloat(user?.balance_ton ?? 0)
 
@@ -97,7 +98,9 @@ export default function App() {
       </div>
 
       <div className="app-content">
-        {tab === 'home'      && <Home      user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} />}
+        {showSupport && <Support onBack={() => setShowSupport(false)} />}
+        {showPartnership && <Partnership onBack={() => setShowPartnership(false)} />}
+        {!showSupport && !showPartnership && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} isAdmin={isAdmin} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && <Referrals user={user} />}
