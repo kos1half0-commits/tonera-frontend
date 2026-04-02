@@ -129,9 +129,13 @@ ${refLink}`}</div>
               <div className="pe-inst-step"><span>5</span> Опубликуйте и скопируйте ссылку на пост</div>
             </div>
             <div className="pe-btn-row">
-              <a className="pe-download-btn" href="/logo.png" download="tonera-logo.png">
+              <button className="pe-download-btn" onClick={() => {
+                const tg = window.Telegram?.WebApp
+                if (tg) tg.openLink(window.location.origin + '/logo.png')
+                else window.open('/logo.png', '_blank')
+              }}>
                 ⬇️ СКАЧАТЬ ЛОГОТИП
-              </a>
+              </button>
               <button className="pe-copy-btn" onClick={() => {
                 const text = `🚀 Зарабатывай TON каждый день!
 
