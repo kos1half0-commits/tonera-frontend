@@ -18,17 +18,8 @@ export default function Referrals({ user }) {
     getReferrals().then(r => setRefs(r.data)).catch(() => {})
 
     // Получаем заработок только от рефералов
-    api.get('/api/wallet/transactions').then(r => {
-      const refEarned = (r.data || [])
-        .filter(t =>
-          parseFloat(t.amount) > 0 && (
-            t.type === 'ref_task' ||
-            t.type === 'ref_deposit' ||
-            (t.type === 'reward' && t.label && t.label.includes('Реф.'))
-          )
-        )
-        .reduce((sum, t) => sum + parseFloat(t.amount), 0)
-      setEarned(refEarned)
+    api.get('/api/referrals').then(r => {
+      if (r.data?.earned !== undefined) setEarned(parseFloat(r.data.earned) || 0)
     }).catch(() => {})
   }, [])
 
