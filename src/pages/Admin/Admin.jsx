@@ -84,73 +84,180 @@ const SETTING_GROUPS = [
 function PartnershipAdmin() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
-  const [postId, setPostId] = useState(null)
+  const [selected, setSelected] = useState(null)
+  const [task, setTask] = useState(null)
+  const [taskLoading, setTaskLoading] = useState(false)
+  const [editTask, setEditTask] = useState(false)
+  const [taskTitle, setTaskTitle] = useState('')
+  const [taskReward, setTaskReward] = useState('')
   const [postText, setPostText] = useState('')
+  const [showPost, setShowPost] = useState(false)
   const [posting, setPosting] = useState(false)
-  const [postToast, setPostToast] = useState('')
+  const [toast, setPartToast] = useState('')
 
+  const showToast = (msg) => { setPartToast(msg); setTimeout(() => setPartToast(''), 3000) }
   const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
   useEffect(() => { load() }, [])
 
-  const approve = async (id) => { await api.post(`/api/partnership/approve/${id}`); load() }
-  const reject  = async (id) => { await api.post(`/api/partnership/reject/${id}`);  load() }
+  const approve = async (id) => { await api.post(`/api/partnership/approve/${id}`); load(); showToast('✅ Одобрено — задание создано') }
+  const reject  = async (id) => { await api.post(`/api/partnership/reject/${id}`);  load(); showToast('❌ Отклонено') }
 
-  const sendPost = async (id) => {
-    if (!postText.trim()) return
+  const openPartner = async (p) => {
+    setSelected(p); setTask(null); setEditTask(false); setShowPost(false)
+    if (p.task_id) {
+      setTaskLoading(true)
+      try {
+        const r = await api.get(`/api/tasks/${p.task_id}`)
+        setTask(r.data); setTaskTitle(r.data.title); setTaskReward(r.data.reward)
+      } catch {}
+      setTaskLoading(false)
+    }
+  }
+
+  const saveTask = async () => {
+    await api.put(`/api/tasks/${task.id}`, { title: taskTitle, reward: taskReward })
+    const r = await api.get(`/api/tasks/${task.id}`)
+    setTask(r.data); setEditTask(false); showToast('✅ Задание обновлено')
+  }
+
+  const pauseTask = async () => {
+    await api.put(`/api/tasks/${task.id}`, { active: !task.active })
+    const r = await api.get(`/api/tasks/${task.id}`)
+    setTask(r.data); showToast(task.active ? '⏸ Задание на паузе' : '▶️ Задание активно')
+  }
+
+  const deletePartner = async () => {
+    if (!confirm('Удалить партнёра и его задание?')) return
+    if (selected.task_id) await api.delete(`/api/tasks/${selected.task_id}`).catch(()=>{})
+    await api.delete(`/api/partnership/${selected.id}`).catch(()=>{})
+    setSelected(null); load(); showToast('🗑 Партнёр удалён')
+  }
+
+  const sendPost = async () => {
     setPosting(true)
     try {
-      await api.post(`/api/partnership/post/${id}`, { text: postText })
-      setPostToast('✅ Пост опубликован!')
-      setPostId(null); setPostText('')
-    } catch (e) {
-      setPostToast('❌ ' + (e?.response?.data?.error || 'Ошибка'))
-    }
+      await api.post(`/api/partnership/post/${selected.id}`, { text: postText })
+      showToast('✅ Пост опубликован!'); setShowPost(false); setPostText('')
+    } catch (e) { showToast('❌ ' + (e?.response?.data?.error || 'Ошибка')) }
     setPosting(false)
-    setTimeout(() => setPostToast(''), 4000)
+  }
+
+  const S = {
+    card: {background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:12,cursor:'pointer'},
+    row: {display:'flex',alignItems:'center',gap:8,marginBottom:6},
+    btn: (c) => ({padding:'7px 12px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',...c}),
+    label: {fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,letterSpacing:'.08em',color:'rgba(232,242,255,0.4)',marginBottom:4,display:'block'},
+    input: {width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',marginBottom:8},
+    back: {background:'transparent',border:'none',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',marginBottom:12,display:'block'},
   }
 
   if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
-  if (!items.length) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>
 
+  // ДЕТАЛЬНЫЙ ВИД ПАРТНЁРА
+  if (selected) return (
+    <div>
+      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+      <button style={S.back} onClick={() => setSelected(null)}>← НАЗАД</button>
+
+      {/* ИНФО */}
+      <div style={{...S.card,cursor:'default',marginBottom:10}}>
+        <div style={S.row}>
+          <span style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#00d4ff'}}>#{selected.id}</span>
+          <span style={{fontFamily:'DM Sans,sans-serif',fontSize:13,fontWeight:700,color:'#e8f2ff',flex:1}}>{selected.username ? '@'+selected.username : selected.first_name}</span>
+          <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,padding:'3px 8px',borderRadius:6,fontWeight:700,
+            background:selected.status==='approved'?'rgba(0,230,118,0.15)':'rgba(255,179,0,0.15)',
+            color:selected.status==='approved'?'#00e676':'#ffb300'
+          }}>{selected.status==='approved'?'ОДОБРЕН':'ОЖИДАЕТ'}</span>
+        </div>
+        <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:3}}>📢 {selected.channel_url}</div>
+        {selected.post_url && <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.3)'}}>🔗 {selected.post_url}</div>}
+      </div>
+
+      {/* ЗАДАНИЕ */}
+      {selected.task_id && (
+        <div style={{...S.card,cursor:'default',marginBottom:10}}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:8}}>📋 ЗАДАНИЕ</div>
+          {taskLoading ? <div style={{color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans,sans-serif',fontSize:12}}>Загрузка...</div> : task ? (
+            editTask ? (
+              <>
+                <span style={S.label}>НАЗВАНИЕ</span>
+                <input style={S.input} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} />
+                <span style={S.label}>НАГРАДА (TON)</span>
+                <input style={{...S.input,marginBottom:10}} type="number" step="0.001" value={taskReward} onChange={e=>setTaskReward(e.target.value)} />
+                <div style={{display:'flex',gap:6}}>
+                  <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={saveTask}>✅ СОХРАНИТЬ</button>
+                  <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>setEditTask(false)}>✕</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,color:'rgba(232,242,255,0.7)',marginBottom:4}}>{task.title}</div>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00d4ff',marginBottom:10}}>Награда: {task.reward} TON</div>
+                <div style={{display:'flex',gap:6}}>
+                  <button style={S.btn({flex:1,background:'rgba(26,95,255,0.2)',color:'#00d4ff'})} onClick={()=>setEditTask(true)}>✏️ РЕДАКТИРОВАТЬ</button>
+                  <button style={S.btn({flex:1,background:task.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:task.active?'#ffb300':'#00e676'})} onClick={pauseTask}>
+                    {task.active ? '⏸ ПАУЗА' : '▶️ ВОЗОБНОВИТЬ'}
+                  </button>
+                </div>
+              </>
+            )
+          ) : <div style={{color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans,sans-serif',fontSize:12}}>Задание не найдено</div>}
+        </div>
+      )}
+
+      {/* ПОСТ В КАНАЛ */}
+      {selected.status === 'approved' && (
+        <div style={{...S.card,cursor:'default',marginBottom:10}}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:8}}>📤 ПОСТ В КАНАЛ</div>
+          {showPost ? (
+            <>
+              <textarea value={postText} onChange={e=>setPostText(e.target.value)} rows={4}
+                placeholder="Текст поста (HTML: <b>, <i>, <a href=''>)"
+                style={{...S.input,resize:'none',marginBottom:6}}/>
+              <div style={{display:'flex',gap:6}}>
+                <button style={S.btn({flex:1,background:'rgba(26,95,255,0.3)',color:'#00d4ff'})} onClick={sendPost} disabled={posting}>
+                  {posting?'...':'📤 ОПУБЛИКОВАТЬ'}
+                </button>
+                <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>setShowPost(false)}>✕</button>
+              </div>
+            </>
+          ) : (
+            <button style={S.btn({width:'100%',background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={()=>setShowPost(true)}>
+              📝 НАПИСАТЬ ПОСТ
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* УДАЛИТЬ */}
+      <button style={S.btn({width:'100%',background:'rgba(255,77,106,0.1)',color:'#ff4d6a',border:'1px solid rgba(255,77,106,0.2)'})} onClick={deletePartner}>
+        🗑 УДАЛИТЬ ПАРТНЁРА
+      </button>
+    </div>
+  )
+
+  // СПИСОК
   return (
-    <div style={{display:'flex',flexDirection:'column',gap:10}}>
-      {postToast && <div style={{background:'rgba(0,230,118,0.12)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:10,padding:'10px 14px',fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00e676',marginBottom:8}}>{postToast}</div>}
+    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:4}}>{toast}</div>}
+      {!items.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
       {items.map(p => (
-        <div key={p.id} style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:12}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+        <div key={p.id} style={S.card} onClick={() => openPartner(p)}>
+          <div style={S.row}>
             <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>#{p.id}</span>
             <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{p.username ? '@'+p.username : p.first_name}</span>
             <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,padding:'3px 8px',borderRadius:6,
-              background: p.status==='approved' ? 'rgba(0,230,118,0.15)' : p.status==='rejected' ? 'rgba(255,77,106,0.15)' : 'rgba(255,179,0,0.15)',
-              color: p.status==='approved' ? '#00e676' : p.status==='rejected' ? '#ff4d6a' : '#ffb300'
+              background:p.status==='approved'?'rgba(0,230,118,0.15)':p.status==='rejected'?'rgba(255,77,106,0.15)':'rgba(255,179,0,0.15)',
+              color:p.status==='approved'?'#00e676':p.status==='rejected'?'#ff4d6a':'#ffb300'
             }}>{p.status==='approved'?'ОДОБРЕН':p.status==='rejected'?'ОТКЛ':'ОЖИДАЕТ'}</span>
+            <span style={{color:'rgba(232,242,255,0.3)',fontSize:14}}>›</span>
           </div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:4}}>📢 {p.channel_url}</div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:8}}>🔗 {p.post_url}</div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{p.channel_url}</div>
           {p.status === 'pending' && (
-            <div style={{display:'flex',gap:8,marginBottom:8}}>
-              <button onClick={() => approve(p.id)} style={{flex:1,padding:'7px',border:'none',borderRadius:8,background:'rgba(0,230,118,0.2)',color:'#00e676',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>✅ ОДОБРИТЬ</button>
-              <button onClick={() => reject(p.id)}  style={{flex:1,padding:'7px',border:'none',borderRadius:8,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>❌ ОТКЛОНИТЬ</button>
+            <div style={{display:'flex',gap:6,marginTop:8}} onClick={e=>e.stopPropagation()}>
+              <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={()=>approve(p.id)}>✅ ОДОБРИТЬ</button>
+              <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>reject(p.id)}>❌ ОТКЛОНИТЬ</button>
             </div>
-          )}
-          {p.status === 'approved' && (
-            postId === p.id ? (
-              <div style={{marginTop:8}}>
-                <textarea value={postText} onChange={e=>setPostText(e.target.value)} rows={4}
-                  placeholder="Текст поста (поддерживается HTML: <b>, <i>, <a href=''>)"
-                  style={{width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',resize:'none',marginBottom:6}}/>
-                <div style={{display:'flex',gap:6}}>
-                  <button onClick={() => sendPost(p.id)} disabled={posting} style={{flex:1,padding:'8px',border:'none',borderRadius:8,background:'rgba(26,95,255,0.3)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>
-                    {posting?'...':'📤 ОПУБЛИКОВАТЬ'}
-                  </button>
-                  <button onClick={()=>{setPostId(null);setPostText('')}} style={{padding:'8px 12px',border:'none',borderRadius:8,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>✕</button>
-                </div>
-              </div>
-            ) : (
-              <button onClick={()=>setPostId(p.id)} style={{width:'100%',padding:'7px',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,background:'transparent',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',marginTop:4}}>
-                📝 ОПУБЛИКОВАТЬ ПОСТ В КАНАЛЕ
-              </button>
-            )
           )}
         </div>
       ))}
