@@ -34,3 +34,8 @@
 .pp-desc{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.5);line-height:1.5;margin-bottom:8px;}
 .pp-channel{font-family:'Orbitron',sans-serif;font-size:10px;color:#00d4ff;word-break:break-all;}
 .partner-rejected{background:rgba(255,77,106,0.05);border:1px solid rgba(255,77,106,0.2);border-radius:16px;padding:20px;text-align:center;font-family:'Orbitron',sans-serif;font-size:12px;color:#ff4d6a;}
+.post-example{background:#0a1628;border:1px solid rgba(0,212,255,0.2);border-radius:14px;padding:14px;margin-bottom:14px;}
+.pe-label{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.1em;margin-bottom:10px;}
+.pe-text{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.7);line-height:1.7;white-space:pre-line;background:#060f2a;border:1px solid rgba(26,95,255,0.2);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.pe-copy-btn{width:100%;padding:11px;border:none;border-radius:10px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:.04em;}
+.pe-copy-btn:active{background:rgba(0,212,255,0.2);}
