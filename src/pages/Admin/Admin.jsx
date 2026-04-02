@@ -136,6 +136,11 @@ function AdminTaskItem({ task: initialTask, onDelete, onRefresh }) {
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
             <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,color:'#00d4ff'}}>+{task.reward} TON</span>
             <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>{task.executions||0}/{task.max_executions||0} выполнений</span>
+            {task.creator_username || task.creator_name ? (
+              <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(255,179,0,0.6)'}}>👤 {task.creator_username ? '@'+task.creator_username : task.creator_name}</span>
+            ) : (
+              <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(26,95,255,0.5)'}}>📢 Системное</span>
+            )}
             <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,color:task.active?'#00e676':'#ff4d6a'}}>{task.active?'АКТИВНО':'ПАУЗА'}</span>
           </div>
         </div>
