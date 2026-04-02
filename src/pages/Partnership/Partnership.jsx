@@ -21,9 +21,17 @@ export default function Partnership({ onBack }) {
   const [copied, setCopied]           = useState(false)
   const [toast, setToast]             = useState('')
   const [toastErr, setToastErr]       = useState(false)
+  const [task, setTask]               = useState(null)
+  const [editDesc, setEditDesc]       = useState(false)
+  const [newDesc, setNewDesc]         = useState('')
 
   useEffect(() => {
-    api.get('/api/partnership/my').then(r => setInfo(r.data)).catch(() => {})
+    api.get('/api/partnership/my').then(r => {
+      setInfo(r.data)
+      if (r.data?.partnership?.task_id) {
+        api.get(`/api/tasks/${r.data.partnership.task_id}`).then(t => setTask(t.data)).catch(() => {})
+      }
+    }).catch(() => {})
   }, [])
 
   const showToast = (msg, err=false) => {
@@ -75,12 +83,65 @@ export default function Partnership({ onBack }) {
 
       {/* СТАТУС ЗАЯВКИ */}
       {p?.status === 'approved' && (
-        <div className="p-status approved">
-          <div className="ps-icon">🌟</div>
-          <div className="ps-title">ВЫ ПАРТНЁР TONERA</div>
-          <div className="ps-desc">Ваш канал добавлен в задания — пользователи подписываются на ваш канал и вы получаете бесплатный трафик</div>
-          <div className="ps-channel">{p.channel_url}</div>
-          <div className="ps-bonus">Ваш реф. процент: <b>{refPercent}%</b></div>
+        <div className="p-approved-wrap">
+          <div className="p-status approved">
+            <div className="ps-icon">🌟</div>
+            <div className="ps-title">ВЫ ПАРТНЁР TONERA</div>
+            <div className="ps-desc">Ваш канал добавлен в задания — пользователи подписываются</div>
+            <div className="ps-channel">{p.channel_url}</div>
+            <div className="ps-bonus">Реф. процент: <b>{refPercent}%</b></div>
+          </div>
+
+          {task && (
+            <div className="p-task-block">
+              <div className="ptb-title">📋 ВАШЕ ЗАДАНИЕ</div>
+              <div className="ptb-stats">
+                <div className="ptb-stat">
+                  <div className="ptb-val">{task.executions || 0}</div>
+                  <div className="ptb-lbl">Выполнено</div>
+                </div>
+                <div className="ptb-stat">
+                  <div className="ptb-val">{task.max_executions || 0}</div>
+                  <div className="ptb-lbl">Максимум</div>
+                </div>
+                <div className="ptb-stat">
+                  <div className="ptb-val" style={{color: task.active ? '#00e676' : '#ff4d6a'}}>
+                    {task.active ? 'АКТИВНО' : 'ПАУЗА'}
+                  </div>
+                  <div className="ptb-lbl">Статус</div>
+                </div>
+              </div>
+
+              <div className="ptb-progress-wrap">
+                <div className="ptb-progress-bar">
+                  <div className="ptb-progress-fill" style={{width: `${Math.min(100, ((task.executions||0)/(task.max_executions||1))*100)}%`}}/>
+                </div>
+                <div className="ptb-progress-label">{Math.round(((task.executions||0)/(task.max_executions||1))*100)}%</div>
+              </div>
+
+              <div className="ptb-name">{task.title}</div>
+
+              {editDesc ? (
+                <div className="ptb-edit">
+                  <textarea className="ptb-textarea" value={newDesc} onChange={e=>setNewDesc(e.target.value)} rows={3} placeholder="Описание задания..."/>
+                  <div className="ptb-edit-btns">
+                    <button className="ptb-save-btn" onClick={async()=>{
+                      await api.put(`/api/tasks/${task.id}`, { description: newDesc })
+                      const r = await api.get(`/api/tasks/${task.id}`)
+                      setTask(r.data); setEditDesc(false)
+                      showToast('✅ Описание обновлено')
+                    }}>СОХРАНИТЬ</button>
+                    <button className="ptb-cancel-btn" onClick={()=>setEditDesc(false)}>ОТМЕНА</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="ptb-desc-row">
+                  <div className="ptb-desc">{task.description || 'Нет описания'}</div>
+                  <button className="ptb-edit-btn" onClick={()=>{ setEditDesc(true); setNewDesc(task.description||'') }}>✏️</button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
