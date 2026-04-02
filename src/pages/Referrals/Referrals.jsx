@@ -15,7 +15,11 @@ export default function Referrals({ user }) {
     : `https://t.me/${BOT_USERNAME}`
 
   useEffect(() => {
-    getReferrals().then(r => setRefs(r.data)).catch(() => {})
+    getReferrals().then(r => {
+      const data = r.data
+      if (Array.isArray(data)) { setRefs(data) }
+      else { setRefs(data?.referrals || []); if (data?.earned !== undefined) setEarned(parseFloat(data.earned) || 0) }
+    }).catch(() => {})
 
     // Получаем заработок только от рефералов
     api.get('/api/referrals').then(r => {
