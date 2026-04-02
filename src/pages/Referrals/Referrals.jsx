@@ -7,6 +7,7 @@ const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'tonera_bot'
 
 export default function Referrals({ user }) {
   const [refs, setRefs] = useState([])
+  const [regBonus, setRegBonus] = useState(0.001)
   const [earned, setEarned] = useState(0)
   const [copied, setCopied] = useState(false)
 
@@ -15,6 +16,7 @@ export default function Referrals({ user }) {
     : `https://t.me/${BOT_USERNAME}`
 
   useEffect(() => {
+    import('../../api/index').then(m => m.default.get('/api/settings/ref_register_bonus').then(r => setRegBonus(parseFloat(r.data?.value || 0.001))).catch(()=>{}))
     getReferrals().then(r => {
       const data = r.data
       if (Array.isArray(data)) { setRefs(data) }
@@ -76,7 +78,7 @@ export default function Referrals({ user }) {
                 <div className="ref-name">{r.username || r.first_name || 'Пользователь'}</div>
                 <div className="ref-date">{new Date(r.created_at).toLocaleDateString('ru')}</div>
               </div>
-              <div className="ref-bonus">+{parseFloat(user?.ref_register_bonus || 0).toFixed(4)} TON</div>
+              <div className="ref-bonus">+{regBonus.toFixed(4)} TON</div>
             </div>
           ))}
         </div>
