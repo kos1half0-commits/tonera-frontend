@@ -90,6 +90,7 @@ function PartnershipAdmin() {
   const [editTask, setEditTask] = useState(false)
   const [taskTitle, setTaskTitle] = useState('')
   const [taskReward, setTaskReward] = useState('')
+  const [taskMaxExec, setTaskMaxExec] = useState('')
   const [postText, setPostText] = useState('')
   const [showPost, setShowPost] = useState(false)
   const [posting, setPosting] = useState(false)
@@ -108,14 +109,14 @@ function PartnershipAdmin() {
       setTaskLoading(true)
       try {
         const r = await api.get(`/api/tasks/${p.task_id}`)
-        setTask(r.data); setTaskTitle(r.data.title); setTaskReward(r.data.reward)
+        setTask(r.data); setTaskTitle(r.data.title); setTaskReward(r.data.reward); setTaskMaxExec(r.data.max_executions || 100)
       } catch {}
       setTaskLoading(false)
     }
   }
 
   const saveTask = async () => {
-    await api.put(`/api/tasks/${task.id}`, { title: taskTitle, reward: taskReward })
+    await api.put(`/api/tasks/${task.id}`, { title: taskTitle, reward: taskReward, max_executions: parseInt(taskMaxExec) })
     const r = await api.get(`/api/tasks/${task.id}`)
     setTask(r.data); setEditTask(false); showToast('✅ Задание обновлено')
   }
@@ -183,7 +184,13 @@ function PartnershipAdmin() {
                 <span style={S.label}>НАЗВАНИЕ</span>
                 <input style={S.input} value={taskTitle} onChange={e=>setTaskTitle(e.target.value)} />
                 <span style={S.label}>НАГРАДА (TON)</span>
-                <input style={{...S.input,marginBottom:10}} type="number" step="0.001" value={taskReward} onChange={e=>setTaskReward(e.target.value)} />
+                <input style={{...S.input}} type="number" step="0.001" value={taskReward} onChange={e=>setTaskReward(e.target.value)} />
+                <span style={S.label}>МАКС. ПРОСМОТРОВ</span>
+                <div style={{display:'flex',gap:6,marginBottom:10}}>
+                  <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontSize:14})} onClick={()=>setTaskMaxExec(v=>Math.max(1,parseInt(v)-10))}>−10</button>
+                  <input style={{...S.input,marginBottom:0,flex:1,textAlign:'center'}} type="number" value={taskMaxExec} onChange={e=>setTaskMaxExec(e.target.value)} />
+                  <button style={S.btn({background:'rgba(0,230,118,0.15)',color:'#00e676',fontSize:14})} onClick={()=>setTaskMaxExec(v=>parseInt(v)+10)}>+10</button>
+                </div>
                 <div style={{display:'flex',gap:6}}>
                   <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={saveTask}>✅ СОХРАНИТЬ</button>
                   <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>setEditTask(false)}>✕</button>
@@ -192,7 +199,15 @@ function PartnershipAdmin() {
             ) : (
               <>
                 <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,color:'rgba(232,242,255,0.7)',marginBottom:4}}>{task.title}</div>
-                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00d4ff',marginBottom:10}}>Награда: {task.reward} TON</div>
+                <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap'}}>
+                  <span style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00d4ff'}}>💰 {task.reward} TON</span>
+                  <span style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>👁 {task.executions||0}/{task.max_executions||100} просмотров</span>
+                  <span style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:task.active?'#00e676':'#ffb300'}}>{task.active?'▶ АКТИВНО':'⏸ ПАУЗА'}</span>
+                </div>
+                <div style={{display:'flex',gap:6,marginBottom:8}}>
+                  <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={async()=>{await api.put(`/api/tasks/${task.id}`,{max_executions:Math.max(1,(task.max_executions||100)-10)});const r=await api.get(`/api/tasks/${task.id}`);setTask(r.data)}}>−10 просм.</button>
+                  <button style={S.btn({background:'rgba(0,230,118,0.15)',color:'#00e676'})} onClick={async()=>{await api.put(`/api/tasks/${task.id}`,{max_executions:(task.max_executions||100)+10});const r=await api.get(`/api/tasks/${task.id}`);setTask(r.data)}}>+10 просм.</button>
+                </div>
                 <div style={{display:'flex',gap:6}}>
                   <button style={S.btn({flex:1,background:'rgba(26,95,255,0.2)',color:'#00d4ff'})} onClick={()=>setEditTask(true)}>✏️ РЕДАКТИРОВАТЬ</button>
                   <button style={S.btn({flex:1,background:task.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:task.active?'#ffb300':'#00e676'})} onClick={pauseTask}>
