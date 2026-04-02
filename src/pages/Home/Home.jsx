@@ -3,7 +3,7 @@ import { getUserStakes, getTasks } from '../../api/index'
 import api from '../../api/index'
 import './Home.css'
 
-export default function Home({ user, onTab, onCreate, onMyTasks, onSupport }) {
+export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership }) {
   const [news, setNews] = useState([])
   useEffect(() => { api.get('/api/news').then(r => setNews(r.data || [])).catch(() => {}) }, [])
   const balance = parseFloat(user?.balance_ton ?? 0)
@@ -135,6 +135,10 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport }) {
         <div className="qa" onClick={onSupport}>
           <div className="qa-icon si-purple"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
           <div className="qa-lbl">ПОДДЕРЖКА</div>
+        </div>
+        <div className="qa" onClick={onPartnership}>
+          <div className="qa-icon si-gold"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
+          <div className="qa-lbl">ПАРТНЁРСТВО</div>
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ import Spin from './pages/Spin/Spin'
 import Games from './pages/Games/Games'
 import Support from './pages/Support/Support'
 import Slots from './pages/Slots/Slots'
+import Partnership from './pages/Partnership/Partnership'
 import Trading from './pages/Trading/Trading'
 import WelcomeBonus from './components/WelcomeBonus'
 import './App.css'
@@ -33,6 +34,7 @@ export default function App() {
   const [tasksView, setTasksView] = useState('list')
   const [blockMsg, setBlockMsg] = useState(null)
   const [showSupport, setShowSupport] = useState(false)
+  const [showPartnership, setShowPartnership] = useState(false)
   const [gameScreen, setGameScreen] = useState(null) // null | 'spin'
   const { user, setUser } = useUserStore()
 
@@ -94,7 +96,7 @@ export default function App() {
       </div>
 
       <div className="app-content">
-        {tab === 'home'      && <Home      user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} />}
+        {tab === 'home'      && <Home      user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && <Referrals user={user} />}

@@ -72,6 +72,45 @@ const SETTING_GROUPS = [
   },
 ]
 
+function PartnershipAdmin() {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
+  useEffect(() => { load() }, [])
+
+  const approve = async (id) => { await api.post(`/api/partnership/approve/${id}`); load() }
+  const reject  = async (id) => { await api.post(`/api/partnership/reject/${id}`);  load() }
+
+  if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+  if (!items.length) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+      {items.map(p => (
+        <div key={p.id} style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:12}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>#{p.id}</span>
+            <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{p.username ? '@'+p.username : p.first_name}</span>
+            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,padding:'3px 8px',borderRadius:6,
+              background: p.status==='approved' ? 'rgba(0,230,118,0.15)' : p.status==='rejected' ? 'rgba(255,77,106,0.15)' : 'rgba(255,179,0,0.15)',
+              color: p.status==='approved' ? '#00e676' : p.status==='rejected' ? '#ff4d6a' : '#ffb300'
+            }}>{p.status==='approved'?'ОДОБРЕН':p.status==='rejected'?'ОТКЛ':'ОЖИДАЕТ'}</span>
+          </div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:4}}>📢 {p.channel_url}</div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:8}}>🔗 {p.post_url}</div>
+          {p.status === 'pending' && (
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={() => approve(p.id)} style={{flex:1,padding:'7px',border:'none',borderRadius:8,background:'rgba(0,230,118,0.2)',color:'#00e676',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>✅ ОДОБРИТЬ</button>
+              <button onClick={() => reject(p.id)}  style={{flex:1,padding:'7px',border:'none',borderRadius:8,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}>❌ ОТКЛОНИТЬ</button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function AdminChart({ data, metric }) {
   const canvasRef = useRef(null)
 
@@ -395,6 +434,7 @@ export default function Admin() {
           {id:'users',icon:'👥',label:'ЮЗЕРЫ'},
           {id:'support',icon:'💬',label:'ТИКЕТЫ'},
           {id:'news',icon:'📢',label:'НОВОСТИ'},
+          {id:'partnerships',icon:'🤝',label:'ПАРТНЁРЫ'},
           {id:'withdrawals',icon:'💸',label:`ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (
@@ -727,6 +767,13 @@ export default function Admin() {
       )}
 
       {/* SUPPORT */}
+      {tab === 'partnerships' && (
+        <div className="admin-section">
+          <div className="stats-section-title">🤝 ЗАЯВКИ НА ПАРТНЁРСТВО</div>
+          <PartnershipAdmin />
+        </div>
+      )}
+
       {tab === 'news' && (
         <div className="admin-section">
           <div className="stats-section-title">📢 НОВОСТИ ПРОЕКТА</div>
