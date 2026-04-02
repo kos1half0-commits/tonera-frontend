@@ -30,6 +30,14 @@ const SETTING_GROUPS = [
     ]
   },
   {
+    id: 'partnership',
+    title: '🤝 Партнёрство',
+    settings: [
+      { key: 'partnership_enabled',    label: 'Статус (0=откл, 1=вкл, 2=только админ)' },
+      { key: 'partnership_ref_percent', label: 'Реф. % для партнёров' },
+    ]
+  },
+  {
     id: 'staking',
     title: '📈 Стейкинг',
     settings: [

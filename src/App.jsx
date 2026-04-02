@@ -35,6 +35,7 @@ export default function App() {
   const [blockMsg, setBlockMsg] = useState(null)
   const [showSupport, setShowSupport] = useState(false)
   const [showPartnership, setShowPartnership] = useState(false)
+  const [partnershipStatus, setPartnershipStatus] = useState('1')
   const [gameScreen, setGameScreen] = useState(null) // null | 'spin'
   const { user, setUser } = useUserStore()
 
@@ -96,7 +97,7 @@ export default function App() {
       </div>
 
       <div className="app-content">
-        {tab === 'home'      && <Home      user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} />}
+        {tab === 'home'      && <Home      user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && <Referrals user={user} />}
