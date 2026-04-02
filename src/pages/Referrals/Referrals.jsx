@@ -87,7 +87,7 @@ export default function Referrals({ user }) {
                 <div className="ref-name">{r.username || r.first_name || 'Пользователь'}</div>
                 <div className="ref-date">{new Date(r.created_at).toLocaleDateString('ru')}</div>
               </div>
-              <div className="ref-bonus">+{regBonus.toFixed(4)} TON</div>
+              <div className="ref-bonus">+{parseFloat(r.earned || regBonus).toFixed(4)} TON</div>
             </div>
           ))}
         </div>
