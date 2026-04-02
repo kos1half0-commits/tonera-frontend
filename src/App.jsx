@@ -115,7 +115,7 @@ export default function App() {
       <WelcomeBonus onClaim={() => setTab('staking')} />
       <nav className="bottom-nav">
         {visibleTabs.map(t => (
-          <button key={t.id} className={`nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setGameScreen(null) }}>
+          <button key={t.id} className={`nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setGameScreen(null); setShowSupport(false); setShowPartnership(false) }}>
             <span className="nav-icon">{t.icon}</span>
             <span className="nav-label">{t.label}</span>
           </button>
