@@ -55,6 +55,7 @@ export default function Partnership({ onBack }) {
   }
 
   const botUsername = info?.bot_username || 'tonera_bot'
+  const refLink = info?.ref_code ? `t.me/${info.bot_username || 'tonera_bot'}?start=${info.ref_code}` : `t.me/${info?.bot_username || 'tonera_bot'}`
   const refPercent = info?.ref_percent || 30
   const p = info?.partnership
 
@@ -118,7 +119,7 @@ export default function Partnership({ onBack }) {
 ✅ Задания — выполняй и получай TON
 
 👇 Заходи прямо сейчас:
-t.me/${botUsername}`}</div>
+${refLink}`}</div>
             <div className="pe-instructions">
               <div className="pe-inst-title">📌 КАК ОПУБЛИКОВАТЬ</div>
               <div className="pe-inst-step"><span>1</span> Скачайте логотип кнопкой ниже</div>
@@ -140,7 +141,7 @@ t.me/${botUsername}`}</div>
 ✅ Задания — выполняй и получай TON
 
 👇 Заходи прямо сейчас:
-t.me/${botUsername}`
+${refLink}`
                 navigator.clipboard.writeText(text).then(() => {
                   setCopied(true)
                   setTimeout(() => setCopied(false), 3000)
@@ -157,7 +158,7 @@ t.me/${botUsername}`
               value={channelUrl} onChange={e => setChannelUrl(e.target.value)} />
 
             <div className="pf-label" style={{marginTop:12}}>ССЫЛКА НА ПОСТ С РЕКЛАМОЙ</div>
-            <div className="pf-hint">Пост должен содержать: t.me/{botUsername}</div>
+            <div className="pf-hint">Пост должен содержать: {refLink}</div>
             <div className="pf-post-row">
               <input className="pf-input" placeholder="https://t.me/yourchannel/123"
                 value={postUrl} onChange={e => { setPostUrl(e.target.value); setPostChecked(false) }} />
