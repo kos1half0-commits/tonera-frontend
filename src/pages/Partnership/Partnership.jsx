@@ -108,6 +108,7 @@ export default function Partnership({ onBack }) {
           </div>
 
           <div className="post-example">
+            <img src="/logo.png" className="pe-logo" alt="TonEra" />
             <div className="pe-label">ПРИМЕР ПОСТА</div>
             <div className="pe-text" id="post-example-text">{`🚀 Зарабатывай TON каждый день!
 
