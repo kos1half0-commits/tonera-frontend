@@ -129,8 +129,10 @@ export default function Partnership({ onBack }) {
                   <div className="ptb-edit-btns">
                     <button className="ptb-save-btn" onClick={async()=>{
                       await api.put(`/api/tasks/${task.id}`, { title: newTitle, description: newDesc })
+                      await new Promise(r => setTimeout(r, 300))
                       const r = await api.get(`/api/tasks/${task.id}`)
-                      setTask(r.data); setEditDesc(false)
+                      setTask({...r.data})
+                      setEditDesc(false)
                       showToast('✅ Задание обновлено')
                     }}>СОХРАНИТЬ</button>
                     <button className="ptb-cancel-btn" onClick={()=>setEditDesc(false)}>ОТМЕНА</button>
