@@ -8,6 +8,8 @@ const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'tonera_bot'
 export default function Referrals({ user }) {
   const [refs, setRefs] = useState([])
   const [regBonus, setRegBonus] = useState(0.001)
+  const [fromTasks, setFromTasks] = useState(0)
+  const [fromDeposits, setFromDeposits] = useState(0)
   const [earned, setEarned] = useState(0)
   const [copied, setCopied] = useState(false)
 
@@ -20,7 +22,12 @@ export default function Referrals({ user }) {
     getReferrals().then(r => {
       const data = r.data
       if (Array.isArray(data)) { setRefs(data) }
-      else { setRefs(data?.referrals || []); if (data?.earned !== undefined) setEarned(parseFloat(data.earned) || 0) }
+      else {
+        setRefs(data?.referrals || [])
+        if (data?.earned !== undefined) setEarned(parseFloat(data.earned) || 0)
+        if (data?.from_tasks !== undefined) setFromTasks(parseFloat(data.from_tasks) || 0)
+        if (data?.from_deposits !== undefined) setFromDeposits(parseFloat(data.from_deposits) || 0)
+      }
     }).catch(() => {})
 
     // Получаем заработок только от рефералов
@@ -47,6 +54,8 @@ export default function Referrals({ user }) {
       <div className="refs-stats">
         <div className="ref-stat"><div className="rsv">{refs.length}</div><div className="rsl">Приглашено</div></div>
         <div className="ref-stat"><div className="rsv">{earned.toFixed(4)}</div><div className="rsl">TON заработано</div></div>
+        <div className="ref-stat"><div className="rsv">{fromTasks.toFixed(4)}</div><div className="rsl">С заданий</div></div>
+        <div className="ref-stat"><div className="rsv">{fromDeposits.toFixed(4)}</div><div className="rsl">С депозитов</div></div>
       </div>
 
       <div className="invite-card">
