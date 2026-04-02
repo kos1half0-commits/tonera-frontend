@@ -81,6 +81,123 @@ const SETTING_GROUPS = [
   },
 ]
 
+function AdminTaskItem({ task: initialTask, onDelete, onRefresh }) {
+  const [task, setTask] = useState(initialTask)
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [title, setTitle] = useState(initialTask.title)
+  const [reward, setReward] = useState(initialTask.reward)
+  const [maxExec, setMaxExec] = useState(initialTask.max_executions || 0)
+  const [buyers, setBuyers] = useState([])
+  const [loadBuyers, setLoadBuyers] = useState(false)
+
+  const reload = async () => {
+    const r = await api.get(`/api/tasks/${task.id}`); setTask(r.data)
+  }
+
+  const openDetail = async () => {
+    setOpen(o => !o)
+    if (!open && buyers.length === 0) {
+      setLoadBuyers(true)
+      try {
+        const r = await api.get(`/api/admin/task-buyers/${task.id}`)
+        setBuyers(r.data || [])
+      } catch {}
+      setLoadBuyers(false)
+    }
+  }
+
+  const save = async () => {
+    await api.put(`/api/tasks/${task.id}`, { title, reward, max_executions: parseInt(maxExec) })
+    await reload(); setEditing(false); onRefresh()
+  }
+
+  const pause = async () => {
+    await api.put(`/api/tasks/${task.id}`, { active: !task.active })
+    await reload()
+  }
+
+  const S = {
+    btn: (c={}) => ({padding:'6px 10px',border:'none',borderRadius:7,fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer',...c}),
+    input: {width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'7px 10px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',marginBottom:6},
+    label: {fontFamily:'Orbitron,sans-serif',fontSize:8,color:'rgba(232,242,255,0.35)',letterSpacing:'.08em',display:'block',marginBottom:3},
+  }
+
+  return (
+    <div style={{background:'#0e1c3a',border:`1px solid ${task.active?'rgba(26,95,255,0.2)':'rgba(255,77,106,0.2)'}`,borderRadius:12,marginBottom:8,overflow:'hidden'}}>
+      {/* HEADER */}
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',cursor:'pointer'}} onClick={openDetail}>
+        {task.channel_photo
+          ? <img src={task.channel_photo} style={{width:36,height:36,borderRadius:8,objectFit:'cover',flexShrink:0}} onError={e=>e.target.style.display='none'}/>
+          : <div style={{width:36,height:36,borderRadius:8,background:'rgba(26,95,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>{task.icon}</div>
+        }
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{task.title}</div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,color:'#00d4ff'}}>+{task.reward} TON</span>
+            <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>{task.executions||0}/{task.max_executions||0} выполнений</span>
+            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,color:task.active?'#00e676':'#ff4d6a'}}>{task.active?'АКТИВНО':'ПАУЗА'}</span>
+          </div>
+        </div>
+        <span style={{color:'rgba(232,242,255,0.3)',fontSize:14,transition:'.2s',transform:open?'rotate(90deg)':'none'}}>›</span>
+      </div>
+
+      {/* DETAIL */}
+      {open && (
+        <div style={{padding:'0 12px 12px',borderTop:'1px solid rgba(26,95,255,0.08)'}}>
+          {editing ? (
+            <div style={{paddingTop:10}}>
+              <span style={S.label}>НАЗВАНИЕ</span>
+              <input style={S.input} value={title} onChange={e=>setTitle(e.target.value)}/>
+              <div style={{display:'flex',gap:8}}>
+                <div style={{flex:1}}>
+                  <span style={S.label}>НАГРАДА (TON)</span>
+                  <input style={S.input} type="number" step="0.001" value={reward} onChange={e=>setReward(e.target.value)}/>
+                </div>
+                <div style={{flex:1}}>
+                  <span style={S.label}>МАКС. ВЫПОЛНЕНИЙ</span>
+                  <input style={S.input} type="number" value={maxExec} onChange={e=>setMaxExec(e.target.value)}/>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={save}>✅ СОХРАНИТЬ</button>
+                <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>setEditing(false)}>✕ ОТМЕНА</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{display:'flex',gap:6,paddingTop:10,marginBottom:10}}>
+              <button style={S.btn({flex:1,background:'rgba(26,95,255,0.2)',color:'#00d4ff'})} onClick={()=>{setEditing(true);setTitle(task.title);setReward(task.reward);setMaxExec(task.max_executions||0)}}>✏️ РЕДАКТИРОВАТЬ</button>
+              <button style={S.btn({flex:1,background:task.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:task.active?'#ffb300':'#00e676'})} onClick={pause}>
+                {task.active?'⏸ ПАУЗА':'▶️ АКТИВИРОВАТЬ'}
+              </button>
+              <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})} onClick={()=>onDelete(task.id)}>🗑</button>
+            </div>
+          )}
+
+          {/* КТО ЗАКАЗАЛ */}
+          <div style={{marginTop:8}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.35)',letterSpacing:'.08em',marginBottom:6}}>КТО ВЫПОЛНИЛ ({buyers.length})</div>
+            {loadBuyers ? (
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+            ) : buyers.length === 0 ? (
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.25)'}}>Никто ещё не выполнил</div>
+            ) : (
+              <div style={{maxHeight:150,overflowY:'auto',display:'flex',flexDirection:'column',gap:4}}>
+                {buyers.map((b,i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'4px 0',borderBottom:'1px solid rgba(26,95,255,0.06)'}}>
+                    <span style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'#e8f2ff',flex:1}}>{b.username ? '@'+b.username : b.first_name}</span>
+                    <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)'}}>{new Date(b.completed_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PartnershipAdmin() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -807,18 +924,9 @@ export default function Admin() {
           <div className="tasks-list">
             {tasks.length === 0 && <div className="no-tasks">Нет заданий</div>}
             {tasks.map(task => (
-              <div key={task.id} className="admin-task-item">
-                {task.channel_photo ? <img src={task.channel_photo} className="ati-photo" onError={e=>e.target.style.display='none'}/> : <div className="ati-icon">{task.icon}</div>}
-                <div className="ati-info">
-                  <div className="ati-name">{task.title}</div>
-                  <div className="ati-meta">
-                    <span className={`ati-type ${task.type==='bot'?'type-bot':'type-sub'}`}>{task.type==='bot'?'БОТ':'ПОДПИСКА'}</span>
-                    <span className="ati-reward">+{task.reward} TON</span>
-                    <span className="ati-exec">{task.executions || 0} выполнений</span>
-                  </div>
-                </div>
-                <button className="ati-del" onClick={() => deleteTask(task.id)}>✕</button>
-              </div>
+              <AdminTaskItem key={task.id} task={task} onDelete={deleteTask} onRefresh={async()=>{
+                const r = await api.get('/api/admin/tasks'); setTasks(r.data)
+              }}/>
             ))}
           </div>
         </div>
