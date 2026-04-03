@@ -219,6 +219,10 @@ function PartnershipAdmin() {
   const [toast, setPartToast] = useState('')
   const [checkResult, setCheckResult] = useState(null)
   const [checking, setChecking] = useState(false)
+  const [templates, setTemplates] = useState([])
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [newTplTitle, setNewTplTitle] = useState('')
+  const [savingTpl, setSavingTpl] = useState(false)
 
   const showToast = (msg) => { setPartToast(msg); setTimeout(() => setPartToast(''), 3000) }
   const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
