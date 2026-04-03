@@ -223,6 +223,8 @@ function PartnershipAdmin() {
   const [showTemplates, setShowTemplates] = useState(false)
   const [newTplTitle, setNewTplTitle] = useState('')
   const [savingTpl, setSavingTpl] = useState(false)
+  const [postPhoto, setPostPhoto] = useState(null)
+  const [postPhotoPreview, setPostPhotoPreview] = useState(null)
 
   const showToast = (msg) => { setPartToast(msg); setTimeout(() => setPartToast(''), 3000) }
   const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
@@ -265,8 +267,18 @@ function PartnershipAdmin() {
   const sendPost = async () => {
     setPosting(true)
     try {
-      await api.post(`/api/partnership/post/${selected.id}`, { text: postText })
-      showToast('✅ Пост опубликован!'); setShowPost(false); setPostText('')
+      let photoData = null
+      if (postPhoto) {
+        photoData = await new Promise((res, rej) => {
+          const r = new FileReader()
+          r.onload = () => res(r.result)
+          r.onerror = rej
+          r.readAsDataURL(postPhoto)
+        })
+      }
+      await api.post(`/api/partnership/post/${selected.id}`, { text: postText, photo: photoData })
+      showToast('✅ Пост опубликован!')
+      setShowPost(false); setPostText(''); setPostPhoto(null); setPostPhotoPreview(null)
     } catch (e) { showToast('❌ ' + (e?.response?.data?.error || 'Ошибка')) }
     setPosting(false)
   }
@@ -374,6 +386,29 @@ function PartnershipAdmin() {
                   </div>
                 </div>
               )}
+              {/* ФОТО */}
+              <div style={{marginBottom:8}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)',letterSpacing:'.08em',marginBottom:4}}>ФОТО (НЕОБЯЗАТЕЛЬНО)</div>
+                {postPhotoPreview ? (
+                  <div style={{position:'relative',marginBottom:6}}>
+                    <img src={postPhotoPreview} style={{width:'100%',borderRadius:10,maxHeight:150,objectFit:'cover'}}/>
+                    <button onClick={()=>{setPostPhoto(null);setPostPhotoPreview(null)}}
+                      style={{position:'absolute',top:6,right:6,...S.btn({background:'rgba(255,77,106,0.8)',color:'#fff',fontSize:10})}}>✕</button>
+                  </div>
+                ) : (
+                  <label style={{display:'block',width:'100%',padding:'10px',border:'1px dashed rgba(26,95,255,0.3)',borderRadius:10,textAlign:'center',cursor:'pointer',color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans,sans-serif',fontSize:12}}>
+                    📷 Выбрать фото
+                    <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
+                      const file = e.target.files[0]
+                      if (!file) return
+                      setPostPhoto(file)
+                      const reader = new FileReader()
+                      reader.onload = ev => setPostPhotoPreview(ev.target.result)
+                      reader.readAsDataURL(file)
+                    }}/>
+                  </label>
+                )}
+              </div>
               <textarea value={postText} onChange={e=>setPostText(e.target.value)} rows={4}
                 placeholder="Текст поста (HTML: <b>, <i>, <a href=''>)"
                 style={{...S.input,resize:'none',marginBottom:6}}/>
