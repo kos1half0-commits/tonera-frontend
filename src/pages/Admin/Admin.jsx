@@ -366,6 +366,28 @@ function PartnershipAdmin() {
         </div>
       )}
 
+      {/* ПРОВЕРИТЬ */}
+      <div style={{marginBottom:10}}>
+        <button style={S.btn({width:'100%',background:'rgba(0,212,255,0.1)',color:'#00d4ff',border:'1px solid rgba(0,212,255,0.2)',marginBottom:6})}
+          onClick={async()=>{
+            setChecking(true); setCheckResult(null)
+            try {
+              const r = await api.post(`/api/partnership/check-status/${selected.id}`)
+              setCheckResult(r.data)
+            } catch (e) { setCheckResult({ ok: false, issues: ['❌ Ошибка: ' + (e?.response?.data?.error || 'нет связи')] }) }
+            setChecking(false)
+          }} disabled={checking}>
+          {checking ? '⏳ ПРОВЕРЯЮ...' : '🔍 ПРОВЕРИТЬ ПАРТНЁРА'}
+        </button>
+        {checkResult && (
+          <div style={{background:checkResult.ok?'rgba(0,230,118,0.08)':'rgba(255,77,106,0.08)',border:`1px solid ${checkResult.ok?'rgba(0,230,118,0.2)':'rgba(255,77,106,0.2)'}`,borderRadius:10,padding:'10px 12px'}}>
+            {checkResult.issues.map((iss,i) => (
+              <div key={i} style={{fontFamily:'DM Sans,sans-serif',fontSize:12,color:'#e8f2ff',marginBottom:3}}>{iss}</div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* УДАЛИТЬ */}
       <button style={S.btn({width:'100%',background:'rgba(255,77,106,0.1)',color:'#ff4d6a',border:'1px solid rgba(255,77,106,0.2)'})} onClick={deletePartner}>
         🗑 УДАЛИТЬ ПАРТНЁРА
