@@ -34,7 +34,6 @@ const SETTING_GROUPS = [
     title: '🤝 Партнёрство',
     settings: [
       { key: 'partnership_enabled',     label: 'Статус (0=откл, 1=вкл, 2=только админ)' },
-      { key: 'partnership_ref_percent',  label: 'Реф. % для партнёров' },
       { key: 'partnership_min_subs',     label: 'Мин. подписчиков канала' },
       { key: 'partnership_task_execs',   label: 'Макс. выполнений задания (авто)' },
     ]

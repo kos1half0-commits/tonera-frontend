@@ -66,7 +66,6 @@ export default function Partnership({ onBack }) {
 
   const botUsername = info?.bot_username || 'tonera_bot'
   const minSubs     = info?.min_subs || 1000
-  const refPercent  = info?.ref_percent || 30
   const refLink     = info?.ref_code
     ? `t.me/${botUsername}?start=${info.ref_code}`
     : `t.me/${botUsername}`
@@ -90,7 +89,7 @@ export default function Partnership({ onBack }) {
             <div className="ps-title">ВЫ ПАРТНЁР TONERA</div>
             <div className="ps-desc">Ваш канал добавлен в задания — пользователи подписываются</div>
             <div className="ps-channel">{p.channel_url}</div>
-            <div className="ps-bonus">Реф. процент: <b>{refPercent}%</b></div>
+  
           </div>
 
           {task && (
@@ -182,13 +181,7 @@ export default function Partnership({ onBack }) {
                 <div className="pb-item-desc">Ваш канал появится в заданиях TonEra — тысячи активных пользователей будут подписываться</div>
               </div>
             </div>
-            <div className="pb-item">
-              <div className="pb-icon">💰</div>
-              <div>
-                <div className="pb-item-title">Повышенный реф. %</div>
-                <div className="pb-item-desc">Получайте <b>{refPercent}%</b> с депозитов рефералов вместо стандартного процента</div>
-              </div>
-            </div>
+
             <div className="pb-item">
               <div className="pb-icon">📣</div>
               <div>
