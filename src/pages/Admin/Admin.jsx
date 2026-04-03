@@ -217,6 +217,8 @@ function PartnershipAdmin() {
   const [showPost, setShowPost] = useState(false)
   const [posting, setPosting] = useState(false)
   const [toast, setPartToast] = useState('')
+  const [checkResult, setCheckResult] = useState(null)
+  const [checking, setChecking] = useState(false)
 
   const showToast = (msg) => { setPartToast(msg); setTimeout(() => setPartToast(''), 3000) }
   const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
@@ -226,7 +228,7 @@ function PartnershipAdmin() {
   const reject  = async (id) => { await api.post(`/api/partnership/reject/${id}`);  load(); showToast('❌ Отклонено') }
 
   const openPartner = async (p) => {
-    setSelected(p); setTask(null); setEditTask(false); setShowPost(false)
+    setSelected(p); setTask(null); setEditTask(false); setShowPost(false); setCheckResult(null)
     if (p.task_id) {
       setTaskLoading(true)
       try {
