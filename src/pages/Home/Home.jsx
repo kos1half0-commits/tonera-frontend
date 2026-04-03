@@ -1,10 +1,34 @@
 import { useState, useEffect } from 'react'
 import { getUserStakes, getTasks } from '../../api/index'
 import api from '../../api/index'
+import { useUserStore } from '../../store/userStore'
 import './Home.css'
 
 export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', isAdmin=false }) {
   const [news, setNews] = useState([])
+  const [promoCode, setPromoCode] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoMsg, setPromoMsg] = useState('')
+  const [promoErr, setPromoErr] = useState(false)
+  const { updateBalance } = useUserStore()
+
+  const activatePromo = async () => {
+    if (!promoCode.trim()) return
+    setPromoLoading(true)
+    try {
+      const r = await api.post('/api/promo/activate', { code: promoCode })
+      setPromoMsg(`✅ Промокод активирован! +${parseFloat(r.data.amount).toFixed(4)} TON`)
+      setPromoErr(false)
+      setPromoCode('')
+      updateBalance(parseFloat(r.data.amount))
+    } catch (e) {
+      setPromoMsg(e?.response?.data?.error || 'Ошибка')
+      setPromoErr(true)
+    }
+    setPromoLoading(false)
+    setTimeout(() => setPromoMsg(''), 5000)
+  }
+
   useEffect(() => { api.get('/api/news').then(r => setNews(r.data || [])).catch(() => {}) }, [])
   const balance = parseFloat(user?.balance_ton ?? 0)
   const username = user?.username || user?.first_name || 'Пользователь'
@@ -113,6 +137,18 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
           ))}
         </div>
       )}
+
+      <div className="promo-block">
+        <div className="promo-input-row">
+          <input className="promo-input" placeholder="Введите промокод" value={promoCode}
+            onChange={e=>setPromoCode(e.target.value.toUpperCase())}
+            onKeyDown={e=>e.key==='Enter'&&activatePromo()}/>
+          <button className="promo-btn" onClick={activatePromo} disabled={promoLoading || !promoCode.trim()}>
+            {promoLoading ? '...' : '🎁'}
+          </button>
+        </div>
+        {promoMsg && <div className={`promo-msg ${promoErr?'err':''}`}>{promoMsg}</div>}
+      </div>
 
       <div className="section-title">Быстрые действия</div>
       <div className="qa-grid">
