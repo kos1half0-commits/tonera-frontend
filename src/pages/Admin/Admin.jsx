@@ -275,6 +275,9 @@ function PartnershipAdmin() {
           r.onerror = rej
           r.readAsDataURL(postPhoto)
         })
+      } else if (postPhotoPreview) {
+        // Фото из шаблона — уже base64
+        photoData = postPhotoPreview
       }
       await api.post(`/api/partnership/post/${selected.id}`, { text: postText, photo: photoData })
       showToast('✅ Пост опубликован!')
