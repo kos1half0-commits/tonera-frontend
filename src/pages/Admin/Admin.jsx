@@ -373,7 +373,7 @@ function PartnershipAdmin() {
                   <div style={{display:'flex',flexDirection:'column',gap:3,maxHeight:100,overflowY:'auto'}}>
                     {templates.map(t => (
                       <div key={t.id} style={{display:'flex',gap:4}}>
-                        <button onClick={()=>setPostText(t.text)} style={{...S.btn({flex:1,background:'rgba(26,95,255,0.1)',color:'#00d4ff',textAlign:'left',fontSize:9,padding:'5px 8px'})}}>
+                        <button onClick={()=>{ setPostText(t.text); if(t.photo_url){setPostPhotoPreview(t.photo_url)} else {setPostPhoto(null);setPostPhotoPreview(null)} }} style={{...S.btn({flex:1,background:'rgba(26,95,255,0.1)',color:'#00d4ff',textAlign:'left',fontSize:9,padding:'5px 8px'})}}>
                           📄 {t.title}
                         </button>
                         <button onClick={async()=>{
@@ -420,7 +420,7 @@ function PartnershipAdmin() {
                   <button style={S.btn({background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={async()=>{
                     if (!newTplTitle.trim() || !postText.trim()) return
                     setSavingTpl(true)
-                    await api.post('/api/partnership/templates', { title: newTplTitle, text: postText })
+                    await api.post('/api/partnership/templates', { title: newTplTitle, text: postText, photo_url: postPhotoPreview || null })
                     const r = await api.get('/api/partnership/templates')
                     setTemplates(r.data||[])
                     setNewTplTitle(''); setShowTemplates(false); setSavingTpl(false)
