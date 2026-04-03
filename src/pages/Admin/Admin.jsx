@@ -354,18 +354,63 @@ function PartnershipAdmin() {
           <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:8}}>📤 ПОСТ В КАНАЛ</div>
           {showPost ? (
             <>
+              {/* ШАБЛОНЫ */}
+              {templates.length > 0 && (
+                <div style={{marginBottom:8}}>
+                  <div style={{fontFamily:'Orbitron,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)',letterSpacing:'.08em',marginBottom:4}}>ШАБЛОНЫ</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:3,maxHeight:100,overflowY:'auto'}}>
+                    {templates.map(t => (
+                      <div key={t.id} style={{display:'flex',gap:4}}>
+                        <button onClick={()=>setPostText(t.text)} style={{...S.btn({flex:1,background:'rgba(26,95,255,0.1)',color:'#00d4ff',textAlign:'left',fontSize:9,padding:'5px 8px'})}}>
+                          📄 {t.title}
+                        </button>
+                        <button onClick={async()=>{
+                          await api.delete(`/api/partnership/templates/${t.id}`)
+                          const r = await api.get('/api/partnership/templates')
+                          setTemplates(r.data||[])
+                        }} style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a',fontSize:9,padding:'5px 8px'})}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <textarea value={postText} onChange={e=>setPostText(e.target.value)} rows={4}
                 placeholder="Текст поста (HTML: <b>, <i>, <a href=''>)"
                 style={{...S.input,resize:'none',marginBottom:6}}/>
+              {/* СОХРАНИТЬ КАК ШАБЛОН */}
+              {showTemplates ? (
+                <div style={{display:'flex',gap:6,marginBottom:6}}>
+                  <input value={newTplTitle} onChange={e=>setNewTplTitle(e.target.value)}
+                    placeholder="Название шаблона" style={{...S.input,marginBottom:0,flex:1,padding:'6px 10px'}}/>
+                  <button style={S.btn({background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={async()=>{
+                    if (!newTplTitle.trim() || !postText.trim()) return
+                    setSavingTpl(true)
+                    await api.post('/api/partnership/templates', { title: newTplTitle, text: postText })
+                    const r = await api.get('/api/partnership/templates')
+                    setTemplates(r.data||[])
+                    setNewTplTitle(''); setShowTemplates(false); setSavingTpl(false)
+                  }} disabled={savingTpl}>💾</button>
+                  <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})} onClick={()=>setShowTemplates(false)}>✕</button>
+                </div>
+              ) : (
+                <button style={{...S.btn({width:'100%',background:'transparent',color:'rgba(232,242,255,0.3)'}),border:'1px dashed rgba(26,95,255,0.2)',marginBottom:6}}
+                  onClick={()=>setShowTemplates(true)}>
+                  💾 СОХРАНИТЬ КАК ШАБЛОН
+                </button>
+              )}
               <div style={{display:'flex',gap:6}}>
                 <button style={S.btn({flex:1,background:'rgba(26,95,255,0.3)',color:'#00d4ff'})} onClick={sendPost} disabled={posting}>
                   {posting?'...':'📤 ОПУБЛИКОВАТЬ'}
                 </button>
-                <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>setShowPost(false)}>✕</button>
+                <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>{setShowPost(false);setShowTemplates(false)}}>✕</button>
               </div>
             </>
           ) : (
-            <button style={S.btn({width:'100%',background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={()=>setShowPost(true)}>
+            <button style={S.btn({width:'100%',background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={async()=>{
+              setShowPost(true)
+              const r = await api.get('/api/partnership/templates')
+              setTemplates(r.data||[])
+            }}>
               📝 НАПИСАТЬ ПОСТ
             </button>
           )}
