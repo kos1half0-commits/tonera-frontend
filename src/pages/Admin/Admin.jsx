@@ -119,7 +119,15 @@ function PromoAdmin() {
       <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:12}}>
         <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>СОЗДАТЬ ПРОМОКОД</div>
         <span style={S.label}>КОД</span>
-        <input style={S.input} value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="TONERA2024"/>
+        <div style={{display:'flex',gap:6}}>
+          <input style={{...S.input,flex:1}} value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="TONERA2024"/>
+          <button style={S.btn({background:'rgba(0,212,255,0.1)',color:'#00d4ff',border:'1px solid rgba(0,212,255,0.2)',flexShrink:0})}
+            onClick={()=>{
+              const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+              const gen = Array.from({length:8},()=>chars[Math.floor(Math.random()*chars.length)]).join('')
+              setCode(gen)
+            }}>🎲 ГЕНЕРИРОВАТЬ</button>
+        </div>
         <div style={{display:'flex',gap:8}}>
           <div style={{flex:1}}>
             <span style={S.label}>СУММА (TON)</span>
