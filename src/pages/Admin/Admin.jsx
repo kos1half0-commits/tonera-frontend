@@ -418,12 +418,16 @@ function PartnershipAdmin() {
                   <input value={newTplTitle} onChange={e=>setNewTplTitle(e.target.value)}
                     placeholder="Название шаблона" style={{...S.input,marginBottom:0,flex:1,padding:'6px 10px'}}/>
                   <button style={S.btn({background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={async()=>{
-                    if (!newTplTitle.trim() || !postText.trim()) return
+                    if (!newTplTitle.trim()) { showToast('Введите название шаблона'); return }
                     setSavingTpl(true)
-                    await api.post('/api/partnership/templates', { title: newTplTitle, text: postText, photo_url: postPhotoPreview || null })
-                    const r = await api.get('/api/partnership/templates')
-                    setTemplates(r.data||[])
-                    setNewTplTitle(''); setShowTemplates(false); setSavingTpl(false)
+                    try {
+                      await api.post('/api/partnership/templates', { title: newTplTitle, text: postText, photo_url: postPhotoPreview || null })
+                      const r = await api.get('/api/partnership/templates')
+                      setTemplates(r.data||[])
+                      setNewTplTitle(''); setShowTemplates(false)
+                      showToast('✅ Шаблон сохранён')
+                    } catch (e) { showToast('❌ ' + (e?.response?.data?.error || 'Ошибка')) }
+                    setSavingTpl(false)
                   }} disabled={savingTpl}>💾</button>
                   <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})} onClick={()=>setShowTemplates(false)}>✕</button>
                 </div>
