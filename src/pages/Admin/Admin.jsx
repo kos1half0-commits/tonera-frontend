@@ -762,6 +762,8 @@ export default function Admin() {
       setTickets(sup.data || [])
       const nws = await api.get('/api/news')
       setNews(nws.data || [])
+      const tpl = await api.get('/api/admin/task-templates')
+      setTaskTemplates(tpl.data || [])
     } catch {}
   }
 
@@ -1096,7 +1098,56 @@ export default function Admin() {
       {tab === 'tasks' && (
         <div className="admin-section">
           <div className="add-task-form">
-            <div className="atf-title">ДОБАВИТЬ ЗАДАНИЕ</div>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+              <div className="atf-title" style={{marginBottom:0}}>ДОБАВИТЬ ЗАДАНИЕ</div>
+              <button style={{padding:'5px 10px',border:'1px solid rgba(0,212,255,0.3)',borderRadius:8,background:'rgba(0,212,255,0.08)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer'}}
+                onClick={async()=>{
+                  setShowTaskTemplates(t=>!t)
+                  if (!showTaskTemplates) {
+                    const r = await api.get('/api/admin/task-templates')
+                    setTaskTemplates(r.data||[])
+                  }
+                }}>
+                📋 ШАБЛОНЫ
+              </button>
+            </div>
+            {showTaskTemplates && (
+              <div style={{marginBottom:12,background:'#060f2a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:10}}>
+                {taskTemplates.length === 0 ? (
+                  <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.3)',textAlign:'center',padding:'8px 0'}}>Нет шаблонов</div>
+                ) : taskTemplates.map(t => (
+                  <div key={t.id} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid rgba(26,95,255,0.08)'}}>
+                    {t.channel_photo ? <img src={t.channel_photo} style={{width:28,height:28,borderRadius:6,objectFit:'cover'}} onError={e=>e.target.style.display='none'}/> : <span style={{fontSize:16}}>{t.icon}</span>}
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.title}</div>
+                      <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{t.type==='bot'?'БОТ':'ПОДПИСКА'} · {t.reward} TON</div>
+                    </div>
+                    <button onClick={()=>{
+                      setForm({title:t.title,link:t.link||'',type:t.type||'subscribe',icon:t.icon||'✈️',channel_title:t.channel_title||'',channel_photo:t.channel_photo||''})
+                      setShowTaskTemplates(false)
+                    }} style={{padding:'4px 8px',border:'none',borderRadius:6,background:'rgba(26,95,255,0.2)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer'}}>
+                      ПРИМЕНИТЬ
+                    </button>
+                    <button onClick={async()=>{
+                      await api.delete(`/api/admin/task-templates/${t.id}`)
+                      const r = await api.get('/api/admin/task-templates')
+                      setTaskTemplates(r.data||[])
+                    }} style={{padding:'4px 6px',border:'none',borderRadius:6,background:'rgba(255,77,106,0.1)',color:'#ff4d6a',cursor:'pointer',fontSize:10}}>✕</button>
+                  </div>
+                ))}
+                {/* Сохранить текущую форму как шаблон */}
+                {form.title && (
+                  <button onClick={async()=>{
+                    await api.post('/api/admin/task-templates', form)
+                    const r = await api.get('/api/admin/task-templates')
+                    setTaskTemplates(r.data||[])
+                    showToast('✅ Шаблон сохранён')
+                  }} style={{width:'100%',marginTop:8,padding:'7px',border:'1px dashed rgba(26,95,255,0.3)',borderRadius:8,background:'transparent',color:'rgba(232,242,255,0.4)',fontFamily:'Orbitron,sans-serif',fontSize:8,cursor:'pointer'}}>
+                    💾 СОХРАНИТЬ ТЕКУЩУЮ ФОРМУ КАК ШАБЛОН
+                  </button>
+                )}
+              </div>
+            )}
             <div className="atf-row">
               <label className="atf-label">ТИП</label>
               <div className="type-btns">
