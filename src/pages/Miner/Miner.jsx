@@ -13,6 +13,8 @@ export default function Miner({ onBack, isAdmin }) {
   const [payingElec, setPayingElec] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [elecDays, setElecDays] = useState(1)
+  const [collectWallet, setCollectWallet] = useState('')
+  const [showCollectInput, setShowCollectInput] = useState(false)
   const [pending, setPending] = useState(0)
   const [projectWallet, setProjectWallet] = useState('')
   const timerRef = useRef(null)
@@ -72,11 +74,13 @@ export default function Miner({ onBack, isAdmin }) {
   }
 
   const collect = async () => {
+    if (!collectWallet.trim()) { showToast('Введите адрес TON кошелька', true); return }
     setCollecting(true)
     try {
-      const r = await api.post('/api/miner/collect')
+      const r = await api.post('/api/miner/collect', { wallet_address: collectWallet })
       await load()
-      showToast(`✅ Собрано ${parseFloat(r.data.earned).toFixed(6)} TON!`)
+      showToast(`✅ Запрос на вывод ${parseFloat(r.data.earned).toFixed(6)} TON создан!`)
+      setShowCollectInput(false)
     } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
     setCollecting(false)
   }
@@ -92,24 +96,35 @@ export default function Miner({ onBack, isAdmin }) {
   }
 
   const upgrade = async () => {
+    if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); return }
+    if (!projectWallet) { showToast('Кошелёк проекта не настроен', true); return }
     setUpgrading(true)
     try {
-      const r = await api.post('/api/miner/upgrade')
+      const upgradePrice = miner?.upgradePrice ?? s.upgradePrice ?? 0.5
+      const amountNano = Math.floor(upgradePrice * 1e9).toString()
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [{ address: projectWallet, amount: amountNano }]
+      })
+      await api.post('/api/miner/upgrade', { tx_hash: result?.boc || '' })
       await load()
-      showToast(`✅ Апгрейд до уровня ${r.data.newLevel}!`)
-    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+      showToast(`✅ Апгрейд выполнен!`)
+    } catch (e) {
+      if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('ОТМЕНЕНО', true)
+      else showToast(e?.response?.data?.error || e?.message || 'Ошибка', true)
+    }
     setUpgrading(false)
   }
 
   if (loading) return <div className="miner-wrap"><div className="miner-loading">⛏ Загрузка...</div></div>
 
-  const settings = data?.settings || {}
+  const s = data?.settings || {}
   const miner = data?.miner
-  const enabled = settings?.enabled ?? 0
-  const price = settings?.price ?? 1
-  const speedBase = settings?.speedBase ?? 0.001
-  const electricityCost = settings?.electricityCost ?? 0.01
-  const electricityHours = settings?.electricityHours ?? 24
+  const enabled = s?.enabled ?? 0
+  const price = s?.price ?? 1
+  const speedBase = s?.speedBase ?? 0.001
+  const electricityCost = s?.electricityCost ?? 0.01
+  const electricityHours = s?.electricityHours ?? 24
 
   if (minerEnabled === 0) {
     return (
@@ -159,9 +174,26 @@ export default function Miner({ onBack, isAdmin }) {
           <div className="miner-pending">
             <div className="mp-label">НАМАЙНЕНО</div>
             <div className="mp-value">{pending.toFixed(8)} TON</div>
-            <button className="mp-collect-btn" onClick={collect} disabled={collecting || !miner.isActive || pending < 0.000001}>
-              {collecting ? '...' : '💰 СОБРАТЬ'}
-            </button>
+            {showCollectInput ? (
+              <div style={{marginTop:10}}>
+                <input
+                  value={collectWallet}
+                  onChange={e=>setCollectWallet(e.target.value)}
+                  placeholder="Адрес TON кошелька"
+                  style={{width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:10,padding:'10px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',marginBottom:8}}
+                />
+                <div style={{display:'flex',gap:8}}>
+                  <button className="mp-collect-btn" style={{flex:1}} onClick={collect} disabled={collecting || !miner.isActive || pending < 0.0001}>
+                    {collecting ? '...' : '💰 ВЫВЕСТИ'}
+                  </button>
+                  <button onClick={()=>setShowCollectInput(false)} style={{padding:'10px 14px',border:'none',borderRadius:10,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',cursor:'pointer',fontSize:12}}>✕</button>
+                </div>
+              </div>
+            ) : (
+              <button className="mp-collect-btn" onClick={()=>setShowCollectInput(true)} disabled={!miner.isActive || pending < 0.0001}>
+                💰 ВЫВЕСТИ НА КОШЕЛЁК
+              </button>
+            )}
           </div>
 
           <div className="miner-info">
