@@ -44,3 +44,10 @@
 .mu-info{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.5);margin-bottom:12px;line-height:1.5;}
 .mu-btn{width:100%;padding:13px;border:1px solid rgba(26,95,255,0.3);border-radius:12px;background:rgba(26,95,255,0.15);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;}
 .mu-btn:disabled{opacity:.4;cursor:not-allowed;}
+.miner-elec-block{background:#0e1c3a;border:1px solid rgba(255,179,0,0.2);border-radius:14px;padding:14px;margin-bottom:12px;}
+.meb-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:#ffb300;margin-bottom:6px;}
+.meb-info{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.5);margin-bottom:4px;}
+.meb-cost{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.4);margin-bottom:10px;}
+.meb-days{display:flex;gap:6px;margin-bottom:10px;}
+.meb-day-btn{flex:1;padding:7px 4px;border:1px solid rgba(255,179,0,0.2);border-radius:8px;background:transparent;color:rgba(232,242,255,0.4);font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;cursor:pointer;}
+.meb-day-btn.on{border-color:#ffb300;background:rgba(255,179,0,0.1);color:#ffb300;}

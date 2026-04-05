@@ -12,6 +12,7 @@ export default function Miner({ onBack, isAdmin }) {
   const [collecting, setCollecting] = useState(false)
   const [payingElec, setPayingElec] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
+  const [elecDays, setElecDays] = useState(1)
   const [pending, setPending] = useState(0)
   const [projectWallet, setProjectWallet] = useState('')
   const timerRef = useRef(null)
@@ -80,10 +81,13 @@ export default function Miner({ onBack, isAdmin }) {
     setCollecting(false)
   }
 
-  const payElectricity = async () => {
+  const payElectricity = async (days) => {
     setPayingElec(true)
-    try { await api.post('/api/miner/electricity'); await load(); showToast('✅ Электричество оплачено!') }
-    catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+    try {
+      const r = await api.post('/api/miner/electricity', { days })
+      await load()
+      showToast(`✅ Оплачено на ${days} дн. (${parseFloat(r.data.cost).toFixed(4)} TON)`)
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
     setPayingElec(false)
   }
 
@@ -164,13 +168,31 @@ export default function Miner({ onBack, isAdmin }) {
             <div className="mi-row"><span>Уровень</span><b>LVL {miner.level}</b></div>
             <div className="mi-row"><span>Скорость</span><b>{parseFloat(miner.speed).toFixed(6)} TON/час</b></div>
             <div className="mi-row"><span>Электричество</span><b>{miner.hoursElectricity}ч / {electricityHours}ч</b></div>
+            <div className="mi-row"><span>Стоимость эл-ва</span><b>{parseFloat(miner.electricityCost ?? electricityCost).toFixed(4)} TON</b></div>
           </div>
 
-          {miner.electricityDue && (
-            <button className="miner-elec-btn" onClick={payElectricity} disabled={payingElec}>
-              {payingElec ? '...' : `⚡ ОПЛАТИТЬ ${electricityCost} TON`}
+          <div className="miner-elec-block">
+            <div className="meb-title">⚡ ОПЛАТА ЭЛЕКТРИЧЕСТВА</div>
+            <div className="meb-info">
+              {miner.electricityDue
+                ? '⚠️ Майнер остановлен — требуется оплата'
+                : `✅ Оплачено. Можно продлить заранее`}
+            </div>
+            <div className="meb-cost">
+              {parseFloat(miner.electricityCostPerDay ?? (parseFloat(miner.speed)*24*0.1)).toFixed(6)} TON/день
+              ({miner.electricityPercent ?? 10}% от заработка)
+            </div>
+            <div className="meb-days">
+              {[1,2,4,8,16,32].map(d => (
+                <button key={d} className={`meb-day-btn ${elecDays===d?'on':''}`} onClick={()=>setElecDays(d)}>
+                  {d}д
+                </button>
+              ))}
+            </div>
+            <button className="miner-elec-btn" onClick={()=>payElectricity(elecDays)} disabled={payingElec}>
+              {payingElec ? '...' : `⚡ ОПЛАТИТЬ НА ${elecDays} ДНЕЙ — ${(parseFloat(miner.electricityCostPerDay ?? parseFloat(miner.speed)*24*0.1)*elecDays).toFixed(4)} TON`}
             </button>
-          )}
+          </div>
 
           <div className="miner-upgrade">
             <div className="mu-title">АПГРЕЙД МАЙНЕРА</div>
