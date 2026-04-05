@@ -32,9 +32,12 @@ export default function Miner({ onBack, isAdmin }) {
     setLoading(false)
   }
 
+  const [minerEnabled, setMinerEnabled] = useState(1)
+
   useEffect(() => {
     load()
     api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet || '')).catch(()=>{})
+    api.get('/api/settings/miner_enabled').then(r => setMinerEnabled(parseInt(r.data?.value ?? 1))).catch(()=>{})
   }, [])
 
   useEffect(() => {
@@ -104,8 +107,7 @@ export default function Miner({ onBack, isAdmin }) {
   const electricityCost = settings?.electricityCost ?? 0.01
   const electricityHours = settings?.electricityHours ?? 24
 
-  console.log('MINER FRONTEND:', JSON.stringify({blocked: data?.blocked, enabled, isAdmin}))
-  if (data?.blocked || enabled === 0) {
+  if (minerEnabled === 0) {
     return (
       <div className="miner-wrap">
         <div className="miner-header">
