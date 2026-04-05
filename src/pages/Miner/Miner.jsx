@@ -13,30 +13,30 @@ export default function Miner({ onBack, isAdmin }) {
   const [payingElec, setPayingElec] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [pending, setPending] = useState(0)
-  const [tonConnectUI] = useTonConnectUI()
   const [projectWallet, setProjectWallet] = useState('')
   const timerRef = useRef(null)
+  const [tonConnectUI] = useTonConnectUI()
 
   const showToast = (msg, err=false) => {
     setToast(msg); setToastErr(err)
     setTimeout(() => setToast(''), 4000)
   }
 
-  useEffect(() => { api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet || '')).catch(()=>{}) }, [])
-
   const load = async () => {
     try {
       const r = await api.get('/api/miner/status')
       setData(r.data)
       setPending(r.data.miner?.pendingTon || 0)
-    } catch {}
+    } catch(e) { console.log('load err:', e.message) }
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet || '')).catch(()=>{})
+  }, [])
 
   useEffect(() => {
-    clearInterval(timerRef.current)
     if (!data?.miner?.isActive) return
     const speed = parseFloat(data.miner.speed)
     timerRef.current = setInterval(() => {
@@ -49,7 +49,8 @@ export default function Miner({ onBack, isAdmin }) {
     if (!projectWallet) { showToast('Кошелёк не настроен', true); return }
     setBuying(true)
     try {
-      const amountNano = Math.floor(s.price * 1e9).toString()
+      const price = data?.settings?.price ?? 1
+      const amountNano = Math.floor(price * 1e9).toString()
       const result = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 300,
         messages: [{ address: projectWallet, amount: amountNano }]
@@ -58,8 +59,9 @@ export default function Miner({ onBack, isAdmin }) {
       await load()
       showToast('✅ Майнер куплен!')
     } catch (e) {
-      if (e?.message?.includes('User rejects')) showToast('ОТМЕНЕНО', true)
-      else { console.log('BUY ERR:', e?.message, e?.response?.data); showToast(e?.response?.data?.error || e?.message || 'Ошибка', true) }
+      if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('ОТМЕНЕНО', true)
+      else showToast(e?.response?.data?.error || e?.message || 'Ошибка покупки', true)
+      console.log('BUY ERR:', e?.message, e?.response?.data)
     }
     setBuying(false)
   }
@@ -91,21 +93,15 @@ export default function Miner({ onBack, isAdmin }) {
     setUpgrading(false)
   }
 
-  if (loading) return (
-    <div className="miner-wrap">
-      <div className="miner-loading">⛏ Загрузка...</div>
-    </div>
-  )
+  if (loading) return <div className="miner-wrap"><div className="miner-loading">⛏ Загрузка...</div></div>
 
-  const { settings, hasDeposit, miner } = data || {}
-  const s = {
-    price: settings?.price ?? 1,
-    speedBase: settings?.speedBase ?? 0.001,
-    electricityCost: settings?.electricityCost ?? 0.01,
-    electricityHours: settings?.electricityHours ?? 24,
-    upgradeMultiplier: settings?.upgradeMultiplier ?? 1.5,
-  }
-  const enabled = settings?.enabled
+  const settings = data?.settings || {}
+  const miner = data?.miner
+  const enabled = settings?.enabled ?? 0
+  const price = settings?.price ?? 1
+  const speedBase = settings?.speedBase ?? 0.001
+  const electricityCost = settings?.electricityCost ?? 0.01
+  const electricityHours = settings?.electricityHours ?? 24
 
   if (enabled === 0 || (enabled === 2 && !isAdmin)) {
     return (
@@ -138,17 +134,11 @@ export default function Miner({ onBack, isAdmin }) {
           <div className="mb-title">КУПИТЬ МАЙНЕР</div>
           <div className="mb-desc">Начни добывать TON автоматически 24/7</div>
           <div className="mb-stats">
-            <div className="mb-stat">
-              <div className="mb-sv">{s.speedBase} TON</div>
-              <div className="mb-sl">в час</div>
-            </div>
-            <div className="mb-stat">
-              <div className="mb-sv">{s.electricityCost} TON</div>
-              <div className="mb-sl">электричество/{s.electricityHours}ч</div>
-            </div>
+            <div className="mb-stat"><div className="mb-sv">{speedBase} TON</div><div className="mb-sl">в час</div></div>
+            <div className="mb-stat"><div className="mb-sv">{electricityCost} TON</div><div className="mb-sl">электричество/{electricityHours}ч</div></div>
           </div>
           <button className="mb-buy-btn" onClick={buy} disabled={buying}>
-            {buying ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${s.price} TON`}
+            {buying ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${price} TON`}
           </button>
         </div>
       ) : (
@@ -170,12 +160,12 @@ export default function Miner({ onBack, isAdmin }) {
           <div className="miner-info">
             <div className="mi-row"><span>Уровень</span><b>LVL {miner.level}</b></div>
             <div className="mi-row"><span>Скорость</span><b>{parseFloat(miner.speed).toFixed(6)} TON/час</b></div>
-            <div className="mi-row"><span>Электричество</span><b>{miner.hoursElectricity}ч / {settings?.electricityHours}ч</b></div>
+            <div className="mi-row"><span>Электричество</span><b>{miner.hoursElectricity}ч / {electricityHours}ч</b></div>
           </div>
 
           {miner.electricityDue && (
             <button className="miner-elec-btn" onClick={payElectricity} disabled={payingElec}>
-              {payingElec ? '...' : `⚡ ОПЛАТИТЬ ${s.electricityCost} TON`}
+              {payingElec ? '...' : `⚡ ОПЛАТИТЬ ${electricityCost} TON`}
             </button>
           )}
 
