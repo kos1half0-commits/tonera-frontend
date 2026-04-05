@@ -1574,6 +1574,7 @@ export default function Admin() {
               <button className={`utab ${usersTab==='traders'?'on':''}`} onClick={() => setUsersTab('traders')}>📊 ТРЕЙДЕРЫ</button>
               <button className={`utab ${usersTab==='spinners'?'on':''}`} onClick={() => setUsersTab('spinners')}>🎰 СПИНЕРЫ</button>
               <button className={`utab ${usersTab==='sloters'?'on':''}`} onClick={() => setUsersTab('sloters')}>🎰 СЛОТЕРЫ</button>
+              <button className={`utab ${usersTab==='stakers'?'on':''}`} onClick={() => setUsersTab('stakers')}>💰 СТЕЙКЕРЫ</button>
             </div>
             <div className="sort-btns">
               {[{k:'created_at',l:'ДАТА'},{k:'balance_ton',l:'БАЛАНС'},{k:'referral_count',l:'РЕФЫ'}].map(s => (
@@ -1590,6 +1591,7 @@ export default function Admin() {
               if (usersTab === 'traders') return parseInt(u.trading_count || 0) > 0
               if (usersTab === 'spinners') return parseInt(u.spin_count || 0) > 0
               if (usersTab === 'sloters') return parseInt(u.slots_count || 0) > 0
+              if (usersTab === 'stakers') return parseFloat(u.staking_amount || 0) > 0
               if (usersTab === 'slotters') return parseInt(u.slots_count || 0) > 0
               const q = search.toLowerCase()
               return !q || (u.username||'').toLowerCase().includes(q) || (u.first_name||'').toLowerCase().includes(q) || String(u.telegram_id).includes(q)
@@ -1616,6 +1618,12 @@ export default function Admin() {
                 )}
                 {usersTab === 'spinners' && parseInt(u.spin_count||0) > 0 && (
                   <div className="aui-meta" style={{color:'#ffb300',marginTop:2}}>🎰 Спинов: {u.spin_count} · Потрачено: {parseFloat(u.spin_volume||0).toFixed(4)} TON</div>
+                )}
+                {usersTab === 'stakers' && parseFloat(u.staking_amount||0) > 0 && (
+                  <div className="uu-extra">
+                    <span>💰 В стейке: <b>{parseFloat(u.staking_amount).toFixed(4)} TON</b></span>
+                    <span>📊 Активных: <b>{u.staking_count}</b></span>
+                  </div>
                 )}
                 {usersTab === 'sloters' && parseInt(u.slots_count||0) > 0 && (
                   <div className="aui-meta" style={{color:'#a855f7',marginTop:2}}>🎰 Слотов: {u.slots_count} · Потрачено: {parseFloat(u.slots_volume||0).toFixed(4)} TON</div>
