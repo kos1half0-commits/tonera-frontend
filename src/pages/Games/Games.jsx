@@ -17,11 +17,13 @@ export default function Games({ onGame, isAdmin = false }) {
       api.get('/api/spin/info'),
       api.get('/api/trading/info'),
       api.get('/api/slots/info'),
-    ]).then(([spin, trading, slots]) => {
+      api.get('/api/miner/status'),
+    ]).then(([spin, trading, slots, miner]) => {
       setStatuses({
         spin_enabled:    String(spin.data?.spin_enabled    ?? '1'),
         trading_enabled: String(trading.data?.trading_enabled ?? '1'),
         slots_enabled:   String(slots.data?.slots_enabled  ?? '1'),
+        miner_enabled:   String(miner.data?.settings?.enabled ?? '0'),
       })
     }).catch(() => {})
   }, [])
