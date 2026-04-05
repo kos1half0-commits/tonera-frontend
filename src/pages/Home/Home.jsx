@@ -4,7 +4,7 @@ import api from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Home.css'
 
-export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', isAdmin=false }) {
+export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', isAdmin=false }) {
   const [news, setNews] = useState([])
   const [promoCode, setPromoCode] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
@@ -176,6 +176,12 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
         <div className="qa" onClick={onPartnership}>
           <div className="qa-icon si-gold"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
           <div className="qa-lbl">ПАРТНЁРСТВО</div>
+        </div>
+        )}
+        {(minerStatus==='1' || (minerStatus==='2' && isAdmin)) && (
+        <div className="qa" onClick={onMiner}>
+          <div className="qa-icon si-cyan">⛏</div>
+          <div className="qa-lbl">МАЙНИНГ</div>
         </div>
         )}
       </div>

@@ -37,6 +37,7 @@ export default function App() {
   const [showSupport, setShowSupport] = useState(false)
   const [showPartnership, setShowPartnership] = useState(false)
   const [partnershipStatus, setPartnershipStatus] = useState('1')
+  const [minerStatus, setMinerStatus] = useState('0')
   const [gameScreen, setGameScreen] = useState(null) // null | 'spin'
   const { user, setUser } = useUserStore()
 
@@ -60,6 +61,7 @@ export default function App() {
   useEffect(() => { api.get('/api/spin/info').then(r => setSpinEnabled(r.data?.spin_enabled !== '0')).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/trading/info').then(r => setTradingStatus(String(r.data?.trading_enabled ?? '1'))).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/partnership/status').then(r => setPartnershipStatus(String(r.data?.value ?? '1'))).catch(()=>{}) }, [])
+  useEffect(() => { api.get('/api/miner/status').then(r => setMinerStatus(String(r.data?.settings?.enabled ?? '0'))).catch(()=>{}) }, [])
   const visibleTabs = TABS.filter(t => (t.id !== 'admin' || isAdmin) && t.id !== 'customer' && (t.id !== 'games' || true))
   const balance = parseFloat(user?.balance_ton ?? 0)
 
@@ -101,7 +103,7 @@ export default function App() {
       <div className="app-content">
         {showSupport && <Support onBack={() => setShowSupport(false)} />}
         {showPartnership && <Partnership onBack={() => setShowPartnership(false)} />}
-        {!showSupport && !showPartnership && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} isAdmin={isAdmin} />}
+        {!showSupport && !showPartnership && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} onMiner={() => setPage('miner')} minerStatus={minerStatus} isAdmin={isAdmin} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && <Referrals user={user} />}

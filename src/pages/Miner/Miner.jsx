@@ -24,17 +24,17 @@ export default function Miner({ onBack, isAdmin }) {
       const r = await api.get('/api/miner/status')
       setData(r.data)
       setPending(r.data.miner?.pendingTon || 0)
-    } catch { }
+    } catch {}
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
 
-  // Обновляем pending каждую секунду
   useEffect(() => {
+    clearInterval(timerRef.current)
     if (!data?.miner?.isActive) return
+    const speed = parseFloat(data.miner.speed)
     timerRef.current = setInterval(() => {
-      const speed = parseFloat(data.miner.speed)
       setPending(p => p + speed / 3600)
     }, 1000)
     return () => clearInterval(timerRef.current)
@@ -74,7 +74,11 @@ export default function Miner({ onBack, isAdmin }) {
     setUpgrading(false)
   }
 
-  if (loading) return <div className="miner-wrap"><div className="miner-loading">⛏ Загрузка...</div></div>
+  if (loading) return (
+    <div className="miner-wrap">
+      <div className="miner-loading">⛏ Загрузка...</div>
+    </div>
+  )
 
   const { settings, hasDeposit, miner } = data || {}
   const enabled = settings?.enabled
@@ -126,23 +130,27 @@ export default function Miner({ onBack, isAdmin }) {
           <div className="mb-title">КУПИТЬ МАЙНЕР</div>
           <div className="mb-desc">Начни добывать TON автоматически 24/7</div>
           <div className="mb-stats">
-            <div className="mb-stat"><div className="mb-sv">{settings.speedBase} TON</div><div className="mb-sl">в час</div></div>
-            <div className="mb-stat"><div className="mb-sv">{settings.electricityCost} TON</div><div className="mb-sl">электричество/{settings.electricityHours}ч</div></div>
+            <div className="mb-stat">
+              <div className="mb-sv">{settings?.speedBase} TON</div>
+              <div className="mb-sl">в час</div>
+            </div>
+            <div className="mb-stat">
+              <div className="mb-sv">{settings?.electricityCost} TON</div>
+              <div className="mb-sl">электричество/{settings?.electricityHours}ч</div>
+            </div>
           </div>
           <button className="mb-buy-btn" onClick={buy} disabled={buying}>
-            {buying ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${settings.price} TON`}
+            {buying ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${settings?.price} TON`}
           </button>
         </div>
       ) : (
         <>
-          {/* СТАТУС */}
           <div className={`miner-status-block ${miner.isActive ? 'active' : 'stopped'}`}>
             <div className="msb-icon">{miner.isActive ? '⛏' : '⏸'}</div>
             <div className="msb-status">{miner.isActive ? 'МАЙНИНГ АКТИВЕН' : 'МАЙНЕР ОСТАНОВЛЕН'}</div>
             {miner.electricityDue && <div className="msb-warn">⚡ Требуется оплата электричества</div>}
           </div>
 
-          {/* НАМАЙНЕНО */}
           <div className="miner-pending">
             <div className="mp-label">НАМАЙНЕНО</div>
             <div className="mp-value">{pending.toFixed(8)} TON</div>
@@ -151,21 +159,18 @@ export default function Miner({ onBack, isAdmin }) {
             </button>
           </div>
 
-          {/* ИНФО */}
           <div className="miner-info">
             <div className="mi-row"><span>Уровень</span><b>LVL {miner.level}</b></div>
             <div className="mi-row"><span>Скорость</span><b>{parseFloat(miner.speed).toFixed(6)} TON/час</b></div>
-            <div className="mi-row"><span>Электричество</span><b>{miner.hoursElectricity}ч / {settings.electricityHours}ч</b></div>
+            <div className="mi-row"><span>Электричество</span><b>{miner.hoursElectricity}ч / {settings?.electricityHours}ч</b></div>
           </div>
 
-          {/* ЭЛЕКТРИЧЕСТВО */}
           {miner.electricityDue && (
             <button className="miner-elec-btn" onClick={payElectricity} disabled={payingElec}>
-              {payingElec ? '...' : `⚡ ОПЛАТИТЬ ${settings.electricityCost} TON`}
+              {payingElec ? '...' : `⚡ ОПЛАТИТЬ ${settings?.electricityCost} TON`}
             </button>
           )}
 
-          {/* АПГРЕЙД */}
           <div className="miner-upgrade">
             <div className="mu-title">АПГРЕЙД МАЙНЕРА</div>
             <div className="mu-info">

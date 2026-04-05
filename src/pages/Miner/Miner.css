@@ -1,60 +1,46 @@
 .miner-wrap{padding:12px 12px 100px;max-width:420px;margin:0 auto;overflow-y:auto;height:100%;}
-.miner-loading{text-align:center;padding:40px;font-family:'Orbitron',sans-serif;color:rgba(232,242,255,0.3);}
+.miner-loading{text-align:center;padding:60px;font-family:'Orbitron',sans-serif;color:rgba(232,242,255,0.3);font-size:14px;}
 .miner-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);border-radius:12px;padding:10px 20px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e676;z-index:100;white-space:nowrap;}
 .miner-toast.err{background:rgba(255,77,106,0.12);border-color:rgba(255,77,106,0.3);color:#ff4d6a;}
 .miner-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .miner-back{background:transparent;border:1px solid rgba(26,95,255,0.3);border-radius:10px;padding:8px 14px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00d4ff;cursor:pointer;}
-.miner-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:#e8f2ff;}
-
-/* LOCKED */
-.miner-locked{text-align:center;padding:40px 20px;background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;}
-.ml-icon{font-size:48px;margin-bottom:12px;}
+.miner-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#e8f2ff;}
+.miner-locked{text-align:center;padding:48px 20px;background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;}
+.ml-icon{font-size:52px;margin-bottom:14px;}
 .ml-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#e8f2ff;margin-bottom:8px;}
 .ml-desc{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.5);line-height:1.5;}
-
-/* BUY */
-.miner-buy-block{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;padding:24px;text-align:center;}
-.mb-icon{font-size:52px;margin-bottom:10px;}
-.mb-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;color:#e8f2ff;margin-bottom:8px;}
-.mb-desc{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.5);margin-bottom:16px;}
-.mb-stats{display:flex;gap:12px;justify-content:center;margin-bottom:20px;}
-.mb-stat{background:rgba(26,95,255,0.1);border:1px solid rgba(26,95,255,0.2);border-radius:10px;padding:10px 14px;text-align:center;}
-.mb-sv{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#00d4ff;margin-bottom:2px;}
+.miner-buy-block{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;padding:28px 20px;text-align:center;}
+.mb-icon{font-size:56px;margin-bottom:12px;}
+.mb-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#e8f2ff;margin-bottom:8px;}
+.mb-desc{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.5);margin-bottom:20px;line-height:1.5;}
+.mb-stats{display:flex;gap:10px;justify-content:center;margin-bottom:24px;}
+.mb-stat{background:rgba(26,95,255,0.1);border:1px solid rgba(26,95,255,0.2);border-radius:12px;padding:12px 16px;text-align:center;}
+.mb-sv{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:#00d4ff;margin-bottom:4px;}
 .mb-sl{font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(232,242,255,0.4);}
-.mb-buy-btn{width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,#1a5fff,#0930cc);color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(26,95,255,0.4);}
+.mb-buy-btn{width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,#1a5fff,#0930cc);color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(26,95,255,0.4);}
 .mb-buy-btn:disabled{opacity:.5;cursor:not-allowed;}
-
-/* STATUS */
 .miner-status-block{border-radius:14px;padding:16px;text-align:center;margin-bottom:12px;display:flex;flex-direction:column;align-items:center;gap:6px;}
 .miner-status-block.active{background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.2);}
 .miner-status-block.stopped{background:rgba(255,77,106,0.06);border:1px solid rgba(255,77,106,0.2);}
-.msb-icon{font-size:32px;}
-.msb-status{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;}
+.msb-icon{font-size:36px;}
+.msb-status{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;}
 .miner-status-block.active .msb-status{color:#00e676;}
 .miner-status-block.stopped .msb-status{color:#ff4d6a;}
 .msb-warn{font-family:'DM Sans',sans-serif;font-size:12px;color:#ffb300;}
-
-/* PENDING */
-.miner-pending{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:14px;padding:16px;margin-bottom:12px;text-align:center;}
-.mp-label{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(232,242,255,0.35);letter-spacing:.1em;margin-bottom:6px;}
-.mp-value{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#00d4ff;margin-bottom:12px;}
-.mp-collect-btn{padding:12px 28px;border:none;border-radius:12px;background:linear-gradient(135deg,#ffb300,#ff8c00);color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;}
+.miner-pending{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:14px;padding:20px;margin-bottom:12px;text-align:center;}
+.mp-label{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(232,242,255,0.35);letter-spacing:.1em;margin-bottom:8px;}
+.mp-value{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:#00d4ff;margin-bottom:14px;}
+.mp-collect-btn{padding:12px 32px;border:none;border-radius:12px;background:linear-gradient(135deg,#ffb300,#ff8c00);color:#fff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;}
 .mp-collect-btn:disabled{opacity:.4;cursor:not-allowed;}
-
-/* INFO */
-.miner-info{background:#0e1c3a;border:1px solid rgba(26,95,255,0.15);border-radius:14px;padding:12px 16px;margin-bottom:12px;}
-.mi-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(26,95,255,0.07);}
+.miner-info{background:#0e1c3a;border:1px solid rgba(26,95,255,0.15);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
+.mi-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(26,95,255,0.07);}
 .mi-row:last-child{border-bottom:none;}
-.mi-row span{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.45);}
+.mi-row span{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.45);}
 .mi-row b{font-family:'Orbitron',sans-serif;font-size:10px;color:#e8f2ff;}
-
-/* ELECTRICITY */
-.miner-elec-btn{width:100%;padding:13px;border:none;border-radius:12px;background:rgba(255,179,0,0.15);border:1px solid rgba(255,179,0,0.3);color:#ffb300;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:12px;}
-.miner-elec-btn:disabled{opacity:.4;}
-
-/* UPGRADE */
+.miner-elec-btn{width:100%;padding:13px;border:1px solid rgba(255,179,0,0.3);border-radius:12px;background:rgba(255,179,0,0.1);color:#ffb300;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:12px;}
+.miner-elec-btn:disabled{opacity:.4;cursor:not-allowed;}
 .miner-upgrade{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:14px;padding:16px;}
-.mu-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.08em;margin-bottom:8px;}
-.mu-info{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.5);margin-bottom:10px;}
-.mu-btn{width:100%;padding:12px;border:none;border-radius:12px;background:rgba(26,95,255,0.2);border:1px solid rgba(26,95,255,0.3);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;}
+.mu-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.35);letter-spacing:.1em;margin-bottom:10px;}
+.mu-info{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.5);margin-bottom:12px;line-height:1.5;}
+.mu-btn{width:100%;padding:13px;border:1px solid rgba(26,95,255,0.3);border-radius:12px;background:rgba(26,95,255,0.15);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;}
 .mu-btn:disabled{opacity:.4;cursor:not-allowed;}
