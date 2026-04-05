@@ -59,7 +59,7 @@ export default function Miner({ onBack, isAdmin }) {
       showToast('✅ Майнер куплен!')
     } catch (e) {
       if (e?.message?.includes('User rejects')) showToast('ОТМЕНЕНО', true)
-      else showToast(e?.response?.data?.error || 'Ошибка', true)
+      else { console.log('BUY ERR:', e?.message, e?.response?.data); showToast(e?.response?.data?.error || e?.message || 'Ошибка', true) }
     }
     setBuying(false)
   }
