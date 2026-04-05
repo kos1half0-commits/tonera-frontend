@@ -47,11 +47,7 @@ export default function Miner({ onBack, isAdmin }) {
   }, [data?.miner?.isActive, data?.miner?.speed])
 
   const buy = async () => {
-    if (!wallet) {
-      tonConnectUI.openModal()
-      showToast('Подключите кошелёк TON', true)
-      return
-    }
+    if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); return }
     if (!projectWallet) { showToast('Кошелёк проекта не настроен', true); return }
     setBuying(true)
     try {
@@ -67,7 +63,6 @@ export default function Miner({ onBack, isAdmin }) {
     } catch (e) {
       if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('ОТМЕНЕНО', true)
       else showToast(e?.response?.data?.error || e?.message || 'Ошибка покупки', true)
-      console.log('BUY ERR:', e?.message, e?.response?.data)
     }
     setBuying(false)
   }
@@ -101,7 +96,15 @@ export default function Miner({ onBack, isAdmin }) {
 
   if (loading) return <div className="miner-wrap"><div className="miner-loading">⛏ Загрузка...</div></div>
 
-  if ((enabled === 0) && !loading) {
+  const settings = data?.settings || {}
+  const miner = data?.miner
+  const enabled = settings?.enabled ?? 0
+  const price = settings?.price ?? 1
+  const speedBase = settings?.speedBase ?? 0.001
+  const electricityCost = settings?.electricityCost ?? 0.01
+  const electricityHours = settings?.electricityHours ?? 24
+
+  if (enabled === 0) {
     return (
       <div className="miner-wrap">
         <div className="miner-header">
@@ -117,20 +120,9 @@ export default function Miner({ onBack, isAdmin }) {
     )
   }
 
-  const settings = data?.settings || {}
-  const miner = data?.miner
-  const enabled = settings?.enabled ?? 0
-  const price = settings?.price ?? 1
-  const speedBase = settings?.speedBase ?? 0.001
-  const electricityCost = settings?.electricityCost ?? 0.01
-  const electricityHours = settings?.electricityHours ?? 24
-
-
-
   return (
     <div className="miner-wrap">
       {toast && <div className={`miner-toast ${toastErr?'err':''}`}>{toast}</div>}
-
       <div className="miner-header">
         <button className="miner-back" onClick={onBack}>← НАЗАД</button>
         <div className="miner-title">⛏ МАЙНИНГ</div>
