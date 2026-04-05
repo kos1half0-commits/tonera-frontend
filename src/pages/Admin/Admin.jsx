@@ -20,16 +20,22 @@ const SETTING_GROUPS = [
     ]
   },
   {
+    id: 'miner',
+    title: '⛏ Майнинг',
+    settings: [
+      { key: 'miner_enabled',                  label: 'Статус (0=откл, 1=вкл, 2=только админ)' },
+      { key: 'miner_price',                    label: 'Цена майнера (TON)' },
+      { key: 'miner_speed_base',               label: 'Базовая скорость (TON/час)' },
+      { key: 'miner_electricity_cost',         label: 'Стоимость электричества (TON)' },
+      { key: 'miner_electricity_hours',        label: 'Интервал оплаты (часов)' },
+      { key: 'miner_upgrade_multiplier',       label: 'Множитель апгрейда скорости' },
+      { key: 'miner_upgrade_price_multiplier', label: 'Множитель цены апгрейда' },
+    ]
+  },
+  {
     id: 'slots',
     title: '🎰 Слоты',
     settings: [
-      { key: 'miner_enabled',            label: 'Майнер (0=откл, 1=вкл, 2=только админ)' },
-      { key: 'miner_price',              label: 'Цена майнера (TON)' },
-      { key: 'miner_speed_base',         label: 'Базовая скорость (TON/час)' },
-      { key: 'miner_electricity_cost',   label: 'Стоимость электричества (TON)' },
-      { key: 'miner_electricity_hours',  label: 'Интервал оплаты (часов)' },
-      { key: 'miner_upgrade_multiplier', label: 'Множитель апгрейда скорости' },
-      { key: 'miner_upgrade_price_multiplier', label: 'Множитель цены апгрейда' },
       { key: 'slots_enabled', label: 'Статус (0=откл, 1=вкл, 2=тех.работы, 3=только админ)' },
       { key: 'slots_min_bet', label: 'Мин. ставка (TON)' },
       { key: 'slots_bank',       label: 'Банк слотов (TON)' },
