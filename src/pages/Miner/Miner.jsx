@@ -27,6 +27,7 @@ export default function Miner({ onBack, isAdmin }) {
   const load = async () => {
     try {
       const r = await api.get('/api/miner/status')
+      console.log('MINER DATA:', JSON.stringify(r.data))
       setData(r.data)
       setPending(r.data.miner?.pendingTon || 0)
     } catch {}
