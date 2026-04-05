@@ -101,15 +101,7 @@ export default function Miner({ onBack, isAdmin }) {
 
   if (loading) return <div className="miner-wrap"><div className="miner-loading">⛏ Загрузка...</div></div>
 
-  const settings = data?.settings || {}
-  const miner = data?.miner
-  const enabled = settings?.enabled ?? 0
-  const price = settings?.price ?? 1
-  const speedBase = settings?.speedBase ?? 0.001
-  const electricityCost = settings?.electricityCost ?? 0.01
-  const electricityHours = settings?.electricityHours ?? 24
-
-  if (enabled === 0 || (enabled === 2 && !isAdmin)) {
+  if ((enabled === 0) && !loading) {
     return (
       <div className="miner-wrap">
         <div className="miner-header">
@@ -124,6 +116,16 @@ export default function Miner({ onBack, isAdmin }) {
       </div>
     )
   }
+
+  const settings = data?.settings || {}
+  const miner = data?.miner
+  const enabled = settings?.enabled ?? 0
+  const price = settings?.price ?? 1
+  const speedBase = settings?.speedBase ?? 0.001
+  const electricityCost = settings?.electricityCost ?? 0.01
+  const electricityHours = settings?.electricityHours ?? 24
+
+
 
   return (
     <div className="miner-wrap">
