@@ -118,8 +118,20 @@ function AdminsPanel() {
         <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>ДОБАВИТЬ АДМИНА</div>
         <span style={S.label}>TELEGRAM ID</span>
         <input style={S.input} value={tgId} onChange={e=>setTgId(e.target.value)} placeholder="123456789" type="number"/>
-        <span style={S.label}>USERNAME (НЕОБЯЗАТЕЛЬНО)</span>
-        <input style={S.input} value={username} onChange={e=>setUsername(e.target.value)} placeholder="@username"/>
+        <span style={S.label}>USERNAME</span>
+        <div style={{display:'flex',gap:6}}>
+          <input style={{...S.input,flex:1}} value={username} onChange={e=>setUsername(e.target.value)} placeholder="@username"/>
+          <button style={S.btn({background:'rgba(0,212,255,0.1)',color:'#00d4ff',border:'1px solid rgba(0,212,255,0.2)',flexShrink:0})}
+            onClick={async()=>{
+              if (!tgId.trim()) return
+              try {
+                const r = await api.get(`/api/admin/user-info/${tgId}`)
+                if (r.data?.username) setUsername('@' + r.data.username)
+                else if (r.data?.first_name) setUsername(r.data.first_name)
+                else showToast('❌ Пользователь не найден в БД')
+              } catch { showToast('❌ Не найден') }
+            }}>🔍 НАЙТИ</button>
+        </div>
         <button style={{...S.btn({background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',width:'100%',marginTop:10,padding:'10px'}),fontFamily:'Orbitron,sans-serif'}}
           onClick={add} disabled={saving}>
           {saving ? '...' : '+ ДОБАВИТЬ'}
