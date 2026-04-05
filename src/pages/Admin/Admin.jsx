@@ -30,6 +30,7 @@ const SETTING_GROUPS = [
       { key: 'miner_electricity_hours',        label: 'Интервал оплаты (часов)' },
       { key: 'miner_upgrade_multiplier',   label: 'Множитель скорости за апгрейд' },
       { key: 'miner_upgrade_price',              label: 'Цена апгрейда (фиксированная, TON)' },
+      { key: 'miner_min_collect',               label: 'Мин. вывод дохода (TON)' },
       { key: 'miner_electricity_percent',  label: 'Стоимость электричества (% от дневного заработка)' },
     ]
   },

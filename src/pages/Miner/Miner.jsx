@@ -190,7 +190,8 @@ export default function Miner({ onBack, isAdmin }) {
                 </div>
               </div>
             ) : (
-              <button className="mp-collect-btn" onClick={()=>setShowCollectInput(true)} disabled={!miner.isActive || pending < 0.0001}>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.35)',marginBottom:6}}>Мин. вывод: {parseFloat(miner.minCollect ?? 0.01).toFixed(4)} TON</div>
+              <button className="mp-collect-btn" onClick={()=>setShowCollectInput(true)} disabled={!miner.isActive || pending < parseFloat(miner.minCollect ?? 0.01)}>
                 💰 ВЫВЕСТИ НА КОШЕЛЁК
               </button>
             )}
