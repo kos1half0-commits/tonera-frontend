@@ -1592,6 +1592,7 @@ export default function Admin() {
               if (usersTab === 'spinners') return parseInt(u.spin_count || 0) > 0
               if (usersTab === 'sloters') return parseInt(u.slots_count || 0) > 0
               if (usersTab === 'stakers') return parseFloat(u.staking_amount || 0) > 0
+              return true
               if (usersTab === 'slotters') return parseInt(u.slots_count || 0) > 0
               const q = search.toLowerCase()
               return !q || (u.username||'').toLowerCase().includes(q) || (u.first_name||'').toLowerCase().includes(q) || String(u.telegram_id).includes(q)
