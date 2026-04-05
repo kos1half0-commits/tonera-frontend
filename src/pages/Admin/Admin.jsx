@@ -1203,6 +1203,10 @@ export default function Admin() {
                     }} style={{padding:'4px 8px',border:'none',borderRadius:6,background:'rgba(26,95,255,0.2)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer'}}>
                       ПРИМЕНИТЬ
                     </button>
+                    {t.link && (
+                      <button onClick={()=>window.Telegram?.WebApp?.openLink(t.link)||window.open(t.link,'_blank')}
+                        style={{padding:'4px 6px',border:'none',borderRadius:6,background:'rgba(0,212,255,0.08)',color:'#00d4ff',cursor:'pointer',fontSize:12}}>🔗</button>
+                    )}
                     <button onClick={async()=>{
                       await api.delete(`/api/admin/task-templates/${t.id}`)
                       const r = await api.get('/api/admin/task-templates')
