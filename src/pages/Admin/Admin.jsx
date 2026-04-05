@@ -28,8 +28,12 @@ const SETTING_GROUPS = [
       { key: 'miner_speed_base',               label: 'Базовая скорость (TON/час)' },
       { key: 'miner_electricity_cost',         label: 'Стоимость электричества (TON)' },
       { key: 'miner_electricity_hours',        label: 'Интервал оплаты (часов)' },
-      { key: 'miner_upgrade_multiplier',       label: 'Множитель апгрейда скорости' },
-      { key: 'miner_upgrade_price_multiplier', label: 'Множитель цены апгрейда' },
+      { key: 'miner_upgrade_multiplier',   label: 'Множитель скорости за апгрейд' },
+      { key: 'miner_upgrade_price_1',      label: 'Цена апгрейда LVL 1→2 (TON)' },
+      { key: 'miner_upgrade_price_2',      label: 'Цена апгрейда LVL 2→3 (TON)' },
+      { key: 'miner_upgrade_price_3',      label: 'Цена апгрейда LVL 3→4 (TON)' },
+      { key: 'miner_upgrade_price_4',      label: 'Цена апгрейда LVL 4→5 (TON)' },
+      { key: 'miner_upgrade_price_5',      label: 'Цена апгрейда LVL 5→6 (TON)' },
     ]
   },
   {
