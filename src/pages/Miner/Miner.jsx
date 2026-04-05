@@ -104,6 +104,7 @@ export default function Miner({ onBack, isAdmin }) {
   const electricityCost = settings?.electricityCost ?? 0.01
   const electricityHours = settings?.electricityHours ?? 24
 
+  console.log('MINER FRONTEND:', JSON.stringify({blocked: data?.blocked, enabled, isAdmin}))
   if (data?.blocked || enabled === 0) {
     return (
       <div className="miner-wrap">
