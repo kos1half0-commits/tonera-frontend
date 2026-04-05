@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useTonConnectUI } from '@tonconnect/ui-react'
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
 import api from '../../api/index'
 import './Miner.css'
 
@@ -16,6 +16,7 @@ export default function Miner({ onBack, isAdmin }) {
   const [projectWallet, setProjectWallet] = useState('')
   const timerRef = useRef(null)
   const [tonConnectUI] = useTonConnectUI()
+  const wallet = useTonWallet()
 
   const showToast = (msg, err=false) => {
     setToast(msg); setToastErr(err)
@@ -46,7 +47,12 @@ export default function Miner({ onBack, isAdmin }) {
   }, [data?.miner?.isActive, data?.miner?.speed])
 
   const buy = async () => {
-    if (!projectWallet) { showToast('Кошелёк не настроен', true); return }
+    if (!wallet) {
+      tonConnectUI.openModal()
+      showToast('Подключите кошелёк TON', true)
+      return
+    }
+    if (!projectWallet) { showToast('Кошелёк проекта не настроен', true); return }
     setBuying(true)
     try {
       const price = data?.settings?.price ?? 1
