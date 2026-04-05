@@ -27,7 +27,6 @@ export default function Miner({ onBack, isAdmin }) {
   const load = async () => {
     try {
       const r = await api.get('/api/miner/status')
-      console.log('MINER DATA:', JSON.stringify(r.data))
       setData(r.data)
       setPending(r.data.miner?.pendingTon || 0)
     } catch {}
@@ -50,7 +49,7 @@ export default function Miner({ onBack, isAdmin }) {
     if (!projectWallet) { showToast('Кошелёк не настроен', true); return }
     setBuying(true)
     try {
-      const amountNano = Math.floor(data.settings.price * 1e9).toString()
+      const amountNano = Math.floor(s.price * 1e9).toString()
       const result = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 300,
         messages: [{ address: projectWallet, amount: amountNano }]
@@ -99,6 +98,13 @@ export default function Miner({ onBack, isAdmin }) {
   )
 
   const { settings, hasDeposit, miner } = data || {}
+  const s = {
+    price: settings?.price ?? 1,
+    speedBase: settings?.speedBase ?? 0.001,
+    electricityCost: settings?.electricityCost ?? 0.01,
+    electricityHours: settings?.electricityHours ?? 24,
+    upgradeMultiplier: settings?.upgradeMultiplier ?? 1.5,
+  }
   const enabled = settings?.enabled
 
   if (enabled === 0 || (enabled === 2 && !isAdmin)) {
@@ -133,16 +139,16 @@ export default function Miner({ onBack, isAdmin }) {
           <div className="mb-desc">Начни добывать TON автоматически 24/7</div>
           <div className="mb-stats">
             <div className="mb-stat">
-              <div className="mb-sv">{settings?.speedBase} TON</div>
+              <div className="mb-sv">{s.speedBase} TON</div>
               <div className="mb-sl">в час</div>
             </div>
             <div className="mb-stat">
-              <div className="mb-sv">{settings?.electricityCost} TON</div>
-              <div className="mb-sl">электричество/{settings?.electricityHours}ч</div>
+              <div className="mb-sv">{s.electricityCost} TON</div>
+              <div className="mb-sl">электричество/{s.electricityHours}ч</div>
             </div>
           </div>
           <button className="mb-buy-btn" onClick={buy} disabled={buying}>
-            {buying ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${settings?.price} TON`}
+            {buying ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${s.price} TON`}
           </button>
         </div>
       ) : (
@@ -169,7 +175,7 @@ export default function Miner({ onBack, isAdmin }) {
 
           {miner.electricityDue && (
             <button className="miner-elec-btn" onClick={payElectricity} disabled={payingElec}>
-              {payingElec ? '...' : `⚡ ОПЛАТИТЬ ${settings?.electricityCost} TON`}
+              {payingElec ? '...' : `⚡ ОПЛАТИТЬ ${s.electricityCost} TON`}
             </button>
           )}
 
