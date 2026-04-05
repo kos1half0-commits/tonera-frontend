@@ -1592,12 +1592,15 @@ export default function Admin() {
               if (usersTab === 'spinners') return parseInt(u.spin_count || 0) > 0
               if (usersTab === 'sloters') return parseInt(u.slots_count || 0) > 0
               if (usersTab === 'stakers') return parseFloat(u.staking_amount || 0) > 0
-              return true
-              if (usersTab === 'slotters') return parseInt(u.slots_count || 0) > 0
               const q = search.toLowerCase()
               return !q || (u.username||'').toLowerCase().includes(q) || (u.first_name||'').toLowerCase().includes(q) || String(u.telegram_id).includes(q)
             })
             .sort((a, b) => {
+              if (usersTab === 'stakers') return parseFloat(b.staking_amount||0) - parseFloat(a.staking_amount||0)
+              if (usersTab === 'donors') return parseFloat(b.total_deposited||0) - parseFloat(a.total_deposited||0)
+              if (usersTab === 'traders') return parseFloat(b.trading_volume||0) - parseFloat(a.trading_volume||0)
+              if (usersTab === 'spinners') return parseInt(b.spin_count||0) - parseInt(a.spin_count||0)
+              if (usersTab === 'sloters') return parseInt(b.slots_count||0) - parseInt(a.slots_count||0)
               const va = parseFloat(a[sortBy]) || new Date(a[sortBy]).getTime() || 0
               const vb = parseFloat(b[sortBy]) || new Date(b[sortBy]).getTime() || 0
               return sortDir === 'desc' ? vb - va : va - vb
