@@ -709,6 +709,8 @@ export default function Admin() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [userStats, setUserStats] = useState(null)
   const [usersTab, setUsersTab] = useState('all')
+  const [taskTemplates, setTaskTemplates] = useState([])
+  const [showTaskTemplates, setShowTaskTemplates] = useState(false)
   const [tickets, setTickets] = useState([])
   const [news, setNews] = useState([])
   const [newsTitle, setNewsTitle] = useState('')
