@@ -130,6 +130,11 @@ function MinersAdmin() {
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,color:m.active?'#00e676':'#ff4d6a'}}>{m.active?'АКТИВЕН':'СТОП'}</div>
             <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{new Date(m.created_at).toLocaleDateString('ru')}</div>
           </div>
+          <button onClick={async()=>{
+            if (!confirm('Удалить майнер?')) return
+            await api.delete(`/api/miner/${m.user_id}`)
+            setMiners(prev => prev.filter(x => x.id !== m.id))
+          }} style={{padding:'5px 8px',border:'none',borderRadius:6,background:'rgba(255,77,106,0.1)',color:'#ff4d6a',cursor:'pointer',fontSize:10,flexShrink:0}}>🗑</button>
         </div>
       ))}
     </div>
