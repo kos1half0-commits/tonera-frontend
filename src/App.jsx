@@ -103,7 +103,7 @@ export default function App() {
       <div className="app-content">
         {showSupport && <Support onBack={() => setShowSupport(false)} />}
         {showPartnership && <Partnership onBack={() => setShowPartnership(false)} />}
-        {!showSupport && !showPartnership && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} onMiner={() => setPage('miner')} minerStatus={minerStatus} isAdmin={isAdmin} />}
+        {!showSupport && !showPartnership && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} onMiner={() => setTab('miner')} minerStatus={minerStatus} isAdmin={isAdmin} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && <Referrals user={user} />}
@@ -112,6 +112,7 @@ export default function App() {
         {tab === 'spin'      && <Spin      user={user} onBack={() => setTab('games')} />}
         {tab === 'trading'   && <Trading   user={user} onBack={() => setTab('games')} />}
         {tab === 'slots'     && <Slots     onBack={() => setTab('games')} />}
+        {tab === 'miner'     && <Miner     onBack={() => setTab('home')} isAdmin={user?.is_admin} />}
         {tab === 'admin'     && <Admin     />}
       </div>
 
