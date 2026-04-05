@@ -95,6 +95,47 @@ const SETTING_GROUPS = [
   },
 ]
 
+function MinersAdmin() {
+  const [miners, setMiners] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get('/api/miner/all').then(r => { setMiners(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
+  }, [])
+
+  const S = {
+    row: (c={}) => ({display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,marginBottom:6,...c}),
+  }
+
+  if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+  if (!miners.length) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет майнеров</div>
+
+  return (
+    <div>
+      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>
+        ВСЕГО: {miners.length}
+      </div>
+      {miners.map(m => (
+        <div key={m.id} style={S.row()}>
+          <div style={{width:36,height:36,borderRadius:8,background:'rgba(26,95,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>⛏</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff'}}>{m.username ? '@'+m.username : m.first_name}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)'}}>ID: {m.telegram_id}</div>
+          </div>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00d4ff',fontWeight:700}}>LVL {m.level}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>{parseFloat(m.speed).toFixed(6)} TON/ч</div>
+          </div>
+          <div style={{textAlign:'right',minWidth:60}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,color:m.active?'#00e676':'#ff4d6a'}}>{m.active?'АКТИВЕН':'СТОП'}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{new Date(m.created_at).toLocaleDateString('ru')}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function AdminsPanel() {
   const [admins, setAdmins] = useState([])
   const [tgId, setTgId] = useState('')
@@ -1035,6 +1076,7 @@ export default function Admin() {
           {id:'partnerships',icon:'🤝',label:'ПАРТНЁРЫ'},
           {id:'withdrawals',icon:'💸',label:`ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},
           {id:'promo',icon:'🎁',label:'ПРОМО'},
+          {id:'miners',icon:'⛏',label:'МАЙНЕРЫ'},
           {id:'admins',icon:'👑',label:'АДМИНЫ'},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (
@@ -1511,6 +1553,12 @@ export default function Admin() {
       )}
 
       {/* SYSTEM */}
+      {tab === 'miners' && (
+        <div className="admin-section">
+          <MinersAdmin />
+        </div>
+      )}
+
       {tab === 'admins' && (
         <div className="admin-section">
           <AdminsPanel />
