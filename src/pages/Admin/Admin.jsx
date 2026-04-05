@@ -148,16 +148,35 @@ function PromoAdmin() {
       {promos.length === 0 && <div style={{textAlign:'center',color:'rgba(232,242,255,0.3)',padding:20,fontFamily:'DM Sans'}}>Нет промокодов</div>}
       {promos.map(p => (
         <div key={p.id} style={{background:'#0e1c3a',border:`1px solid ${p.active?'rgba(26,95,255,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
             <span style={{fontFamily:'Orbitron,sans-serif',fontSize:13,fontWeight:900,color:p.active?'#00d4ff':'rgba(232,242,255,0.3)',flex:1}}>{p.code}</span>
-            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#ffb300',fontWeight:700}}>{parseFloat(p.amount).toFixed(4)} TON</span>
-            <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>{p.uses}/{p.max_uses}</span>
             <button style={S.btn({background:p.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:p.active?'#ffb300':'#00e676'})}
               onClick={async()=>{ await api.put(`/api/promo/${p.id}/toggle`); load() }}>
               {p.active?'⏸':'▶️'}
             </button>
             <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})}
               onClick={async()=>{ await api.delete(`/api/promo/${p.id}`); load() }}>✕</button>
+          </div>
+          <div style={{display:'flex',gap:12}}>
+            <div>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#ffb300',fontWeight:700}}>{parseFloat(p.amount).toFixed(4)} TON</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>за 1 использование</div>
+            </div>
+            <div>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00e676',fontWeight:700}}>{(parseFloat(p.amount)*p.uses).toFixed(4)} TON</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>потрачено ({p.uses} из {p.max_uses})</div>
+            </div>
+            <div>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00d4ff',fontWeight:700}}>{(parseFloat(p.amount)*(p.max_uses-p.uses)).toFixed(4)} TON</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>осталось</div>
+            </div>
+            <div>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'rgba(232,242,255,0.5)',fontWeight:700}}>{(parseFloat(p.amount)*p.max_uses).toFixed(4)} TON</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>бюджет</div>
+            </div>
+          </div>
+          <div style={{marginTop:6,height:4,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden'}}>
+            <div style={{height:'100%',width:`${Math.min(100,p.uses/p.max_uses*100)}%`,background:'linear-gradient(90deg,#1a5fff,#00d4ff)',borderRadius:2}}/>
           </div>
         </div>
       ))}
