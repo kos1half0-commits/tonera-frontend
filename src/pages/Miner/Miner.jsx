@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTonConnectUI } from '@tonconnect/ui-react'
 import api from '../../api/index'
 import './Miner.css'
 
@@ -12,12 +13,16 @@ export default function Miner({ onBack, isAdmin }) {
   const [payingElec, setPayingElec] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [pending, setPending] = useState(0)
+  const [tonConnectUI] = useTonConnectUI()
+  const [projectWallet, setProjectWallet] = useState('')
   const timerRef = useRef(null)
 
   const showToast = (msg, err=false) => {
     setToast(msg); setToastErr(err)
     setTimeout(() => setToast(''), 4000)
   }
+
+  useEffect(() => { api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet || '')).catch(()=>{}) }, [])
 
   const load = async () => {
     try {
@@ -41,9 +46,21 @@ export default function Miner({ onBack, isAdmin }) {
   }, [data?.miner?.isActive, data?.miner?.speed])
 
   const buy = async () => {
+    if (!projectWallet) { showToast('Кошелёк не настроен', true); return }
     setBuying(true)
-    try { await api.post('/api/miner/buy'); await load(); showToast('✅ Майнер куплен!') }
-    catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+    try {
+      const amountNano = Math.floor(data.settings.price * 1e9).toString()
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [{ address: projectWallet, amount: amountNano }]
+      })
+      await api.post('/api/miner/buy', { tx_hash: result?.boc || '' })
+      await load()
+      showToast('✅ Майнер куплен!')
+    } catch (e) {
+      if (e?.message?.includes('User rejects')) showToast('ОТМЕНЕНО', true)
+      else showToast(e?.response?.data?.error || 'Ошибка', true)
+    }
     setBuying(false)
   }
 
@@ -94,22 +111,6 @@ export default function Miner({ onBack, isAdmin }) {
           <div className="ml-icon">🔧</div>
           <div className="ml-title">В РАЗРАБОТКЕ</div>
           <div className="ml-desc">Раздел временно недоступен</div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!hasDeposit) {
-    return (
-      <div className="miner-wrap">
-        <div className="miner-header">
-          <button className="miner-back" onClick={onBack}>← НАЗАД</button>
-          <div className="miner-title">⛏ МАЙНИНГ</div>
-        </div>
-        <div className="miner-locked">
-          <div className="ml-icon">💎</div>
-          <div className="ml-title">ТОЛЬКО ДЛЯ ДОНАТОРОВ</div>
-          <div className="ml-desc">Пополните баланс через TON Connect чтобы получить доступ к майнингу</div>
         </div>
       </div>
     )
