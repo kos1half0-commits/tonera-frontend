@@ -159,7 +159,7 @@ function PromoAdmin() {
           </div>
           <div style={{display:'flex',gap:12}}>
             <div>
-              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#ffb300',fontWeight:700}}>{parseFloat(p.amount).toFixed(4)} TON</div>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#ffb300',fontWeight:700}}>{parseFloat(p.amount).toFixed(5)} TON</div>
               <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>за 1 использование</div>
             </div>
             <div>
