@@ -82,6 +82,66 @@ const SETTING_GROUPS = [
   },
 ]
 
+function AdminsPanel() {
+  const [admins, setAdmins] = useState([])
+  const [tgId, setTgId] = useState('')
+  const [username, setUsername] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState('')
+
+  const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000) }
+  const load = () => api.get('/api/admin/admins').then(r => setAdmins(r.data||[])).catch(()=>{})
+  useEffect(() => { load() }, [])
+
+  const add = async () => {
+    if (!tgId.trim()) return
+    setSaving(true)
+    try {
+      await api.post('/api/admin/admins', { telegram_id: tgId, username })
+      setTgId(''); setUsername('')
+      await load(); showToast('✅ Админ добавлен')
+    } catch (e) { showToast('❌ ' + (e?.response?.data?.error || 'Ошибка')) }
+    setSaving(false)
+  }
+
+  const S = {
+    input: {background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',width:'100%'},
+    btn: (c={}) => ({padding:'7px 12px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',...c}),
+    label: {fontFamily:'Orbitron,sans-serif',fontSize:8,color:'rgba(232,242,255,0.35)',letterSpacing:'.08em',display:'block',marginBottom:3,marginTop:8},
+  }
+
+  return (
+    <div>
+      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+
+      <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:12}}>
+        <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>ДОБАВИТЬ АДМИНА</div>
+        <span style={S.label}>TELEGRAM ID</span>
+        <input style={S.input} value={tgId} onChange={e=>setTgId(e.target.value)} placeholder="123456789" type="number"/>
+        <span style={S.label}>USERNAME (НЕОБЯЗАТЕЛЬНО)</span>
+        <input style={S.input} value={username} onChange={e=>setUsername(e.target.value)} placeholder="@username"/>
+        <button style={{...S.btn({background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',width:'100%',marginTop:10,padding:'10px'}),fontFamily:'Orbitron,sans-serif'}}
+          onClick={add} disabled={saving}>
+          {saving ? '...' : '+ ДОБАВИТЬ'}
+        </button>
+      </div>
+
+      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>СПИСОК АДМИНОВ</div>
+      {admins.length === 0 && <div style={{textAlign:'center',color:'rgba(232,242,255,0.25)',padding:16,fontFamily:'DM Sans'}}>Нет дополнительных админов</div>}
+      {admins.map(a => (
+        <div key={a.id} style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:'10px 12px',marginBottom:6,display:'flex',alignItems:'center',gap:8}}>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,color:'#e8f2ff',fontWeight:700}}>{a.username || 'Без username'}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>ID: {a.telegram_id}</div>
+          </div>
+          <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})}
+            onClick={async()=>{ await api.delete(`/api/admin/admins/${a.id}`); load() }}>✕</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function PromoAdmin() {
   const [promos, setPromos] = useState([])
   const [code, setCode] = useState('')
@@ -950,6 +1010,7 @@ export default function Admin() {
           {id:'partnerships',icon:'🤝',label:'ПАРТНЁРЫ'},
           {id:'withdrawals',icon:'💸',label:`ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},
           {id:'promo',icon:'🎁',label:'ПРОМО'},
+          {id:'admins',icon:'👑',label:'АДМИНЫ'},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (
           <button key={t.id} className={`atab ${tab===t.id?'on':''}`} onClick={() => setTab(t.id)}>
@@ -1421,6 +1482,12 @@ export default function Admin() {
       )}
 
       {/* SYSTEM */}
+      {tab === 'admins' && (
+        <div className="admin-section">
+          <AdminsPanel />
+        </div>
+      )}
+
       {tab === 'system' && (
         <div className="admin-section">
           <div className="system-card">
