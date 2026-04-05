@@ -61,7 +61,7 @@ export default function App() {
   useEffect(() => { api.get('/api/spin/info').then(r => setSpinEnabled(r.data?.spin_enabled !== '0')).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/trading/info').then(r => setTradingStatus(String(r.data?.trading_enabled ?? '1'))).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/partnership/status').then(r => setPartnershipStatus(String(r.data?.value ?? '1'))).catch(()=>{}) }, [])
-  useEffect(() => { api.get('/api/miner/status').then(r => setMinerStatus(String(r.data?.settings?.enabled ?? '0'))).catch(()=>{}) }, [])
+  useEffect(() => { api.get('/api/settings/miner_enabled').then(r => setMinerStatus(String(r.data?.value ?? '0'))).catch(()=>{ setMinerStatus('1') }) }, [])
   const visibleTabs = TABS.filter(t => (t.id !== 'admin' || isAdmin) && t.id !== 'customer' && (t.id !== 'games' || true))
   const balance = parseFloat(user?.balance_ton ?? 0)
 
