@@ -274,9 +274,6 @@ export default function Miner({ onBack, isAdmin }) {
               <button className="miner-elec-btn" style={{flex:1}} onClick={()=>payElectricity('day')} disabled={payingElec}>
                 {payingElec ? '...' : `⚡ 1 ДЕНЬ — ${parseFloat(miner.electricityCostPerDay ?? 0).toFixed(4)} TON`}
               </button>
-              <button className="miner-elec-btn" style={{flex:2,background:'rgba(26,95,255,0.2)',borderColor:'rgba(26,95,255,0.4)',color:'#00d4ff'}} onClick={()=>payElectricity('prepay')} disabled={payingElec}>
-                {payingElec ? '...' : `🔵 120 ДНЕЙ — ${(parseFloat(miner.electricityCostPerDay ?? 0)*120).toFixed(4)} TON`}
-              </button>
             </div>
           </div>
 
