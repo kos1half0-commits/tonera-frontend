@@ -189,6 +189,16 @@ export default function Miner({ onBack, isAdmin }) {
       </div>
 
       {!miner ? (
+        <div className="miner-how">
+          <div className="mhow-title">КАК РАБОТАЕТ МАЙНЕР</div>
+          <div className="mhow-step"><span>1</span><div><b>Купи майнер</b> через TON Connect — разовая оплата</div></div>
+          <div className="mhow-step"><span>2</span><div><b>Майнер добывает TON</b> автоматически каждый час</div></div>
+          <div className="mhow-step"><span>3</span><div><b>Каждый день</b> нажимай кнопку оплаты электричества из намайненного, или купи сразу 120 дней через TON Connect</div></div>
+          <div className="mhow-step"><span>4</span><div><b>Выводи доход</b> на свой TON кошелёк когда наберётся минимальная сумма</div></div>
+          <div className="mhow-step"><span>5</span><div><b>Улучшай майнер</b> через TON Connect — каждый апгрейд увеличивает скорость добычи</div></div>
+          <div className="mhow-warn">⚠️ Если не оплатить электричество — майнер остановится</div>
+        </div>
+
         <div className="miner-buy-block">
           <div className="mb-icon">⛏</div>
           <div className="mb-title">КУПИТЬ МАЙНЕР</div>

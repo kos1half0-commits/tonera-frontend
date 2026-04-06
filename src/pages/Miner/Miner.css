@@ -71,3 +71,10 @@
 .meb-countdown{font-family:'DM Sans',sans-serif;font-size:12px;color:#ffb300;margin-bottom:8px;}
 .meb-countdown b{font-family:'Orbitron',sans-serif;font-size:11px;}
 .meb-prepay-info{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(0,212,255,0.7);background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:8px;padding:8px 10px;margin-bottom:10px;}
+.miner-how{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;padding:16px;margin-bottom:12px;}
+.mhow-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.1em;margin-bottom:12px;}
+.mhow-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
+.mhow-step span{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#1a5fff,#0930cc);color:#fff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mhow-step div{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.6);line-height:1.4;}
+.mhow-step div b{color:#e8f2ff;}
+.mhow-warn{font-family:'DM Sans',sans-serif;font-size:12px;color:#ffb300;background:rgba(255,179,0,0.06);border:1px solid rgba(255,179,0,0.2);border-radius:8px;padding:8px 10px;margin-top:4px;}
