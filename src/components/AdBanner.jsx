@@ -5,9 +5,11 @@ import './AdBanner.css'
 export default function AdBanner({ page }) {
   const [ads, setAds] = useState([])
   const [current, setCurrent] = useState(0)
+  const [interval_, setInterval_] = useState(4000)
   const timerRef = useRef(null)
 
   useEffect(() => {
+    api.get('/api/settings/ad_banner_interval').then(r => setInterval_((parseInt(r.data?.value)||4)*1000)).catch(()=>{})
     api.get(`/api/ads?page=${page}`).then(r => {
       // Перемешиваем рандомно
       const shuffled = (r.data||[]).sort(() => Math.random() - 0.5)
@@ -20,9 +22,9 @@ export default function AdBanner({ page }) {
     if (ads.length <= 1) return
     timerRef.current = setInterval(() => {
       setCurrent(c => (c + 1) % ads.length)
-    }, 4000)
+    }, interval_)
     return () => clearInterval(timerRef.current)
-  }, [ads.length])
+  }, [ads.length, interval_])
 
   if (!ads.length) return null
   const ad = ads[current]

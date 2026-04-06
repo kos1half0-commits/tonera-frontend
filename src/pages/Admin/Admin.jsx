@@ -37,6 +37,7 @@ const SETTING_GROUPS = [
     id: 'ads_config',
     title: '📣 Реклама',
     settings: [
+      { key: 'ad_banner_interval', label: 'Интервал прокрутки баннеров (сек)' },
       { key: 'ad_price_week',   label: 'Цена рекламы 1 неделя (TON)' },
       { key: 'ad_price_2weeks', label: 'Цена рекламы 2 недели (TON)' },
       { key: 'ad_price_month',  label: 'Цена рекламы 1 месяц (TON)' },
