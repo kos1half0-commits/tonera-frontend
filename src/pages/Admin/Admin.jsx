@@ -261,12 +261,81 @@ function AdsAdmin() {
 function MinersAdmin() {
   const [miners, setMiners] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState(null)
+  const [history, setHistory] = useState([])
+  const [histLoading, setHistLoading] = useState(false)
 
   useEffect(() => {
     api.get('/api/miner/all').then(r => { setMiners(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
   }, [])
 
+  const openMiner = async (m) => {
+    setSelected(m)
+    setHistLoading(true)
+    try {
+      const r = await api.get(`/api/miner/admin/history/${m.user_id}`)
+      setHistory(r.data||[])
+    } catch {}
+    setHistLoading(false)
+  }
+
   if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+
+  // Детальный просмотр
+  if (selected) {
+    const typeLabel = t => {
+      if (t==='miner_buy') return '⛏ Покупка'
+      if (t==='miner_upgrade') return '⬆️ Апгрейд'
+      if (t==='miner_electricity') return '⚡ Электричество'
+      if (t==='miner_collect') return '💰 Вывод'
+      return t
+    }
+    return (
+      <div>
+        <button onClick={()=>setSelected(null)} style={{marginBottom:12,padding:'7px 14px',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,background:'transparent',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,cursor:'pointer'}}>← НАЗАД</button>
+        <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:10}}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:13,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>
+            {selected.username?'@'+selected.username:selected.first_name}
+          </div>
+          {[
+            ['ID', selected.telegram_id],
+            ['Уровень', `LVL ${selected.level}`],
+            ['Скорость', `${parseFloat(selected.speed).toFixed(6)} TON/ч`],
+            ['В день', `${(parseFloat(selected.speed)*24).toFixed(6)} TON`],
+            ['Статус', selected.active?'✅ Активен':'❌ Остановлен'],
+            ['Куплен', new Date(selected.created_at).toLocaleDateString('ru')],
+          ].map(([k,v]) => (
+            <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(26,95,255,0.07)'}}>
+              <span style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{k}</span>
+              <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#e8f2ff',fontWeight:700}}>{v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>ИСТОРИЯ ТРАНЗАКЦИЙ</div>
+        {histLoading && <div style={{textAlign:'center',padding:10,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Загрузка...</div>}
+        {!histLoading && !history.length && <div style={{textAlign:'center',padding:10,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет транзакций</div>}
+        {history.map((h,i) => (
+          <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.1)',borderRadius:8,marginBottom:5}}>
+            <div style={{flex:1}}>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'#e8f2ff'}}>{typeLabel(h.type)}</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{new Date(h.created_at).toLocaleString('ru')}</div>
+            </div>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:parseFloat(h.amount)>0?'#00e676':'#ff4d6a'}}>
+              {parseFloat(h.amount)>0?'+':''}{parseFloat(h.amount).toFixed(4)} TON
+            </div>
+          </div>
+        ))}
+        <button onClick={async()=>{
+          if(!confirm('Удалить майнер?'))return
+          await api.delete(`/api/miner/${selected.user_id}`)
+          setSelected(null)
+          api.get('/api/miner/all').then(r=>setMiners(r.data||[]))
+        }} style={{width:'100%',marginTop:10,padding:'10px',border:'none',borderRadius:10,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:10,cursor:'pointer',fontWeight:700}}>
+          🗑 УДАЛИТЬ МАЙНЕР
+        </button>
+      </div>
+    )
+  }
 
   const active = miners.filter(m => m.active).length
   const totalSpeed = miners.reduce((s,m) => s + parseFloat(m.speed||0), 0)
@@ -304,7 +373,7 @@ function MinersAdmin() {
       <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>СПИСОК МАЙНЕРОВ</div>
       {!miners.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет майнеров</div>}
       {miners.map(m => (
-        <div key={m.id} style={S.row()}>
+        <div key={m.id} style={{...S.row(),cursor:'pointer'}} onClick={()=>openMiner(m)}>
           <div style={{width:36,height:36,borderRadius:8,background:m.active?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>⛏</div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff'}}>{m.username ? '@'+m.username : m.first_name}</div>
@@ -314,11 +383,7 @@ function MinersAdmin() {
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,color:m.active?'#00e676':'#ff4d6a'}}>{m.active?'АКТИВЕН':'СТОП'}</div>
             <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{parseFloat(m.speed*24).toFixed(4)} TON/д</div>
           </div>
-          <button onClick={async()=>{
-            if (!confirm('Удалить майнер?')) return
-            await api.delete(`/api/miner/${m.user_id}`)
-            setMiners(prev => prev.filter(x => x.id !== m.id))
-          }} style={{padding:'5px 8px',border:'none',borderRadius:6,background:'rgba(255,77,106,0.1)',color:'#ff4d6a',cursor:'pointer',fontSize:10,flexShrink:0}}>🗑</button>
+          <div style={{color:'rgba(232,242,255,0.2)',fontSize:12}}>›</div>
         </div>
       ))}
     </div>
