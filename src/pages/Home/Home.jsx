@@ -1,3 +1,4 @@
+import AdBanner from '../../components/AdBanner'
 import { useState, useEffect } from 'react'
 import { getUserStakes, getTasks } from '../../api/index'
 import api from '../../api/index'
@@ -150,6 +151,7 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
         {promoMsg && <div className={`promo-msg ${promoErr?'err':''}`}>{promoMsg}</div>}
       </div>
 
+      <AdBanner page="home" />
       <div className="section-title">Быстрые действия</div>
       <div className="qa-grid">
         <div className="qa" onClick={() => onTab('staking')}>

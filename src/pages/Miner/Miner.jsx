@@ -1,3 +1,4 @@
+import AdBanner from '../../components/AdBanner'
 import { useState, useEffect, useRef } from 'react'
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
 import api from '../../api/index'
@@ -289,6 +290,7 @@ export default function Miner({ onBack, isAdmin }) {
               {upgrading ? '...' : `⬆️ АПГРЕЙД ЗА ${parseFloat(miner.upgradePrice ?? 0.5).toFixed(4)} TON`}
             </button>
           </div>
+          <AdBanner page="miner" />
           {/* ИСТОРИЯ */}
           <div className="miner-history">
             <div className="mh-title">📋 ИСТОРИЯ</div>
