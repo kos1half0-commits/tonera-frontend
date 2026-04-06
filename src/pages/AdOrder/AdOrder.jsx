@@ -130,6 +130,7 @@ export default function AdOrder({ onBack }) {
         <input className="aof-input" placeholder="https://t.me/yourproject" value={form.link} onChange={e=>setForm(f=>({...f,link:e.target.value}))}/>
 
         <label className="aof-label">ФОТО БАННЕРА</label>
+        <div className="aof-size-hint">📐 Рекомендуемый размер: <b>800×300 px</b> (соотношение 8:3) · Макс. 5MB · JPG, PNG</div>
         {imagePreview ? (
           <div className="aof-preview">
             <img src={imagePreview} alt="" className="aof-preview-img"/>

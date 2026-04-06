@@ -39,3 +39,5 @@
 .adorder-pay-info{background:rgba(0,230,118,0.05);border:1px solid rgba(0,230,118,0.15);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
 .api-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e676;letter-spacing:.08em;margin-bottom:8px;}
 .api-item{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.6);margin-bottom:5px;line-height:1.4;}
+.aof-size-hint{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.4);background:rgba(26,95,255,0.06);border:1px solid rgba(26,95,255,0.15);border-radius:8px;padding:7px 10px;margin-bottom:8px;}
+.aof-size-hint b{color:#00d4ff;}
