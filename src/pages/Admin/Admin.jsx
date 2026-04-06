@@ -153,7 +153,7 @@ function AdOrdersAdmin() {
 
 function AdsAdmin() {
   const [ads, setAds] = useState([])
-  const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet' })
+  const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', linkToAdOrder:false })
   const [editing, setEditing] = useState(null)
   const [toast, setAdsToast] = useState('')
 
@@ -211,7 +211,11 @@ function AdsAdmin() {
           </label>
         )}
         <span style={S.label}>ССЫЛКА (КУДА ВЕДЁТ)</span>
-        <input style={S.input} value={form.link} onChange={e=>setForm(p=>({...p,link:e.target.value}))} placeholder="https://..."/>
+        <input style={{...S.input,opacity:form.linkToAdOrder?0.3:1}} value={form.link} onChange={e=>setForm(p=>({...p,link:e.target.value}))} placeholder="https://..." disabled={form.linkToAdOrder}/>
+        <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',marginTop:4,marginBottom:4}}>
+          <input type="checkbox" checked={!!form.linkToAdOrder} onChange={e=>setForm(p=>({...p,linkToAdOrder:e.target.checked,link:e.target.checked?'__adorder__':p.link}))}/>
+          <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,color:'rgba(232,242,255,0.6)'}}>📣 Ссылка на страницу заказа рекламы</span>
+        </label>
         <span style={S.label}>СТРАНИЦЫ</span>
         <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
           {PAGE_OPTIONS.map(p => {

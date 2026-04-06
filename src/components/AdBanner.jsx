@@ -29,6 +29,11 @@ export default function AdBanner({ page }) {
 
   const handleClick = () => {
     if (!ad.link) return
+    if (ad.link === '__adorder__') {
+      // Открываем страницу заказа внутри приложения
+      window.dispatchEvent(new CustomEvent('openAdOrder'))
+      return
+    }
     const tg = window.Telegram?.WebApp
     if (tg) tg.openLink(ad.link)
     else window.open(ad.link, '_blank')

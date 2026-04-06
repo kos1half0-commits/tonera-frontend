@@ -33,11 +33,19 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('home')
+  useEffect(() => {
+    const handler = () => setPage('adorder')
+    window.addEventListener('openAdOrder', handler)
+    return () => window.removeEventListener('openAdOrder', handler)
+  }, [])
+
   const [page, setPage] = useState(() => {
-    // Проверяем start_param из Telegram
+    // Проверяем start_param из Telegram WebApp или URL
     const tg = window.Telegram?.WebApp
-    const param = tg?.initDataUnsafe?.start_param
-    if (param === 'adorder') return 'adorder'
+    const tgParam = tg?.initDataUnsafe?.start_param
+    if (tgParam === 'adorder') return 'adorder'
+    const urlParam = new URLSearchParams(window.location.search).get('startapp')
+    if (urlParam === 'adorder') return 'adorder'
     return null
   })
   const [tasksView, setTasksView] = useState('list')
