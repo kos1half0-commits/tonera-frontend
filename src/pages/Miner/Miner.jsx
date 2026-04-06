@@ -14,7 +14,6 @@ export default function Miner({ onBack, isAdmin }) {
   const [upgrading, setUpgrading] = useState(false)
   const [pending, setPending] = useState(0)
   const [projectWallet, setProjectWallet] = useState('')
-  const [elecDays, setElecDays] = useState(1)
   const [collectWallet, setCollectWallet] = useState('')
   const [showCollectInput, setShowCollectInput] = useState(false)
   const [minerEnabled, setMinerEnabled] = useState(1)
@@ -106,13 +105,32 @@ export default function Miner({ onBack, isAdmin }) {
     setCollecting(false)
   }
 
-  const payElectricity = async (days) => {
+  const payElectricity = async (mode) => {
     setPayingElec(true)
     try {
-      const r = await api.post('/api/miner/electricity', { days })
-      await load()
-      showToast(`✅ Оплачено на ${days} дн. (${parseFloat(r.data.cost).toFixed(4)} TON)`)
-    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+      if (mode === 'prepay') {
+        if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); setPayingElec(false); return }
+        if (!projectWallet) { showToast('Кошелёк проекта не настроен', true); setPayingElec(false); return }
+        const dailyEarned = parseFloat(miner.speed) * 24
+        const costPerDay = dailyEarned * ((miner.electricityPercent ?? 10) / 100)
+        const total120 = costPerDay * 120
+        const amountNano = Math.floor(total120 * 1e9).toString()
+        const result = await tonConnectUI.sendTransaction({
+          validUntil: Math.floor(Date.now() / 1000) + 300,
+          messages: [{ address: projectWallet, amount: amountNano }]
+        })
+        await api.post('/api/miner/electricity', { mode: 'prepay', tx_hash: result?.boc || '' })
+        await load()
+        showToast('✅ Электричество оплачено на 120 дней!')
+      } else {
+        const r = await api.post('/api/miner/electricity', { mode: 'day' })
+        await load()
+        showToast(`✅ Оплачено 1 день (${parseFloat(r.data.cost).toFixed(6)} TON)`)
+      }
+    } catch (e) {
+      if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('ОТМЕНЕНО', true)
+      else showToast(e?.response?.data?.error || e?.message || 'Ошибка', true)
+    }
     setPayingElec(false)
   }
 
@@ -229,26 +247,24 @@ export default function Miner({ onBack, isAdmin }) {
 
           {/* ЭЛЕКТРИЧЕСТВО */}
           <div className="miner-elec-block">
-            <div className="meb-title">⚡ ОПЛАТА ЭЛЕКТРИЧЕСТВА</div>
+            <div className="meb-title">⚡ ЭЛЕКТРИЧЕСТВО</div>
             <div className="meb-info">
-              {miner.electricityDue ? '⚠️ Майнер остановлен — требуется оплата' : '✅ Активно. Можно продлить заранее'}
+              {miner.electricityDue ? '⚠️ Майнер остановлен — намайненного не хватило' : '✅ Работает — списывается автоматически каждый день'}
             </div>
             {!miner.electricityDue && countdown && (
-              <div className="meb-countdown">⏱ До следующей оплаты: <b>{countdown}</b></div>
+              <div className="meb-countdown">⏱ До следующего списания: <b>{countdown}</b></div>
             )}
             <div className="meb-cost">
-              {parseFloat(miner.electricityCostPerDay ?? 0).toFixed(6)} TON/день ({miner.electricityPercent ?? 10}% от заработка)
+              Стоимость: {parseFloat(miner.electricityCostPerDay ?? 0).toFixed(6)} TON/день ({miner.electricityPercent ?? 10}% от заработка)
             </div>
-            <div className="meb-days">
-              {[1,2,4,8,16,32].map(d => (
-                <button key={d} className={`meb-day-btn ${elecDays===d?'on':''}`} onClick={()=>setElecDays(d)}>
-                  {d}д
-                </button>
-              ))}
+            <div style={{display:'flex',gap:8,marginTop:8}}>
+              <button className="miner-elec-btn" style={{flex:1}} onClick={()=>payElectricity('day')} disabled={payingElec}>
+                {payingElec ? '...' : `⚡ 1 ДЕНЬ — ${parseFloat(miner.electricityCostPerDay ?? 0).toFixed(4)} TON`}
+              </button>
+              <button className="miner-elec-btn" style={{flex:2,background:'rgba(26,95,255,0.2)',borderColor:'rgba(26,95,255,0.4)',color:'#00d4ff'}} onClick={()=>payElectricity('prepay')} disabled={payingElec}>
+                {payingElec ? '...' : `🔵 120 ДНЕЙ — ${(parseFloat(miner.electricityCostPerDay ?? 0)*120).toFixed(4)} TON`}
+              </button>
             </div>
-            <button className="miner-elec-btn" onClick={()=>payElectricity(elecDays)} disabled={payingElec}>
-              {payingElec ? '...' : `⚡ ОПЛАТИТЬ НА ${elecDays} ДНЕЙ — ${(parseFloat(miner.electricityCostPerDay ?? 0)*elecDays).toFixed(4)} TON`}
-            </button>
           </div>
 
           {/* АПГРЕЙД */}
