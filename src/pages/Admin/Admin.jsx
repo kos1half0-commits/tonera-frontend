@@ -1090,6 +1090,10 @@ export default function Admin() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [userStats, setUserStats] = useState(null)
   const [usersTab, setUsersTab] = useState('all')
+  const [usersPage, setUsersPage] = useState(1)
+  const [usersTotal, setUsersTotal] = useState(0)
+  const [usersPages, setUsersPages] = useState(1)
+  const [usersLoading, setUsersLoading] = useState(false)
   const [taskTemplates, setTaskTemplates] = useState([])
   const [showTaskTemplates, setShowTaskTemplates] = useState(false)
   const [tickets, setTickets] = useState([])
@@ -1118,6 +1122,18 @@ export default function Admin() {
   }
 
   useEffect(() => { loadAll() }, [])
+
+  const loadUsers = async (p=1, s='') => {
+    setUsersLoading(true)
+    try {
+      const r = await api.get(`/api/admin/users?page=${p}&search=${encodeURIComponent(s)}`)
+      setUsers(r.data?.users || [])
+      setUsersTotal(r.data?.total || 0)
+      setUsersPages(r.data?.pages || 1)
+      setUsersPage(p)
+    } catch {}
+    setUsersLoading(false)
+  }
 
   const loadAll = async () => {
     try {
@@ -1899,7 +1915,11 @@ export default function Admin() {
       {tab === 'users' && !selectedUser && (
         <div className="admin-section">
           <div className="users-search-row">
-            <input className="users-search" placeholder="🔍 Поиск по имени или ID..." value={search} onChange={e => setSearch(e.target.value)}/>
+            <div style={{display:'flex',gap:6,marginBottom:8}}>
+              <input className="users-search" style={{flex:1}} placeholder="🔍 Поиск по имени или ID..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&loadUsers(1,search)}/>
+              <button onClick={()=>loadUsers(1,search)} style={{padding:'6px 12px',border:'none',borderRadius:8,background:'rgba(26,95,255,0.3)',color:'#00d4ff',cursor:'pointer',fontFamily:'Orbitron,sans-serif',fontSize:9}}>НАЙТИ</button>
+            </div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)',marginBottom:6}}>Показано {users.length} из {usersTotal}</div>
           </div>
           <div className="users-sort-row">
             <div className="users-tabs">
