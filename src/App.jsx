@@ -33,7 +33,13 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('home')
-  const [page, setPage] = useState(null)
+  const [page, setPage] = useState(() => {
+    // Проверяем start_param из Telegram
+    const tg = window.Telegram?.WebApp
+    const param = tg?.initDataUnsafe?.start_param
+    if (param === 'adorder') return 'adorder'
+    return null
+  })
   const [tasksView, setTasksView] = useState('list')
   const [blockMsg, setBlockMsg] = useState(null)
   const [showSupport, setShowSupport] = useState(false)
