@@ -189,6 +189,7 @@ export default function Miner({ onBack, isAdmin }) {
       </div>
 
       {!miner ? (
+        <>
         <div className="miner-how">
           <div className="mhow-title">КАК РАБОТАЕТ МАЙНЕР</div>
           <div className="mhow-step"><span>1</span><div><b>Купи майнер</b> через TON Connect — разовая оплата</div></div>
@@ -211,6 +212,7 @@ export default function Miner({ onBack, isAdmin }) {
             {buying ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${price} TON`}
           </button>
         </div>
+        </>
       ) : (
         <>
           {/* СТАТУС */}
