@@ -121,10 +121,12 @@ export default function AdOrder({ onBack }) {
 
       <div className="adorder-form">
         <label className="aof-label">ЗАГОЛОВОК *</label>
-        <input className="aof-input" placeholder="Название вашего проекта" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/>
+        <input className="aof-input" placeholder="Название вашего проекта" maxLength={60} value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/>
+        <div className="aof-counter">{form.title.length}/60</div>
 
         <label className="aof-label">ОПИСАНИЕ</label>
-        <textarea className="aof-input" rows={3} placeholder="Краткое описание..." value={form.text} onChange={e=>setForm(f=>({...f,text:e.target.value}))} style={{resize:'none'}}/>
+        <textarea className="aof-input" rows={3} placeholder="Краткое описание..." maxLength={120} value={form.text} onChange={e=>setForm(f=>({...f,text:e.target.value}))} style={{resize:'none'}}/>
+        <div className="aof-counter">{(form.text||"").length}/120</div>
 
         <label className="aof-label">ССЫЛКА (КУДА ВЕДЁТ)</label>
         <input className="aof-input" placeholder="https://t.me/yourproject" value={form.link} onChange={e=>setForm(f=>({...f,link:e.target.value}))}/>
