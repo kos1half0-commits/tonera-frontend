@@ -1122,12 +1122,12 @@ export default function Admin() {
   const loadAll = async () => {
     try {
       const [s, se, t, u, w, maint] = await Promise.all([
-        api.get('/api/admin/stats'),
-        api.get('/api/admin/settings'),
-        api.get('/api/admin/tasks'),
-        api.get('/api/admin/users'),
-        api.get('/api/admin/withdrawals'),
-        api.get('/api/admin/maintenance'),
+        api.get('/api/admin/stats').catch(()=>({data:{}})),
+        api.get('/api/admin/settings').catch(()=>({data:{}})),
+        api.get('/api/admin/tasks').catch(()=>({data:[]})),
+        api.get('/api/admin/users').catch(()=>({data:[]})),
+        api.get('/api/admin/withdrawals').catch(()=>({data:[]})),
+        api.get('/api/admin/maintenance').catch(()=>({data:{}})),
       ])
       setStats(s.data)
       setSettings(se.data)
