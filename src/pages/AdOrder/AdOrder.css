@@ -25,3 +25,14 @@
 .ads-icon{font-size:52px;margin-bottom:12px;}
 .ads-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#00e676;margin-bottom:8px;}
 .ads-desc{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.5);line-height:1.5;margin-bottom:20px;}
+.adorder-section{background:#0e1c3a;border:1px solid rgba(26,95,255,0.15);border-radius:14px;padding:14px;margin-bottom:12px;}
+.aos-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.35);letter-spacing:.1em;margin-bottom:10px;}
+.aof-durations{display:flex;gap:8px;}
+.aof-dur-btn{flex:1;padding:12px 6px;border:1px solid rgba(26,95,255,0.2);border-radius:12px;background:transparent;cursor:pointer;text-align:center;}
+.aof-dur-btn.on{border-color:#00d4ff;background:rgba(0,212,255,0.08);}
+.adf-label{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.6);margin-bottom:4px;}
+.adf-price{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:#00d4ff;}
+.aof-dur-btn.on .adf-label{color:#e8f2ff;}
+.adorder-total{display:flex;justify-content:'space-between';align-items:center;padding:12px 16px;background:rgba(26,95,255,0.08);border-radius:12px;margin-bottom:10px;justify-content:space-between;}
+.adorder-total span{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(232,242,255,0.4);letter-spacing:.1em;}
+.adorder-total-price{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#00d4ff;}

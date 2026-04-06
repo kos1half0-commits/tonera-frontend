@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
 import api from '../../api/index'
 import './AdOrder.css'
 
@@ -11,31 +12,33 @@ const PAGE_OPTIONS = [
   { id: 'wallet',  label: 'Кошелёк' },
 ]
 
+const DURATIONS = [
+  { id: 'week',    label: '1 неделя',  days: 7,  priceKey: 'week' },
+  { id: '2weeks',  label: '2 недели',  days: 14, priceKey: 'twoWeeks' },
+  { id: 'month',   label: '1 месяц',   days: 30, priceKey: 'month' },
+]
+
 export default function AdOrder({ onBack }) {
-  const [form, setForm] = useState({ title:'', text:'', link:'', budget:'', pages:['home'] })
+  const [form, setForm] = useState({ title:'', text:'', link:'', pages:['home'], duration:'week' })
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
-  const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [toast, setToast] = useState('')
   const [toastErr, setToastErr] = useState(false)
-
+  const [prices, setPrices] = useState({ week:5, twoWeeks:9, month:15 })
+  const [projectWallet, setProjectWallet] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [tonConnectUI] = useTonConnectUI()
+  const wallet = useTonWallet()
 
-
+  useEffect(() => {
+    api.get('/api/ads/prices').then(r => setPrices(r.data)).catch(()=>{})
+    api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet||'')).catch(()=>{})
+  }, [])
 
   const showToast = (msg, err=false) => {
     setToast(msg); setToastErr(err)
     setTimeout(() => setToast(''), 5000)
-  }
-
-  const uploadImage = async (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = ev => resolve(ev.target.result)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
   }
 
   const togglePage = (page) => {
@@ -45,29 +48,50 @@ export default function AdOrder({ onBack }) {
     }))
   }
 
+  const currentPrice = prices[DURATIONS.find(d=>d.id===form.duration)?.priceKey || 'week'] || 5
+
   const submit = async () => {
     if (!form.title.trim()) { showToast('Введите заголовок', true); return }
     if (form.pages.length === 0) { showToast('Выберите хотя бы одну страницу', true); return }
+    if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); return }
+    if (!projectWallet) { showToast('Кошелёк проекта не настроен', true); return }
 
     setSubmitting(true)
     try {
+      // Конвертируем фото в base64
       let image_url = null
       if (imageFile) {
-        setUploading(true)
-        image_url = await uploadImage(imageFile)
-        setUploading(false)
+        image_url = await new Promise((res, rej) => {
+          const reader = new FileReader()
+          reader.onload = ev => res(ev.target.result)
+          reader.onerror = rej
+          reader.readAsDataURL(imageFile)
+        })
       }
 
+      // Оплата через TON Connect
+      const amountNano = Math.floor(currentPrice * 1e9).toString()
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [{ address: projectWallet, amount: amountNano }]
+      })
+
+      // Отправляем заявку
       await api.post('/api/ads/order', {
         title: form.title,
         text: form.text,
         link: form.link,
-        budget: parseFloat(form.budget) || 0,
         pages: form.pages.join(','),
+        budget: currentPrice,
+        duration: form.duration,
+        tx_hash: result?.boc || '',
         image_url,
       })
       setSubmitted(true)
-    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+    } catch (e) {
+      if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('ОТМЕНЕНО', true)
+      else showToast(e?.response?.data?.error || e?.message || 'Ошибка', true)
+    }
     setSubmitting(false)
   }
 
@@ -79,8 +103,8 @@ export default function AdOrder({ onBack }) {
       </div>
       <div className="adorder-success">
         <div className="ads-icon">✅</div>
-        <div className="ads-title">ЗАЯВКА ОТПРАВЛЕНА</div>
-        <div className="ads-desc">Мы рассмотрим вашу заявку и свяжемся с вами в Telegram</div>
+        <div className="ads-title">ЗАЯВКА ОПЛАЧЕНА</div>
+        <div className="ads-desc">Ваша реклама будет размещена после проверки. Обычно это занимает до 24 часов.</div>
         <button className="adorder-btn" onClick={onBack}>ВЕРНУТЬСЯ</button>
       </div>
     </div>
@@ -89,15 +113,27 @@ export default function AdOrder({ onBack }) {
   return (
     <div className="adorder-wrap">
       {toast && <div className={`adorder-toast ${toastErr?'err':''}`}>{toast}</div>}
-
       <div className="adorder-header">
         <button className="adorder-back" onClick={onBack}>← НАЗАД</button>
         <div className="adorder-title">📣 ЗАКАЗАТЬ РЕКЛАМУ</div>
       </div>
 
       <div className="adorder-info">
-        <div className="aoi-title">РАЗМЕСТИТЕ РЕКЛАМУ В TONERA</div>
-        <div className="aoi-desc">Ваш баннер увидят тысячи активных пользователей TON. Выберите страницы и укажите бюджет.</div>
+        <div className="aoi-title">РЕКЛАМА В TONERA</div>
+        <div className="aoi-desc">Ваш баннер увидят тысячи активных пользователей TON. Выберите период и страницы.</div>
+      </div>
+
+      {/* ПЕРИОД */}
+      <div className="adorder-section">
+        <div className="aos-title">ПЕРИОД РАЗМЕЩЕНИЯ</div>
+        <div className="aof-durations">
+          {DURATIONS.map(d => (
+            <button key={d.id} className={`aof-dur-btn ${form.duration===d.id?'on':''}`} onClick={()=>setForm(f=>({...f,duration:d.id}))}>
+              <div className="adf-label">{d.label}</div>
+              <div className="adf-price">{prices[d.priceKey]} TON</div>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="adorder-form">
@@ -114,7 +150,7 @@ export default function AdOrder({ onBack }) {
         {imagePreview ? (
           <div className="aof-preview">
             <img src={imagePreview} alt="" className="aof-preview-img"/>
-            <button className="aof-remove-img" onClick={()=>{setImageFile(null);setImagePreview(null)}}>✕ Удалить</button>
+            <button className="aof-remove-img" onClick={()=>{setImageFile(null);setImagePreview(null)}}>✕</button>
           </div>
         ) : (
           <label className="aof-upload">
@@ -122,7 +158,7 @@ export default function AdOrder({ onBack }) {
             <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
               const file = e.target.files[0]
               if (!file) return
-              if (file.size > 5 * 1024 * 1024) { showToast('Файл слишком большой (макс. 5MB)', true); return }
+              if (file.size > 5*1024*1024) { showToast('Файл слишком большой (макс. 5MB)', true); return }
               setImageFile(file)
               const reader = new FileReader()
               reader.onload = ev => setImagePreview(ev.target.result)
@@ -139,15 +175,16 @@ export default function AdOrder({ onBack }) {
             </button>
           ))}
         </div>
-
-        <label className="aof-label">БЮДЖЕТ (TON)</label>
-        <input className="aof-input" type="number" step="0.1" placeholder="0.0" value={form.budget} onChange={e=>setForm(f=>({...f,budget:e.target.value}))}/>
-        <div className="aof-hint">Укажите желаемый бюджет — мы свяжемся для обсуждения условий</div>
-
-        <button className="adorder-btn" onClick={submit} disabled={submitting}>
-          {uploading ? '⏳ ЗАГРУЗКА ФОТО...' : submitting ? 'ОТПРАВКА...' : '📤 ОТПРАВИТЬ ЗАЯВКУ'}
-        </button>
       </div>
+
+      <div className="adorder-total">
+        <span>ИТОГО К ОПЛАТЕ</span>
+        <span className="adorder-total-price">{currentPrice} TON</span>
+      </div>
+
+      <button className="adorder-btn" onClick={submit} disabled={submitting}>
+        {submitting ? 'ОБРАБОТКА...' : `💳 ОПЛАТИТЬ ${currentPrice} TON И ОТПРАВИТЬ`}
+      </button>
     </div>
   )
 }
