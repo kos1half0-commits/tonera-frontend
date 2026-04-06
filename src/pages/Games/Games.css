@@ -1,0 +1,14 @@
+.games-wrap{padding:16px;}
+.games-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#e8f2ff;margin-bottom:20px;letter-spacing:.05em;}
+.games-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.game-card{background:linear-gradient(145deg,#060f2a,#08142e);border:1px solid rgba(0,212,255,0.3);border-radius:18px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;}
+.game-card:active{transform:scale(.97);}
+.gc-icon{font-size:42px;margin-bottom:10px;}
+.gc-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#e8f2ff;letter-spacing:.05em;margin-bottom:6px;}
+.gc-desc{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.4);line-height:1.4;}
+.game-card.maint{opacity:.6;cursor:not-allowed;border-color:rgba(255,179,0,0.2);}
+.gc-maint-badge{margin-top:8px;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:#ffb300;background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.3);border-radius:6px;padding:3px 8px;letter-spacing:.06em;}
+.game-card.admin-only{border-color:rgba(255,179,0,0.3);background:rgba(255,179,0,0.03);}
+.gc-badge{margin-top:8px;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;border-radius:6px;padding:3px 8px;letter-spacing:.06em;}
+.maint-badge{color:#ffb300;background:rgba(255,179,0,0.1);border:1px solid rgba(255,179,0,0.3);}
+.admin-badge{color:#a855f7;background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);}

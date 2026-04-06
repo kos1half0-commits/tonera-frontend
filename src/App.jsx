@@ -33,7 +33,6 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('home')
-  const [page, setPage] = useState(null)
   const [tasksView, setTasksView] = useState('list')
   const [blockMsg, setBlockMsg] = useState(null)
   const [showSupport, setShowSupport] = useState(false)
@@ -66,8 +65,6 @@ export default function App() {
   useEffect(() => { api.get('/api/settings/miner_enabled').then(r => setMinerStatus(String(r.data?.value ?? '0'))).catch(()=>{ setMinerStatus('1') }) }, [])
   const visibleTabs = TABS.filter(t => (t.id !== 'admin' || isAdmin) && t.id !== 'customer' && (t.id !== 'games' || true))
   const balance = parseFloat(user?.balance_ton ?? 0)
-
-  if (page === 'adorder') return <AdOrder onBack={() => setPage(null)} />
 
   if (blockMsg) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',padding:24,textAlign:'center',background:'#050a1a'}}>
