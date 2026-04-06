@@ -40,7 +40,6 @@ const SETTING_GROUPS = [
       { key: 'ad_price_week',   label: 'Цена рекламы 1 неделя (TON)' },
       { key: 'ad_price_2weeks', label: 'Цена рекламы 2 недели (TON)' },
       { key: 'ad_price_month',  label: 'Цена рекламы 1 месяц (TON)' },
-      { key: 'miner_electricity_percent',  label: 'Стоимость электричества (% от дневного заработка)' },
     ]
   },
   {
