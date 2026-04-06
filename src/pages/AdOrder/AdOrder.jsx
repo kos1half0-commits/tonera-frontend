@@ -3,15 +3,6 @@ import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
 import api from '../../api/index'
 import './AdOrder.css'
 
-const PAGE_OPTIONS = [
-  { id: 'home',    label: 'Главная' },
-  { id: 'tasks',   label: 'Задания' },
-  { id: 'games',   label: 'Игры' },
-  { id: 'staking', label: 'Стейкинг' },
-  { id: 'miner',   label: 'Майнер' },
-  { id: 'wallet',  label: 'Кошелёк' },
-]
-
 const DURATIONS = [
   { id: 'week',    label: '1 неделя',  days: 7,  priceKey: 'week' },
   { id: '2weeks',  label: '2 недели',  days: 14, priceKey: 'twoWeeks' },
@@ -161,12 +152,32 @@ export default function AdOrder({ onBack }) {
 
         <label className="aof-label">СТРАНИЦЫ ДЛЯ ПОКАЗА *</label>
         <div className="aof-pages">
-          {PAGE_OPTIONS.map(p => (
-            <button key={p.id} className={`aof-page-btn ${form.pages.includes(p.id)?'on':''}`} onClick={()=>togglePage(p.id)}>
-              {p.label}
-            </button>
-          ))}
         </div>
+      </div>
+
+      {/* ПРЕДПРОСМОТР */}
+      {(form.title || imagePreview) && (
+        <div className="adorder-section" style={{marginBottom:12}}>
+          <div className="aos-title">ПРЕДПРОСМОТР БАННЕРА</div>
+          <div className="ad-banner" style={{cursor:'default',marginBottom:0}}>
+            {imagePreview && <img src={imagePreview} className="ad-img" alt="" style={{maxHeight:140,objectFit:'cover'}}/>}
+            <div className="ad-body">
+              <div className="ad-label">РЕКЛАМА</div>
+              {form.title && <div className="ad-title">{form.title}</div>}
+              {form.text && <div className="ad-text">{form.text}</div>}
+              {form.link && <div className="ad-link">Подробнее →</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ОПИСАНИЕ ОПЛАТЫ */}
+      <div className="adorder-pay-info">
+        <div className="api-title">💳 КАК ПРОИСХОДИТ ОПЛАТА</div>
+        <div className="api-item">✅ Оплата через TON Connect — напрямую на кошелёк TonEra</div>
+        <div className="api-item">✅ Никаких комиссий и внутреннего баланса</div>
+        <div className="api-item">✅ Реклама публикуется после проверки модератором</div>
+        <div className="api-item">⏱ Обычно в течение 24 часов</div>
       </div>
 
       <div className="adorder-total">

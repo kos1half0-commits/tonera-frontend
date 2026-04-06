@@ -36,3 +36,6 @@
 .adorder-total{display:flex;justify-content:'space-between';align-items:center;padding:12px 16px;background:rgba(26,95,255,0.08);border-radius:12px;margin-bottom:10px;justify-content:space-between;}
 .adorder-total span{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(232,242,255,0.4);letter-spacing:.1em;}
 .adorder-total-price{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#00d4ff;}
+.adorder-pay-info{background:rgba(0,230,118,0.05);border:1px solid rgba(0,230,118,0.15);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.api-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#00e676;letter-spacing:.08em;margin-bottom:8px;}
+.api-item{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.6);margin-bottom:5px;line-height:1.4;}
