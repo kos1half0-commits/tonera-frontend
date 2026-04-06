@@ -18,6 +18,7 @@ export default function Miner({ onBack, isAdmin }) {
   const [collectWallet, setCollectWallet] = useState('')
   const [showCollectInput, setShowCollectInput] = useState(false)
   const [minerEnabled, setMinerEnabled] = useState(1)
+  const [history, setHistory] = useState([])
   const timerRef = useRef(null)
   const [tonConnectUI] = useTonConnectUI()
   const wallet = useTonWallet()
@@ -40,6 +41,7 @@ export default function Miner({ onBack, isAdmin }) {
     load()
     api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet || '')).catch(()=>{})
     api.get('/api/settings/miner_enabled').then(r => setMinerEnabled(parseInt(r.data?.value ?? 1))).catch(()=>{})
+    api.get('/api/miner/history').then(r => setHistory(r.data || [])).catch(()=>{})
   }, [])
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export default function Miner({ onBack, isAdmin }) {
       })
       await api.post('/api/miner/buy', { tx_hash: result?.boc || '' })
       await load()
+      api.get('/api/miner/history').then(r => setHistory(r.data || [])).catch(()=>{})
       showToast('✅ Майнер куплен!')
     } catch (e) {
       if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('ОТМЕНЕНО', true)
@@ -235,6 +238,29 @@ export default function Miner({ onBack, isAdmin }) {
             <button className="mu-btn" onClick={upgrade} disabled={upgrading}>
               {upgrading ? '...' : `⬆️ АПГРЕЙД ЗА ${parseFloat(miner.upgradePrice ?? 0.5).toFixed(4)} TON`}
             </button>
+          </div>
+          {/* ИСТОРИЯ */}
+          <div className="miner-history">
+            <div className="mh-title">📋 ИСТОРИЯ</div>
+            {history.length === 0 ? (
+              <div className="mh-empty">Нет записей</div>
+            ) : history.map((h, i) => (
+              <div key={i} className="mh-item">
+                <div className="mh-icon">
+                  {h.label?.includes('Куплен') ? '⛏' :
+                   h.label?.includes('Апгрейд') ? '⬆️' :
+                   h.label?.includes('электр') ? '⚡' :
+                   h.label?.includes('Майнинг') ? '💰' : '📋'}
+                </div>
+                <div className="mh-info">
+                  <div className="mh-label">{h.label}</div>
+                  <div className="mh-date">{new Date(h.created_at).toLocaleDateString('ru', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                </div>
+                <div className={`mh-amount ${parseFloat(h.amount) > 0 ? 'pos' : 'neg'}`}>
+                  {parseFloat(h.amount) > 0 ? '+' : ''}{parseFloat(h.amount).toFixed(4)} TON
+                </div>
+              </div>
+            ))}
           </div>
         </>
       )}
