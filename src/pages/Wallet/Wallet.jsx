@@ -1,3 +1,4 @@
+import AdBanner from '../../components/AdBanner'
 import { useState, useEffect } from 'react'
 import { getTransactions } from '../../api/index'
 import { useUserStore } from '../../store/userStore'
@@ -171,6 +172,7 @@ export default function Wallet({ user }) {
   return (
     <>
     <div className="wallet-wrap">
+      <AdBanner page="wallet" />
       {toast && <div className={`wallet-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
 
       <div className="wallet-title">Кошелёк</div>

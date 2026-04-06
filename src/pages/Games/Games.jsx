@@ -1,3 +1,4 @@
+import AdBanner from '../../components/AdBanner'
 import { useState, useEffect } from 'react'
 import api from '../../api/index'
 import './Games.css'
@@ -28,6 +29,7 @@ export default function Games({ onGame, isAdmin = false }) {
 
   return (
     <div className="games-wrap">
+      <AdBanner page="games" />
       <div className="games-title">🎮 ИГРЫ</div>
       <div className="games-grid">
         {GAMES_CONFIG.map(g => {

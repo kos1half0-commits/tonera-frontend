@@ -1,3 +1,4 @@
+import AdBanner from '../../components/AdBanner'
 import { useState, useEffect, useRef } from 'react'
 import { getUserStakes, createStake, unstake, reinvestStake, addToStake, collectStake, withdrawStake } from '../../api/index'
 import api from '../../api/index'
@@ -190,6 +191,7 @@ export default function Staking({ user }) {
 
   return (
     <div className="staking-wrap">
+      <AdBanner page="staking" />
       {toast && <div className="stake-toast">{toast}</div>}
 
       <div className="stake-topbar">

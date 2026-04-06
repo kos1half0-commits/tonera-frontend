@@ -1,3 +1,4 @@
+import AdBanner from '../../components/AdBanner'
 import { useState, useEffect, useRef } from 'react'
 import { getTasks, completeTask, createTask, getMyTasks } from '../../api/index'
 import { useUserStore } from '../../store/userStore'
@@ -162,6 +163,7 @@ export default function Tasks({ initialView = 'list', onViewChange }) {
 
   return (
     <div className="tasks-wrap">
+      <AdBanner page="tasks" />
       {toast && <div className={`tasks-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
 
       <div className="tasks-tabs">
