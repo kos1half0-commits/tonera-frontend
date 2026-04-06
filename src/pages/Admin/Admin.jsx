@@ -31,6 +31,14 @@ const SETTING_GROUPS = [
       { key: 'miner_upgrade_multiplier',   label: 'Множитель скорости за апгрейд' },
       { key: 'miner_upgrade_price',              label: 'Цена апгрейда (фиксированная, TON)' },
       { key: 'miner_min_collect',               label: 'Мин. вывод дохода (TON)' },
+    ]
+  },
+  {
+    id: 'ads_config',
+    title: '📣 Реклама',
+    settings: [
+      { key: 'cloudinary_cloud_name',    label: 'Cloudinary Cloud Name' },
+      { key: 'cloudinary_upload_preset', label: 'Cloudinary Upload Preset' },
       { key: 'miner_electricity_percent',  label: 'Стоимость электричества (% от дневного заработка)' },
     ]
   },
@@ -97,6 +105,52 @@ const SETTING_GROUPS = [
   },
 ]
 
+function AdOrdersAdmin() {
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [toast, setT] = useState('')
+
+  const showToast = m => { setT(m); setTimeout(()=>setT(''),3000) }
+  const load = () => api.get('/api/ads/orders').then(r=>{setOrders(r.data||[]);setLoading(false)}).catch(()=>setLoading(false))
+  useEffect(()=>{ load() },[])
+
+  const approve = async id => { await api.put(`/api/ads/orders/${id}`,{status:'approved'}); load(); showToast('✅ Одобрено — баннер создан') }
+  const reject  = async id => { await api.put(`/api/ads/orders/${id}`,{status:'rejected'}); load(); showToast('❌ Отклонено') }
+
+  const S = { btn: (c={})=>({padding:'6px 10px',border:'none',borderRadius:7,fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer',...c}) }
+
+  if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+
+  return (
+    <div>
+      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+      {!orders.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
+      {orders.map(o => (
+        <div key={o.id} style={{background:'#0e1c3a',border:`1px solid ${o.status==='approved'?'rgba(0,230,118,0.2)':o.status==='rejected'?'rgba(255,77,106,0.15)':'rgba(26,95,255,0.2)'}`,borderRadius:12,padding:12,marginBottom:8}}>
+          {o.image_url && <img src={o.image_url} style={{width:'100%',borderRadius:8,maxHeight:100,objectFit:'cover',marginBottom:8}} onError={e=>e.target.style.display='none'}/>}
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+            <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{o.title}</span>
+            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,padding:'3px 8px',borderRadius:6,fontWeight:700,
+              background:o.status==='approved'?'rgba(0,230,118,0.15)':o.status==='rejected'?'rgba(255,77,106,0.15)':'rgba(255,179,0,0.15)',
+              color:o.status==='approved'?'#00e676':o.status==='rejected'?'#ff4d6a':'#ffb300'
+            }}>{o.status==='approved'?'ОДОБРЕНО':o.status==='rejected'?'ОТКЛ':'ОЖИДАЕТ'}</span>
+          </div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:2}}>👤 {o.username?'@'+o.username:o.first_name}</div>
+          {o.text && <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:2}}>{o.text}</div>}
+          {o.link && <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'#00d4ff',marginBottom:2}}>🔗 {o.link}</div>}
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)',marginBottom:6}}>📍 {o.pages} · 💰 {o.budget} TON</div>
+          {o.status === 'pending' && (
+            <div style={{display:'flex',gap:6}}>
+              <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={()=>approve(o.id)}>✅ ОДОБРИТЬ</button>
+              <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>reject(o.id)}>❌ ОТКЛОНИТЬ</button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function AdsAdmin() {
   const [ads, setAds] = useState([])
   const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet' })
@@ -138,8 +192,24 @@ function AdsAdmin() {
         <input style={S.input} value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder="Заголовок рекламы"/>
         <span style={S.label}>ТЕКСТ</span>
         <textarea style={{...S.input,resize:'none'}} rows={2} value={form.text} onChange={e=>setForm(p=>({...p,text:e.target.value}))} placeholder="Описание..."/>
-        <span style={S.label}>ССЫЛКА НА КАРТИНКУ</span>
-        <input style={S.input} value={form.image_url} onChange={e=>setForm(p=>({...p,image_url:e.target.value}))} placeholder="https://..."/>
+        <span style={S.label}>ФОТО БАННЕРА</span>
+        {form.image_url ? (
+          <div style={{position:'relative',marginBottom:8}}>
+            <img src={form.image_url} style={{width:'100%',borderRadius:8,maxHeight:80,objectFit:'cover'}}/>
+            <button onClick={()=>setForm(p=>({...p,image_url:''}))} style={{position:'absolute',top:4,right:4,padding:'3px 7px',border:'none',borderRadius:5,background:'rgba(255,77,106,0.8)',color:'#fff',cursor:'pointer',fontSize:10}}>✕</button>
+          </div>
+        ) : (
+          <label style={{display:'block',padding:'10px',border:'1px dashed rgba(26,95,255,0.3)',borderRadius:8,textAlign:'center',cursor:'pointer',color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans,sans-serif',fontSize:12,marginBottom:8}}>
+            📷 Загрузить фото
+            <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
+              const file = e.target.files[0]
+              if (!file) return
+              const reader = new FileReader()
+              reader.onload = ev => setForm(p=>({...p,image_url:ev.target.result}))
+              reader.readAsDataURL(file)
+            }}/>
+          </label>
+        )}
         <span style={S.label}>ССЫЛКА (КУДА ВЕДЁТ)</span>
         <input style={S.input} value={form.link} onChange={e=>setForm(p=>({...p,link:e.target.value}))} placeholder="https://..."/>
         <span style={S.label}>СТРАНИЦЫ</span>
@@ -1191,6 +1261,7 @@ export default function Admin() {
           {id:'withdrawals',icon:'💸',label:`ЗАЯВКИ${withdrawals.filter(w=>w.status==='pending').length > 0 ? ' ('+withdrawals.filter(w=>w.status==='pending').length+')' : ''}`},
           {id:'promo',icon:'🎁',label:'ПРОМО'},
           {id:'ads',icon:'📣',label:'РЕКЛАМА'},
+          {id:'adorders',icon:'📋',label:'ЗАЯВКИ РЕК'},
           {id:'miners',icon:'⛏',label:'МАЙНЕРЫ'},
           {id:'admins',icon:'👑',label:'АДМИНЫ'},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
@@ -1668,6 +1739,12 @@ export default function Admin() {
       )}
 
       {/* SYSTEM */}
+      {tab === 'adorders' && (
+        <div className="admin-section">
+          <AdOrdersAdmin />
+        </div>
+      )}
+
       {tab === 'ads' && (
         <div className="admin-section">
           <AdsAdmin />

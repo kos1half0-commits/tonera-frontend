@@ -5,7 +5,7 @@ import api from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Home.css'
 
-export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', isAdmin=false }) {
+export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', onAdOrder, isAdmin=false }) {
   const [news, setNews] = useState([])
   const [promoCode, setPromoCode] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
@@ -186,6 +186,10 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
           <div className="qa-lbl">МАЙНИНГ</div>
         </div>
         )}
+        <div className="qa" onClick={onAdOrder}>
+          <div className="qa-icon si-gold">📣</div>
+          <div className="qa-lbl">РЕКЛАМА</div>
+        </div>
       </div>
     </div>
   )
