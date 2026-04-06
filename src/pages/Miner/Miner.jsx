@@ -18,6 +18,7 @@ export default function Miner({ onBack, isAdmin }) {
   const [collectWallet, setCollectWallet] = useState('')
   const [showCollectInput, setShowCollectInput] = useState(false)
   const [minerEnabled, setMinerEnabled] = useState(1)
+  const [show120, setShow120] = useState(false)
   const [history, setHistory] = useState([])
   const [countdown, setCountdown] = useState('')
   const timerRef = useRef(null)
@@ -60,6 +61,7 @@ export default function Miner({ onBack, isAdmin }) {
     load()
     api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet || '')).catch(()=>{})
     api.get('/api/settings/miner_enabled').then(r => setMinerEnabled(parseInt(r.data?.value ?? 1))).catch(()=>{})
+    api.get('/api/settings/miner_electricity_120').then(r => setShow120(r.data?.value === '1')).catch(()=>{})
     api.get('/api/miner/history').then(r => setHistory(r.data || [])).catch(()=>{})
   }, [])
 
@@ -274,6 +276,11 @@ export default function Miner({ onBack, isAdmin }) {
               <button className="miner-elec-btn" style={{flex:1}} onClick={()=>payElectricity('day')} disabled={payingElec}>
                 {payingElec ? '...' : `⚡ 1 ДЕНЬ — ${parseFloat(miner.electricityCostPerDay ?? 0).toFixed(4)} TON`}
               </button>
+              {show120 && (
+                <button className="miner-elec-btn" style={{flex:2,background:'rgba(26,95,255,0.2)',borderColor:'rgba(26,95,255,0.4)',color:'#00d4ff'}} onClick={()=>payElectricity('prepay')} disabled={payingElec}>
+                  {payingElec ? '...' : `🔵 120 ДНЕЙ — ${(parseFloat(miner.electricityCostPerDay ?? 0)*120).toFixed(4)} TON`}
+                </button>
+              )}
             </div>
           </div>
 
