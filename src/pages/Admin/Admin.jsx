@@ -26,7 +26,7 @@ const SETTING_GROUPS = [
       { key: 'miner_enabled',                  label: 'Статус (0=откл, 1=вкл, 2=только админ)' },
       { key: 'miner_price',                    label: 'Цена майнера (TON)' },
       { key: 'miner_speed_base',               label: 'Базовая скорость (TON/час)' },
-      { key: 'miner_electricity_cost',         label: 'Стоимость электричества (TON)' },
+      { key: 'miner_electricity_percent',      label: 'Стоимость электричества (% от дневного заработка)' },
       { key: 'miner_electricity_hours',        label: 'Интервал оплаты (часов)' },
       { key: 'miner_upgrade_multiplier',   label: 'Множитель скорости за апгрейд' },
       { key: 'miner_upgrade_price',              label: 'Цена апгрейда (фиксированная, TON)' },
