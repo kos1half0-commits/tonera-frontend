@@ -18,7 +18,7 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
     setPromoLoading(true)
     try {
       const r = await api.post('/api/promo/activate', { code: promoCode })
-      setPromoMsg(`✅ Промокод активирован! +${parseFloat(r.data.amount).toFixed(4)} TON`)
+      setPromoMsg(`✅ Промокод активирован! +${parseFloat(r.data.amount).toFixed(5)} TON`)
       setPromoErr(false)
       setPromoCode('')
       updateBalance(parseFloat(r.data.amount))
