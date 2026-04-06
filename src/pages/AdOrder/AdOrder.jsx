@@ -19,7 +19,7 @@ const DURATIONS = [
 ]
 
 export default function AdOrder({ onBack }) {
-  const [form, setForm] = useState({ title:'', text:'', link:'', pages:['home'], duration:'week' })
+  const [form, setForm] = useState({ title:'', text:'', link:'', duration:'week' })
   const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
@@ -41,18 +41,10 @@ export default function AdOrder({ onBack }) {
     setTimeout(() => setToast(''), 5000)
   }
 
-  const togglePage = (page) => {
-    setForm(f => ({
-      ...f,
-      pages: f.pages.includes(page) ? f.pages.filter(p=>p!==page) : [...f.pages, page]
-    }))
-  }
-
   const currentPrice = prices[DURATIONS.find(d=>d.id===form.duration)?.priceKey || 'week'] || 5
 
   const submit = async () => {
     if (!form.title.trim()) { showToast('Введите заголовок', true); return }
-    if (form.pages.length === 0) { showToast('Выберите хотя бы одну страницу', true); return }
     if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); return }
     if (!projectWallet) { showToast('Кошелёк проекта не настроен', true); return }
 
@@ -81,7 +73,7 @@ export default function AdOrder({ onBack }) {
         title: form.title,
         text: form.text,
         link: form.link,
-        pages: form.pages.join(','),
+        pages: 'home,tasks,games,staking,miner,wallet',
         budget: currentPrice,
         duration: form.duration,
         tx_hash: result?.boc || '',
