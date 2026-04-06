@@ -290,7 +290,7 @@ export default function Miner({ onBack, isAdmin }) {
               {upgrading ? '...' : `⬆️ АПГРЕЙД ЗА ${parseFloat(miner.upgradePrice ?? 0.5).toFixed(4)} TON`}
             </button>
           </div>
-          <AdBanner page="miner" />
+          <div style={{marginTop:14}}><AdBanner page="miner" /></div>
           {/* ИСТОРИЯ */}
           <div className="miner-history">
             <div className="mh-title">📋 ИСТОРИЯ</div>
