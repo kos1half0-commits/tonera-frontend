@@ -19,6 +19,7 @@ export default function Miner({ onBack, isAdmin }) {
   const [showCollectInput, setShowCollectInput] = useState(false)
   const [minerEnabled, setMinerEnabled] = useState(1)
   const [history, setHistory] = useState([])
+  const [countdown, setCountdown] = useState('')
   const timerRef = useRef(null)
   const [tonConnectUI] = useTonConnectUI()
   const wallet = useTonWallet()
@@ -36,6 +37,24 @@ export default function Miner({ onBack, isAdmin }) {
     } catch(e) { console.log('load err:', e.message) }
     setLoading(false)
   }
+
+  useEffect(() => {
+    if (!data?.miner) return
+    const calcCountdown = () => {
+      const lastElec = new Date(data.miner.last_electricity)
+      const hours = data?.settings?.electricityHours ?? 24
+      const expiry = new Date(lastElec.getTime() + hours * 3600000)
+      const diff = expiry - new Date()
+      if (diff <= 0) { setCountdown('ПРОСРОЧЕНО'); return }
+      const h = Math.floor(diff / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setCountdown(`${h}ч ${m}м ${s}с`)
+    }
+    calcCountdown()
+    const t = setInterval(calcCountdown, 1000)
+    return () => clearInterval(t)
+  }, [data?.miner?.last_electricity, data?.settings?.electricityHours])
 
   useEffect(() => {
     load()
@@ -214,6 +233,9 @@ export default function Miner({ onBack, isAdmin }) {
             <div className="meb-info">
               {miner.electricityDue ? '⚠️ Майнер остановлен — требуется оплата' : '✅ Активно. Можно продлить заранее'}
             </div>
+            {!miner.electricityDue && countdown && (
+              <div className="meb-countdown">⏱ До следующей оплаты: <b>{countdown}</b></div>
+            )}
             <div className="meb-cost">
               {parseFloat(miner.electricityCostPerDay ?? 0).toFixed(6)} TON/день ({miner.electricityPercent ?? 10}% от заработка)
             </div>
