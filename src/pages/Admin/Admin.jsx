@@ -105,32 +105,53 @@ function MinersAdmin() {
     api.get('/api/miner/all').then(r => { setMiners(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
   }, [])
 
+  if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+
+  const active = miners.filter(m => m.active).length
+  const totalSpeed = miners.reduce((s,m) => s + parseFloat(m.speed||0), 0)
+  const avgLevel = miners.length ? (miners.reduce((s,m) => s + m.level, 0) / miners.length).toFixed(1) : 0
+  const totalRevenue = miners.reduce((s,m) => s + Math.abs(parseFloat(m.upgrade_spent||0)), 0)
+
   const S = {
+    stat: {background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:'10px 12px',flex:1,textAlign:'center'},
     row: (c={}) => ({display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,marginBottom:6,...c}),
   }
 
-  if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
-  if (!miners.length) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет майнеров</div>
-
   return (
     <div>
-      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>
-        ВСЕГО: {miners.length}
+      {/* СТАТИСТИКА */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:12}}>
+        <div style={S.stat}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00d4ff'}}>{miners.length}</div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>Всего майнеров</div>
+        </div>
+        <div style={S.stat}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00e676'}}>{active}</div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>Активных</div>
+        </div>
+        <div style={S.stat}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#ffb300'}}>{totalSpeed.toFixed(4)}</div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>TON/час суммарно</div>
+        </div>
+        <div style={S.stat}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#e8f2ff'}}>{avgLevel}</div>
+          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>Средний уровень</div>
+        </div>
       </div>
+
+      {/* СПИСОК */}
+      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>СПИСОК МАЙНЕРОВ</div>
+      {!miners.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет майнеров</div>}
       {miners.map(m => (
         <div key={m.id} style={S.row()}>
-          <div style={{width:36,height:36,borderRadius:8,background:'rgba(26,95,255,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>⛏</div>
+          <div style={{width:36,height:36,borderRadius:8,background:m.active?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>⛏</div>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff'}}>{m.username ? '@'+m.username : m.first_name}</div>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)'}}>ID: {m.telegram_id}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>LVL {m.level} · {parseFloat(m.speed).toFixed(6)} TON/ч · {new Date(m.created_at).toLocaleDateString('ru')}</div>
           </div>
-          <div style={{textAlign:'right'}}>
-            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00d4ff',fontWeight:700}}>LVL {m.level}</div>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>{parseFloat(m.speed).toFixed(6)} TON/ч</div>
-          </div>
-          <div style={{textAlign:'right',minWidth:60}}>
+          <div style={{textAlign:'right',marginRight:4}}>
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,color:m.active?'#00e676':'#ff4d6a'}}>{m.active?'АКТИВЕН':'СТОП'}</div>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{new Date(m.created_at).toLocaleDateString('ru')}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{parseFloat(m.speed*24).toFixed(4)} TON/д</div>
           </div>
           <button onClick={async()=>{
             if (!confirm('Удалить майнер?')) return
