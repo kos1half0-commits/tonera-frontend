@@ -1150,7 +1150,9 @@ export default function Admin() {
       setStats(s.data)
       setSettings(se.data)
       setTasks(t.data)
-      setUsers(u.data)
+      setUsers(u.data?.users || u.data || [])
+      setUsersTotal(u.data?.total || 0)
+      setUsersPages(u.data?.pages || 1)
       setWithdrawals(w.data || [])
       try {
         const spinInfo = await api.get('/api/spin/info')
