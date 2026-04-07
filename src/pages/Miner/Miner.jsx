@@ -66,13 +66,17 @@ export default function Miner({ onBack, isAdmin }) {
   }, [])
 
   useEffect(() => {
+    clearInterval(timerRef.current)
     if (!data?.miner?.isActive) return
     const speed = parseFloat(data.miner.speed)
+    // Начинаем с pendingTon с сервера
+    const serverPending = data.miner.pendingTon || 0
+    setPending(serverPending)
     timerRef.current = setInterval(() => {
       setPending(p => p + speed / 3600)
     }, 1000)
     return () => clearInterval(timerRef.current)
-  }, [data?.miner?.isActive, data?.miner?.speed])
+  }, [data?.miner?.id, data?.miner?.isActive, data?.miner?.speed])
 
   const buy = async () => {
     if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); return }
