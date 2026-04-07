@@ -1122,13 +1122,13 @@ export default function Admin() {
   }
 
   useEffect(() => { loadAll() }, [])
-  useEffect(() => { if (tab === 'users') loadUsers(1, '') }, [tab])
+  useEffect(() => { if (tab === 'users') loadUsers(1, search, usersTab) }, [tab])
+  useEffect(() => { if (tab === 'users') loadUsers(1, search, usersTab) }, [usersTab])
 
-  const loadUsers = async (p=1, s='') => {
+  const loadUsers = async (p=1, s='', f='all') => {
     setUsersLoading(true)
     try {
-      const r = await api.get(`/api/admin/users?page=${p}&search=${encodeURIComponent(s)}`)
-      console.log('USERS API:', r.data)
+      const r = await api.get(`/api/admin/users?page=${p}&search=${encodeURIComponent(s)}&filter=${f}`)
       setUsers(r.data?.users || [])
       setUsersTotal(r.data?.total || 0)
       setUsersPages(r.data?.pages || 1)
@@ -1920,19 +1920,19 @@ export default function Admin() {
         <div className="admin-section">
           <div className="users-search-row">
             <div style={{display:'flex',gap:6,marginBottom:8}}>
-              <input className="users-search" style={{flex:1}} placeholder="🔍 Поиск по имени или ID..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&loadUsers(1,search)}/>
-              <button onClick={()=>loadUsers(1,search)} style={{padding:'6px 12px',border:'none',borderRadius:8,background:'rgba(26,95,255,0.3)',color:'#00d4ff',cursor:'pointer',fontFamily:'Orbitron,sans-serif',fontSize:9}}>НАЙТИ</button>
+              <input className="users-search" style={{flex:1}} placeholder="🔍 Поиск по имени или ID..." value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&loadUsers(1,search,usersTab)}/>
+              <button onClick={()=>loadUsers(1,search,usersTab)} style={{padding:'6px 12px',border:'none',borderRadius:8,background:'rgba(26,95,255,0.3)',color:'#00d4ff',cursor:'pointer',fontFamily:'Orbitron,sans-serif',fontSize:9}}>НАЙТИ</button>
             </div>
             <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)',marginBottom:6}}>Показано {users.length} из {usersTotal}</div>
           </div>
           <div className="users-sort-row">
             <div className="users-tabs">
-              <button className={`utab ${usersTab==='all'?'on':''}`} onClick={() => setUsersTab('all')}>ВСЕ</button>
-              <button className={`utab ${usersTab==='donors'?'on':''}`} onClick={() => setUsersTab('donors')}>💎 ДОНАТОРЫ</button>
+              <button className={`utab ${usersTab==='all'?'on':''}`} onClick={() => { setUsersTab('all') }}>ВСЕ</button>
+              <button className={`utab ${usersTab==='donors'?'on':''}`} onClick={() => { setUsersTab('donors') }}>💎 ДОНАТОРЫ</button>
               <button className={`utab ${usersTab==='traders'?'on':''}`} onClick={() => setUsersTab('traders')}>📊 ТРЕЙДЕРЫ</button>
               <button className={`utab ${usersTab==='spinners'?'on':''}`} onClick={() => setUsersTab('spinners')}>🎰 СПИНЕРЫ</button>
               <button className={`utab ${usersTab==='sloters'?'on':''}`} onClick={() => setUsersTab('sloters')}>🎰 СЛОТЕРЫ</button>
-              <button className={`utab ${usersTab==='stakers'?'on':''}`} onClick={() => setUsersTab('stakers')}>💰 СТЕЙКЕРЫ</button>
+              <button className={`utab ${usersTab==='stakers'?'on':''}`} onClick={() => { setUsersTab('stakers') }}>💰 СТЕЙКЕРЫ</button>
             </div>
             <div className="sort-btns">
               {[{k:'created_at',l:'ДАТА'},{k:'balance_ton',l:'БАЛАНС'},{k:'referral_count',l:'РЕФЫ'}].map(s => (
@@ -1943,26 +1943,7 @@ export default function Admin() {
             </div>
           </div>
           <div className="users-count">{usersLoading ? 'Загрузка...' : `${users.length} из ${usersTotal}`}</div>
-          {!usersLoading && users
-            .filter(u => {
-              if (usersTab === 'donors') return parseFloat(u.total_deposited || 0) > 0
-              if (usersTab === 'stakers') return parseFloat(u.staking_amount || 0) > 0
-              if (usersTab === 'traders') return true
-              if (usersTab === 'spinners') return true
-              if (usersTab === 'sloters') return true
-              return true
-            })
-            .sort((a, b) => {
-              if (usersTab === 'stakers') return parseFloat(b.staking_amount||0) - parseFloat(a.staking_amount||0)
-              if (usersTab === 'donors') return parseFloat(b.total_deposited||0) - parseFloat(a.total_deposited||0)
-              if (usersTab === 'traders') return 0
-              if (usersTab === 'spinners') return 0
-              if (usersTab === 'sloters') return 0
-              const va = parseFloat(a[sortBy]) || new Date(a[sortBy]).getTime() || 0
-              const vb = parseFloat(b[sortBy]) || new Date(b[sortBy]).getTime() || 0
-              return sortDir === 'desc' ? vb - va : va - vb
-            })
-            .map(u => (
+          {!usersLoading && users.map(u => (
             <div key={u.id} className={`admin-user-item ${u.is_blocked ? 'blocked' : ''}`} onClick={() => openUserStats(u)} style={{cursor:'pointer'}}>
               <div className="aui-avatar">{(u.username||u.first_name||'?')[0].toUpperCase()}</div>
               <div className="aui-info">
