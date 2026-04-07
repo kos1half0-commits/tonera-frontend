@@ -1122,6 +1122,7 @@ export default function Admin() {
   }
 
   useEffect(() => { loadAll() }, [])
+  useEffect(() => { if (tab === 'users') loadUsers(1, '') }, [tab])
 
   const loadUsers = async (p=1, s='') => {
     setUsersLoading(true)
@@ -1939,8 +1940,8 @@ export default function Admin() {
               ))}
             </div>
           </div>
-          <div className="users-count">{users.length} пользователей</div>
-          {users
+          <div className="users-count">{usersLoading ? 'Загрузка...' : `${users.length} из ${usersTotal}`}</div>
+          {!usersLoading && users
             .filter(u => {
               if (usersTab === 'donors') return parseFloat(u.total_deposited || 0) > 0
               if (usersTab === 'stakers') return parseFloat(u.staking_amount || 0) > 0
