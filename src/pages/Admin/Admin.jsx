@@ -1640,11 +1640,11 @@ export default function Admin() {
                   </div>
                 </div>
                 <div className="wi-right">
-                  <div className={`wi-status ${w.status}`}>{w.status === 'pending' ? 'ОЖИДАЕТ' : 'ВЫПЛАЧЕНО'}</div>
+                  <div className={`wi-status ${w.status}`}>{w.status==='pending'?'ОЖИДАЕТ':w.status==='cancelled'?'ОТМЕНЁН':'ВЫПЛАЧЕНО'}</div>
                   {w.status === 'pending' && (
-                    <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-end'}}>
-                    <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✅ ВЫПЛАЧЕНО</button>
-                    <button className="wi-done-btn" style={{background:'rgba(255,77,106,0.15)',color:'#ff4d6a',border:'1px solid rgba(255,77,106,0.3)'}} onClick={() => {
+                    <div style={{display:'flex',gap:4,marginTop:6}}>
+                    <button style={{padding:'6px 10px',border:'none',borderRadius:7,background:'rgba(0,230,118,0.2)',color:'#00e676',fontFamily:'Orbitron,sans-serif',fontSize:8,cursor:'pointer',fontWeight:700}} onClick={() => markWithdrawalDone(w.id)}>✅ ВЫПЛАЧЕНО</button>
+                    <button style={{padding:'6px 10px',border:'none',borderRadius:7,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:8,cursor:'pointer',fontWeight:700}} onClick={() => {
                       const max = Math.abs(parseFloat(w.amount)).toFixed(4)
                       const amt = prompt(`Сумма возврата юзеру (макс. ${max} TON):`, max)
                       if (!amt) return
