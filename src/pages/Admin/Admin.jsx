@@ -1127,11 +1127,12 @@ export default function Admin() {
     setUsersLoading(true)
     try {
       const r = await api.get(`/api/admin/users?page=${p}&search=${encodeURIComponent(s)}`)
+      console.log('USERS API:', r.data)
       setUsers(r.data?.users || [])
       setUsersTotal(r.data?.total || 0)
       setUsersPages(r.data?.pages || 1)
       setUsersPage(p)
-    } catch {}
+    } catch(e) { console.log('USERS ERR:', e?.response?.data, e?.message) }
     setUsersLoading(false)
   }
 
