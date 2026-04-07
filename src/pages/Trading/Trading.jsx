@@ -390,7 +390,8 @@ export default function Trading({ user, onBack }) {
       const res = await api.post('/api/trading/bet', {
         amount: val,
         direction: dir,
-        duration: betTime.seconds
+        duration: betTime.seconds,
+        startPrice: currentPrice || 0
       })
       updateBalance(-val)
       const b = { direction: dir, amount: val, startPrice: currentPrice || 0, endTime: new Date(res.data.endTime).getTime() }
