@@ -1637,6 +1637,11 @@ export default function Admin() {
                     <div className="wi-addr-short">{addr.length > 20 ? addr.slice(0,10)+'...'+addr.slice(-6) : addr}</div>
                     <button className="wi-copy-btn" onClick={() => { navigator.clipboard.writeText(addr); showToast('АДРЕС СКОПИРОВАН') }}>📋 Адрес</button>
                     <button className="wi-copy-btn wi-copy-amt" onClick={() => { navigator.clipboard.writeText(amount); showToast('СУММА СКОПИРОВАНА') }}>📋 {amount}</button>
+                    <button className="wi-copy-btn" style={{color:'#a78bfa'}} onClick={()=>{
+                      setSelectedUser({id:w.user_id, username:w.username, first_name:w.first_name, telegram_id:w.telegram_id, balance_ton:0})
+                      openUserStats({id:w.user_id, username:w.username, first_name:w.first_name, telegram_id:w.telegram_id, balance_ton:0})
+                      setTab('users')
+                    }}>👤 Профиль</button>
                   </div>
                 </div>
                 <div className="wi-right">
@@ -1809,7 +1814,16 @@ export default function Admin() {
       {tab === 'support' && activeTicket && (
         <div className="admin-section">
           <button className="sup-back" onClick={() => setActiveTicket(null)} style={{marginBottom:12}}>← Назад</button>
-          <div className="stats-section-title">Тикет #{activeTicket.id} · {activeTicket.username ? '@'+activeTicket.username : activeTicket.first_name}</div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+            <div className="stats-section-title" style={{marginBottom:0}}>Тикет #{activeTicket.id} · {activeTicket.username ? '@'+activeTicket.username : activeTicket.first_name}</div>
+            <button style={{padding:'6px 12px',border:'none',borderRadius:8,background:'rgba(167,139,250,0.15)',color:'#a78bfa',fontFamily:'Orbitron,sans-serif',fontSize:9,cursor:'pointer',fontWeight:700}}
+              onClick={()=>{
+                setSelectedUser({id:activeTicket.user_id, username:activeTicket.username, first_name:activeTicket.first_name, telegram_id:activeTicket.telegram_id, balance_ton:0})
+                openUserStats({id:activeTicket.user_id, username:activeTicket.username, first_name:activeTicket.first_name, telegram_id:activeTicket.telegram_id, balance_ton:0})
+                setActiveTicket(null)
+                setTab('users')
+              }}>👤 ПРОФИЛЬ</button>
+          </div>
           <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:16}}>
             <div className="sup-msg user"><div className="sup-msg-text">{activeTicket.message}</div></div>
             {(activeTicket.replies||[]).map((r,i) => (
