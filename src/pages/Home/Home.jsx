@@ -180,7 +180,7 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
           <div className="qa-lbl">ПАРТНЁРСТВО</div>
         </div>
         )}
-        {(minerStatus==='1' || minerStatus==='2') && (
+        {(minerStatus==='1' || (minerStatus==='2' && isAdmin)) && (
         <div className="qa" onClick={onMiner}>
           <div className="qa-icon si-cyan">⛏</div>
           <div className="qa-lbl">МАЙНИНГ</div>
