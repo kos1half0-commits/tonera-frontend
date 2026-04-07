@@ -1642,7 +1642,20 @@ export default function Admin() {
                 <div className="wi-right">
                   <div className={`wi-status ${w.status}`}>{w.status === 'pending' ? 'ОЖИДАЕТ' : 'ВЫПЛАЧЕНО'}</div>
                   {w.status === 'pending' && (
-                    <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✓</button>
+                    <>
+                    <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✓ ВЫПЛАЧЕНО</button>
+                    <button className="wi-done-btn" style={{background:'rgba(255,77,106,0.2)',color:'#ff4d6a',marginLeft:4}} onClick={() => {
+                      const max = Math.abs(parseFloat(w.amount)).toFixed(4)
+                      const amt = prompt(`Сумма возврата юзеру (макс. ${max} TON):`, max)
+                      if (!amt) return
+                      api.post(`/api/admin/withdrawals/${w.id}/cancel`, { refund_amount: parseFloat(amt) })
+                        .then(r => { setWithdrawals(prev => prev.map(x => x.id===w.id ? {...x, status:'cancelled'} : x)); showToast(`↩️ Возвращено ${amt} TON`) })
+                        .catch(e => showToast(e?.response?.data?.error || 'Ошибка', true))
+                    }}>↩️ ОТМЕНИТЬ</button>
+                    </>
+                  )}
+                  {w.status === 'cancelled' && (
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#ff4d6a'}}>↩️ ОТМЕНЁН</div>
                   )}
                 </div>
               </div>
