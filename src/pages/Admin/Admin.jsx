@@ -2009,6 +2009,33 @@ export default function Admin() {
             <div className="up-name">{selectedUser.username || selectedUser.first_name}</div>
             <div className="up-id">ID: {selectedUser.telegram_id}</div>
           </div>
+
+          {/* ПОПОЛНЕНИЕ БАЛАНСА */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:12,marginBottom:10}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)',letterSpacing:'.08em',marginBottom:8}}>💰 ИЗМЕНИТЬ БАЛАНС</div>
+            <div style={{display:'flex',gap:6,marginBottom:6}}>
+              <input id="bal-amount" type="number" step="0.0001" placeholder="Сумма (- для списания)"
+                style={{flex:1,background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 10px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none'}}/>
+            </div>
+            <input id="bal-comment" placeholder="Комментарий (необязательно)"
+              style={{width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 10px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',marginBottom:6}}/>
+            <div style={{display:'flex',gap:6}}>
+              <button style={{flex:1,padding:'8px',border:'none',borderRadius:8,background:'rgba(0,230,118,0.2)',color:'#00e676',fontFamily:'Orbitron,sans-serif',fontSize:9,cursor:'pointer',fontWeight:700}}
+                onClick={async()=>{
+                  const amt = parseFloat(document.getElementById('bal-amount').value)
+                  const comment = document.getElementById('bal-comment').value
+                  if (!amt) return showToast('Укажите сумму', true)
+                  try {
+                    const r = await api.post(`/api/admin/users/${selectedUser.id}/balance`, { amount: amt, comment })
+                    setSelectedUser(u => ({...u, balance_ton: r.data.new_balance}))
+                    document.getElementById('bal-amount').value = ''
+                    document.getElementById('bal-comment').value = ''
+                    showToast(`✅ Баланс изменён на ${amt > 0 ? '+' : ''}${amt} TON`)
+                  } catch(e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+                }}>✅ ПРИМЕНИТЬ</button>
+            </div>
+          </div>
+
           {userStats ? (
             <>
               <div className="stats-cards">
