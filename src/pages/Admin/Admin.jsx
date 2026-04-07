@@ -280,6 +280,17 @@ function MinersAdmin() {
     setHistLoading(false)
   }
 
+  const editElectricity = async (userId, days) => {
+    try {
+      await api.put(`/api/miner/admin/electricity/${userId}`, { days })
+      const r = await api.get('/api/miner/all')
+      setMiners(r.data||[])
+      const updated = r.data.find(m => m.user_id === userId)
+      if (updated) setSelected(updated)
+      showToast(`✅ Электричество установлено на ${days} дней`)
+    } catch(e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+  }
+
   if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
 
   // Детальный просмотр
@@ -305,6 +316,15 @@ function MinersAdmin() {
             ['В день', `${(parseFloat(selected.speed)*24).toFixed(6)} TON`],
             ['Статус', selected.active?'✅ Активен':'❌ Остановлен'],
             ['Куплен', new Date(selected.created_at).toLocaleDateString('ru')],
+            ['Электричество до', selected.last_electricity ? (() => {
+              const exp = new Date(selected.last_electricity)
+              const now = new Date()
+              const diff = exp - now
+              if (diff <= 0) return '❌ Просрочено'
+              const days = Math.floor(diff / 86400000)
+              const hours = Math.floor((diff % 86400000) / 3600000)
+              return `✅ ${days}д ${hours}ч`
+            })() : '❌ Нет данных'],
           ].map(([k,v]) => (
             <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(26,95,255,0.07)'}}>
               <span style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{k}</span>
@@ -326,12 +346,32 @@ function MinersAdmin() {
             </div>
           </div>
         ))}
+        <div style={{background:'#0e1c3a',border:'1px solid rgba(255,179,0,0.2)',borderRadius:12,padding:12,marginBottom:10,marginTop:10}}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)',marginBottom:8}}>⚡ РЕДАКТИРОВАТЬ ЭЛЕКТРИЧЕСТВО</div>
+          <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:8}}>
+            {[1,3,7,14,30,60,90,120].map(d => (
+              <button key={d} style={{padding:'5px 8px',border:'1px solid rgba(255,179,0,0.3)',borderRadius:6,background:'rgba(255,179,0,0.08)',color:'#ffb300',fontFamily:'Orbitron,sans-serif',fontSize:8,cursor:'pointer'}}
+                onClick={()=>editElectricity(selected.user_id, d)}>{d}д</button>
+            ))}
+          </div>
+          <div style={{display:'flex',gap:6}}>
+            <input id="elec-days" type="number" placeholder="Кол-во дней"
+              style={{flex:1,background:'#0b1630',border:'1px solid rgba(255,179,0,0.3)',borderRadius:8,padding:'7px 10px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none'}}/>
+            <button style={{padding:'7px 12px',border:'none',borderRadius:8,background:'rgba(255,179,0,0.2)',color:'#ffb300',fontFamily:'Orbitron,sans-serif',fontSize:9,cursor:'pointer',fontWeight:700}}
+              onClick={()=>{
+                const d = parseFloat(document.getElementById('elec-days').value)
+                if (!d) return
+                editElectricity(selected.user_id, d)
+              }}>✅</button>
+          </div>
+        </div>
+
         <button onClick={async()=>{
           if(!confirm('Удалить майнер?'))return
           await api.delete(`/api/miner/${selected.user_id}`)
           setSelected(null)
           api.get('/api/miner/all').then(r=>setMiners(r.data||[]))
-        }} style={{width:'100%',marginTop:10,padding:'10px',border:'none',borderRadius:10,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:10,cursor:'pointer',fontWeight:700}}>
+        }} style={{width:'100%',padding:'10px',border:'none',borderRadius:10,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:10,cursor:'pointer',fontWeight:700}}>
           🗑 УДАЛИТЬ МАЙНЕР
         </button>
       </div>
