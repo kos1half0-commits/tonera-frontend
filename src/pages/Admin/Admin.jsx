@@ -1642,9 +1642,9 @@ export default function Admin() {
                 <div className="wi-right">
                   <div className={`wi-status ${w.status}`}>{w.status === 'pending' ? 'ОЖИДАЕТ' : 'ВЫПЛАЧЕНО'}</div>
                   {w.status === 'pending' && (
-                    <>
-                    <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✓ ВЫПЛАЧЕНО</button>
-                    <button className="wi-done-btn" style={{background:'rgba(255,77,106,0.2)',color:'#ff4d6a',marginLeft:4}} onClick={() => {
+                    <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-end'}}>
+                    <button className="wi-done-btn" onClick={() => markWithdrawalDone(w.id)}>✅ ВЫПЛАЧЕНО</button>
+                    <button className="wi-done-btn" style={{background:'rgba(255,77,106,0.15)',color:'#ff4d6a',border:'1px solid rgba(255,77,106,0.3)'}} onClick={() => {
                       const max = Math.abs(parseFloat(w.amount)).toFixed(4)
                       const amt = prompt(`Сумма возврата юзеру (макс. ${max} TON):`, max)
                       if (!amt) return
@@ -1652,7 +1652,7 @@ export default function Admin() {
                         .then(r => { setWithdrawals(prev => prev.map(x => x.id===w.id ? {...x, status:'cancelled'} : x)); showToast(`↩️ Возвращено ${amt} TON`) })
                         .catch(e => showToast(e?.response?.data?.error || 'Ошибка', true))
                     }}>↩️ ОТМЕНИТЬ</button>
-                    </>
+                    </div>
                   )}
                   {w.status === 'cancelled' && (
                     <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#ff4d6a'}}>↩️ ОТМЕНЁН</div>
