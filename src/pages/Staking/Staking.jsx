@@ -110,17 +110,17 @@ export default function Staking({ user }) {
     if (income < 1e-9) return
     if (income < mins.collect) { showToast(`МИН. СБОР: ${mins.collect} TON`); return }
     if (cooldown > 0) { showToast(`ПОДОЖДИТЕ ${cooldown} СЕК`); return }
-    if (income < mins.collect) { showToast(`МИН. СБОР: ${mins.collect} TON`); return }
     const v = snap()
     setAcc(0); setT0(Date.now())
     setWal(w => w + v)
     updateBalance(v)
     showToast(`СОБРАНО +${v.toFixed(6)} TON`)
-    startCooldown(Math.floor(Math.random() * 120) + 10)
+    startCooldown(30)
     try {
       if (stakeId) {
         await collectStake(stakeId)
         await reloadUser()
+        await reloadStake()
       }
     } catch {}
   }
@@ -129,20 +129,26 @@ export default function Staking({ user }) {
     if (income < 1e-9) return
     if (income < mins.reinvest) { showToast(`МИН. РЕИНВЕСТ: ${mins.reinvest} TON`); return }
     if (cooldown > 0) { showToast(`ПОДОЖДИТЕ ${cooldown} СЕК`); return }
+    // Оптимистичный UI — показываем сразу
     const v = snap()
-    const newDep = dep + v
     setAcc(0); setT0(Date.now())
-    setDep(newDep)
+    setDep(dep + v)
     showToast(`РЕИНВЕСТ +${v.toFixed(6)} TON`)
-    startCooldown(Math.floor(Math.random() * 120) + 10)
+    startCooldown(30)
     try {
       if (stakeId) {
-        await reinvestStake(stakeId, v, newDep)
+        // Сервер сам рассчитывает earned и newAmount
+        const res = await reinvestStake(stakeId)
+        // Перезагружаем с сервера авторитетные данные
+        await reloadStake()
       } else {
-        const res = await createStake({ amount: newDep })
+        const res = await createStake({ amount: dep + v })
         if (res.data?.stake?.id) setStakeId(res.data.stake.id)
       }
-    } catch {}
+    } catch {
+      // Откатываем UI при ошибке
+      await reloadStake()
+    }
   }
 
   const handleConfirm = async () => {
@@ -150,43 +156,49 @@ export default function Staking({ user }) {
     const val = parseFloat(amount)
     if (!val || val <= 0) { showToast('ВВЕДИ СУММУ'); return }
     setConfirming(true)
-    if (modal === 'plus') {
-      if (val < mins.deposit) { showToast(`МИН. ДЕПОЗИТ: ${mins.deposit} TON`); return }
-      if (val > wal) { showToast('НЕДОСТАТОЧНО СРЕДСТВ'); return }
-      snap(); setAcc(0); setT0(Date.now())
-      setWal(w => w - val)
-      setDep(d => d + val)
-      updateBalance(-val)
-      try {
-        await addToStake(stakeId, val)
-        await reloadStake()
-      } catch {}
-      showToast(`ДЕПОЗИТ +${val.toFixed(4)} TON`)
-    } else {
-      // Нельзя вывести бонусную часть
-      const withdrawable = dep - bonusDep
-      if (val < mins.withdraw) { showToast(`МИН. ВЫВОД: ${mins.withdraw} TON`); return }
-      if (val > withdrawable) {
-        showToast(`МАКС. ВЫВОД: ${withdrawable.toFixed(4)} TON`)
-        return
+    try {
+      if (modal === 'plus') {
+        if (val < mins.deposit) { showToast(`МИН. ДЕПОЗИТ: ${mins.deposit} TON`); setConfirming(false); return }
+        if (val > wal) { showToast('НЕДОСТАТОЧНО СРЕДСТВ'); setConfirming(false); return }
+        snap(); setAcc(0); setT0(Date.now())
+        setWal(w => w - val)
+        setDep(d => d + val)
+        updateBalance(-val)
+        try {
+          await addToStake(stakeId, val)
+          await reloadStake()
+          await reloadUser()
+        } catch {}
+        showToast(`ДЕПОЗИТ +${val.toFixed(4)} TON`)
+      } else {
+        // Нельзя вывести бонусную часть
+        const withdrawable = dep - bonusDep
+        if (val < mins.withdraw) { showToast(`МИН. ВЫВОД: ${mins.withdraw} TON`); setConfirming(false); return }
+        if (val > withdrawable) {
+          showToast(`МАКС. ВЫВОД: ${withdrawable.toFixed(4)} TON`)
+          setConfirming(false)
+          return
+        }
+        snap(); setAcc(0); setT0(Date.now())
+        setDep(d => d - val)
+        try {
+          await withdrawStake(stakeId, val)
+          await reloadUser()
+          await reloadStake()
+          showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
+        } catch (e) {
+          // Откатываем UI если ошибка
+          await reloadStake()
+          await reloadUser()
+          showToast(e?.response?.data?.error || 'ОШИБКА ВЫВОДА')
+          setConfirming(false)
+          return
+        }
       }
-      snap(); setAcc(0); setT0(Date.now())
-      setDep(d => d - val)
-      try {
-        const res = await withdrawStake(stakeId, val)
-        await reloadUser()
-        await reloadStake()
-        showToast(`ВЫВЕДЕНО ${val.toFixed(4)} TON`)
-      } catch (e) {
-        // Откатываем UI если ошибка
-        await reloadStake()
-        await reloadUser()
-        showToast(e?.response?.data?.error || 'ОШИБКА ВЫВОДА')
-        return
-      }
+      setModal(null); setAmount('')
+    } finally {
+      setConfirming(false)
     }
-    setModal(null); setAmount('')
-    setConfirming(false)
   }
 
   return (

@@ -137,11 +137,9 @@ export default function Trading({ user, onBack }) {
         setCandles([...arr])
 
         if (betRef.current && Date.now() >= betRef.current.endTime) {
-          const b = betRef.current
-          const diff = Math.abs(price - b.startPrice)
-          const won = diff < 0.0001 ? null : b.direction === 'up' ? price > b.startPrice : price < b.startPrice
+          const bData = betRef.current
           betRef.current = null; setBet(null)
-          finishBet(won, b.amount)
+          finishBet(bData)
         }
       }
     }
@@ -341,26 +339,26 @@ export default function Trading({ user, onBack }) {
     drawChart()
   }
 
-  const finishBet = async (won, betAmount) => {
+  const finishBet = async (betData) => {
     clearInterval(timerRef.current); setCountdown(0)
     try { localStorage.removeItem('tonera_bet') } catch {}
+    const endPrice = candlesRef.current[candlesRef.current.length - 1]?.close || betData.startPrice
     try {
+      // Сервер определяет won по startPrice и endPrice
+      const r = await api.post('/api/trading/result', {
+        startPrice: betData.startPrice,
+        endPrice: endPrice
+      })
+      const { won, profit } = r.data
       if (won === null) {
-        setResult({ won: null, amount: betAmount })
+        setResult({ won: null, amount: betData.amount })
         showToast('🔄 Цена не изменилась — возврат средств')
-        await api.post('/api/trading/result', { amount: betAmount, won: null })
-        // Перезагружаем конфиг
-        api.get('/api/trading/info').then(r => setConfig(r.data)).catch(() => {})
-        return
-      }
-      const r = await api.post('/api/trading/result', { amount: betAmount, won })
-      if (won) {
-        updateBalance(-betAmount + r.data.profit)
-        setResult({ won: true, profit: r.data.profit, amount: betAmount })
-        showToast(`📈 +${(r.data.profit - betAmount).toFixed(4)} TON!`)
+      } else if (won) {
+        updateBalance(profit)
+        setResult({ won: true, profit, amount: betData.amount })
+        showToast(`📈 +${(profit - betData.amount).toFixed(4)} TON!`)
       } else {
-        updateBalance(-betAmount)
-        setResult({ won: false, amount: betAmount })
+        setResult({ won: false, amount: betData.amount })
         showToast('📉 Не угадал', true)
       }
       loadHistory()
@@ -381,35 +379,50 @@ export default function Trading({ user, onBack }) {
     setTimeout(() => setToast(''), 5000)
   }
 
-  const handleBet = dir => {
+  const handleBet = async (dir) => {
     if (bet) return
     const val = parseFloat(amount)
     if (!val || val < parseFloat(config.trading_min_bet)) { showToast(`МИН.: ${config.trading_min_bet} TON`, true); return }
     if (val > balance) { showToast('НЕДОСТАТОЧНО', true); return }
-    const b = { direction: dir, amount: val, startPrice: currentPrice || 0, endTime: Date.now() + betTime.seconds * 1000 }
-    setBet(b); betRef.current = b; setResult(null)
-    try { localStorage.setItem('tonera_bet', JSON.stringify(b)) } catch {}
-    setCountdown(betTime.seconds)
-    const t = setInterval(() => setCountdown(c => {
-      if (c <= 1) {
-        clearInterval(t)
-        // Принудительно закрываем позицию если WS не закрыл
-        setTimeout(() => {
-          if (betRef.current) {
-            const b = betRef.current
-            const price = candlesRef.current[candlesRef.current.length - 1]?.close || b.startPrice
-            const diff = Math.abs(price - b.startPrice) / b.startPrice
-            const won = diff < 0.00005 ? null : (b.direction === 'up' ? price > b.startPrice : price < b.startPrice)
-            betRef.current = null
-            setBet(null)
-            finishBet(won, b.amount)
-          }
-        }, 1500) // даём 1.5с на последнее сообщение WS
-        return 0
+
+    // Открываем ставку на сервере — баланс списывается серверно
+    try {
+      const res = await api.post('/api/trading/bet', {
+        amount: val,
+        direction: dir,
+        duration: betTime.seconds
+      })
+      updateBalance(-val)
+      const b = { direction: dir, amount: val, startPrice: currentPrice || 0, endTime: new Date(res.data.endTime).getTime() }
+      setBet(b); betRef.current = b; setResult(null)
+      try { localStorage.setItem('tonera_bet', JSON.stringify(b)) } catch {}
+      const remaining = Math.ceil((b.endTime - Date.now()) / 1000)
+      setCountdown(remaining)
+      const t = setInterval(() => setCountdown(c => {
+        if (c <= 1) {
+          clearInterval(t)
+          // Принудительно закрываем позицию если WS не закрыл
+          setTimeout(() => {
+            if (betRef.current) {
+              const bData = betRef.current
+              betRef.current = null
+              setBet(null)
+              finishBet(bData)
+            }
+          }, 1500)
+          return 0
+        }
+        return c - 1
+      }), 1000)
+      timerRef.current = t
+    } catch (e) {
+      if (e?.response?.data?.disabled) {
+        setConfig(c => ({...c, trading_enabled: '0'}))
+        showToast('⚠️ Трейдинг недоступен', true)
+      } else {
+        showToast(e?.response?.data?.error || 'Ошибка', true)
       }
-      return c - 1
-    }), 1000)
-    timerRef.current = t
+    }
   }
 
   if (!configLoaded) return (
