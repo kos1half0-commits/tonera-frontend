@@ -3,6 +3,155 @@ import api from '../../api/index'
 import { getReferrals } from '../../api/index'
 import './Auction.css'
 
+// --- Referral Profile Modal ---
+function RefProfileModal({ userId, onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!userId) return
+    setLoading(true)
+    setError(null)
+    api.get(`/api/auction/ref-profile/${userId}`)
+      .then(r => setData(r.data))
+      .catch(e => setError(e.response?.data?.error || 'Ошибка загрузки'))
+      .finally(() => setLoading(false))
+  }, [userId])
+
+  if (!userId) return null
+
+  const fmt = (v, d = 4) => parseFloat(v || 0).toFixed(d)
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('ru-RU', { day:'2-digit', month:'short', year:'numeric' }) : '—'
+  const fmtTime = (d) => d ? new Date(d).toLocaleString('ru-RU', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '—'
+
+  const txTypeLabels = {
+    deposit: '💳 Депозит',
+    withdrawal: '📤 Вывод',
+    ref_bonus: '🤝 Реф. бонус',
+    ref_task: '📋 Реф. задание',
+    ref_deposit: '💵 Реф. депозит',
+    staking: '📈 Стейкинг',
+    spin_result: '🎰 Спин',
+    trading: '📊 Трейдинг',
+    task_reward: '✅ Задание',
+    miner_payout: '⛏️ Майнинг',
+    bonus: '🎁 Бонус',
+  }
+
+  return (
+    <div className="bid-modal-overlay" onClick={onClose}>
+      <div className="ref-profile-modal" onClick={e => e.stopPropagation()}>
+        <button className="rpm-close" onClick={onClose}>✕</button>
+
+        {loading && (
+          <div className="rpm-loading">
+            <div className="rpm-spinner"></div>
+            <div>Загрузка профиля...</div>
+          </div>
+        )}
+
+        {error && (
+          <div className="rpm-error">⚠️ {error}</div>
+        )}
+
+        {data && !loading && (
+          <>
+            {/* Header */}
+            <div className="rpm-header">
+              <div className="rpm-avatar">{(data.user.username || data.user.first_name || '?')[0].toUpperCase()}</div>
+              <div className="rpm-user-info">
+                <div className="rpm-username">{data.user.username ? `@${data.user.username}` : data.user.first_name || 'Пользователь'}</div>
+                <div className="rpm-registered">На платформе с {fmtDate(data.user.registered)}</div>
+                <div className="rpm-refs">👥 {data.user.referral_count || 0} рефералов</div>
+              </div>
+            </div>
+
+            {/* Activity summary bar */}
+            <div className="rpm-activity-bar">
+              <div className={`rpm-act-dot ${data.stats.activity_7d > 0 ? 'active' : 'inactive'}`}></div>
+              <span className="rpm-act-text">
+                {data.stats.activity_7d > 0
+                  ? `🟢 Активен (${data.stats.activity_7d} действий за 7д)`
+                  : data.stats.activity_30d > 0
+                    ? `🟡 Активен за 30д (${data.stats.activity_30d} действий)`
+                    : '🔴 Неактивен'}
+              </span>
+              {data.stats.last_active && (
+                <span className="rpm-act-last">последн.: {fmtTime(data.stats.last_active)}</span>
+              )}
+            </div>
+
+            {/* Stats grid */}
+            <div className="rpm-section-title">📊 СТАТИСТИКА АКТИВНОСТИ</div>
+            <div className="rpm-stats-grid">
+              <div className="rpm-stat-card">
+                <div className="rpm-stat-icon">💳</div>
+                <div className="rpm-stat-val">{fmt(data.stats.total_deposited)}</div>
+                <div className="rpm-stat-label">TON депозитов</div>
+                <div className="rpm-stat-sub">{data.stats.deposit_count} операций</div>
+              </div>
+              <div className="rpm-stat-card">
+                <div className="rpm-stat-icon">📈</div>
+                <div className="rpm-stat-val">{fmt(data.stats.active_staked)}</div>
+                <div className="rpm-stat-label">TON в стейке</div>
+                <div className="rpm-stat-sub">{data.stats.total_stakes} стейков</div>
+              </div>
+              <div className="rpm-stat-card">
+                <div className="rpm-stat-icon">📊</div>
+                <div className="rpm-stat-val">{data.stats.trading_count}</div>
+                <div className="rpm-stat-label">Сделок</div>
+                <div className="rpm-stat-sub">трейдинг</div>
+              </div>
+              <div className="rpm-stat-card">
+                <div className="rpm-stat-icon">✅</div>
+                <div className="rpm-stat-val">{data.stats.tasks_completed}</div>
+                <div className="rpm-stat-label">Заданий</div>
+                <div className="rpm-stat-sub">выполнено</div>
+              </div>
+              <div className="rpm-stat-card">
+                <div className="rpm-stat-icon">🎰</div>
+                <div className="rpm-stat-val">{data.stats.spin_count}</div>
+                <div className="rpm-stat-label">Спинов</div>
+                <div className="rpm-stat-sub">рулетка</div>
+              </div>
+              <div className="rpm-stat-card">
+                <div className="rpm-stat-icon">⛏️</div>
+                <div className="rpm-stat-val">{data.stats.active_hashrate}</div>
+                <div className="rpm-stat-label">GH/s</div>
+                <div className="rpm-stat-sub">{data.stats.miner_contracts} контрактов</div>
+              </div>
+            </div>
+
+            {/* Miner earned */}
+            {data.stats.miner_earned > 0 && (
+              <div className="rpm-miner-earned">
+                ⛏️ Намайнено: <b>{fmt(data.stats.miner_earned)} TON</b>
+              </div>
+            )}
+
+            {/* Recent transactions */}
+            <div className="rpm-section-title">📜 ПОСЛЕДНИЕ ДЕЙСТВИЯ</div>
+            {data.recent_tx.length === 0 ? (
+              <div className="rpm-empty-tx">Нет транзакций</div>
+            ) : (
+              <div className="rpm-tx-list">
+                {data.recent_tx.map((tx, i) => (
+                  <div key={i} className="rpm-tx-item">
+                    <div className="rpm-tx-type">{txTypeLabels[tx.type] || `📌 ${tx.type}`}</div>
+                    <div className="rpm-tx-label">{tx.label}</div>
+                    <div className="rpm-tx-date">{fmtTime(tx.created_at)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function useCountdown(endsAt) {
   const [timeLeft, setTimeLeft] = useState('')
   const [expired, setExpired] = useState(false)
@@ -32,7 +181,7 @@ function AuctionTimer({ endsAt }) {
   )
 }
 
-function AuctionCard({ auction, userId, onBid, onCancel, showSeller = true }) {
+function AuctionCard({ auction, userId, onBid, onCancel, onViewProfile, showSeller = true }) {
   const isSeller = auction.seller_id === userId
   const statusClass = auction.status === 'active' ? 'active' : auction.status === 'completed' ? 'completed' : 'cancelled'
   const statusLabel = auction.status === 'active' ? 'АКТИВЕН' : auction.status === 'completed' ? 'ПРОДАН' : 'ОТМЕНЁН'
@@ -42,9 +191,9 @@ function AuctionCard({ auction, userId, onBid, onCancel, showSeller = true }) {
   return (
     <div className={`auction-card ${statusClass} ${auction.is_test ? 'test' : ''}`}>
       <div className="ac-header">
-        <div className="ac-avatar">{refName[0].toUpperCase()}</div>
+        <div className="ac-avatar" style={{cursor:'pointer'}} onClick={() => onViewProfile(auction.referred_user_id)}>{refName[0].toUpperCase()}</div>
         <div className="ac-info">
-          <div className="ac-name">{refName}</div>
+          <div className="ac-name" style={{cursor:'pointer'}} onClick={() => onViewProfile(auction.referred_user_id)}>{refName}</div>
           {showSeller && <div className="ac-seller">продавец: {sellerName}</div>}
         </div>
         <span className={`ac-badge ${statusClass}`}>{statusLabel}</span>
@@ -68,16 +217,22 @@ function AuctionCard({ auction, userId, onBid, onCancel, showSeller = true }) {
 
       {auction.status === 'active' && <AuctionTimer endsAt={auction.ends_at} />}
 
-      {auction.status === 'active' && !isSeller && (
-        <button className="ac-bid-btn" onClick={() => onBid(auction)}>
-          💰 СДЕЛАТЬ СТАВКУ
+      {/* Action buttons */}
+      <div style={{display:'flex',gap:6}}>
+        <button className="ac-bid-btn" style={{flex:0,background:'rgba(0,212,255,0.1)',color:'#00d4ff',boxShadow:'none',fontSize:9,padding:'10px 14px'}} onClick={() => onViewProfile(auction.referred_user_id)}>
+          👤 ПРОФИЛЬ
         </button>
-      )}
-      {auction.status === 'active' && isSeller && parseInt(auction.bid_count || 0) === 0 && (
-        <button className="ac-bid-btn cancel" onClick={() => onCancel(auction.id)}>
-          ✕ ОТМЕНИТЬ
-        </button>
-      )}
+        {auction.status === 'active' && !isSeller && (
+          <button className="ac-bid-btn" style={{flex:1}} onClick={() => onBid(auction)}>
+            💰 СДЕЛАТЬ СТАВКУ
+          </button>
+        )}
+        {auction.status === 'active' && isSeller && parseInt(auction.bid_count || 0) === 0 && (
+          <button className="ac-bid-btn cancel" style={{flex:1}} onClick={() => onCancel(auction.id)}>
+            ✕ ОТМЕНИТЬ
+          </button>
+        )}
+      </div>
       {auction.status === 'completed' && auction.winner_username && (
         <div style={{textAlign:'center',padding:'6px',fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>
           🏆 Победитель: <span style={{color:'#00e676',fontWeight:700}}>@{auction.winner_username || auction.winner_name}</span>
@@ -98,6 +253,7 @@ export default function Auction({ onBack, user }) {
   const [bidModal, setBidModal] = useState(null)
   const [bidAmount, setBidAmount] = useState('')
   const [bidding, setBidding] = useState(false)
+  const [profileUserId, setProfileUserId] = useState(null)
 
   // Create form
   const [selRef, setSelRef] = useState(null)
@@ -202,6 +358,8 @@ export default function Auction({ onBack, user }) {
     setBidModal(auction)
   }
 
+
+
   if (loading) return (
     <div className="auction-wrap">
       <button className="auction-back" onClick={onBack}>← НАЗАД</button>
@@ -264,7 +422,7 @@ export default function Auction({ onBack, user }) {
               <div className="auction-empty-text">Нет активных аукционов</div>
             </div>
           ) : auctions.map(a => (
-            <AuctionCard key={a.id} auction={a} userId={userId} onBid={openBidModal} onCancel={handleCancel} />
+            <AuctionCard key={a.id} auction={a} userId={userId} onBid={openBidModal} onCancel={handleCancel} onViewProfile={setProfileUserId} />
           ))}
         </>)}
 
@@ -357,7 +515,7 @@ export default function Auction({ onBack, user }) {
               <div className="auction-empty-text">Вы ещё не выставляли рефералов</div>
             </div>
           ) : myData.selling.map(a => (
-            <AuctionCard key={a.id} auction={a} userId={userId} onBid={openBidModal} onCancel={handleCancel} showSeller={false} />
+            <AuctionCard key={a.id} auction={a} userId={userId} onBid={openBidModal} onCancel={handleCancel} onViewProfile={setProfileUserId} showSeller={false} />
           ))}
         </>)}
 
@@ -375,10 +533,10 @@ export default function Auction({ onBack, user }) {
             return (
               <div key={i} className={`auction-card ${b.auction_status}`}>
                 <div className="ac-header">
-                  <div className="ac-avatar">{refName[0].toUpperCase()}</div>
+                  <div className="ac-avatar" style={{cursor:'pointer'}} onClick={() => setProfileUserId(b.referred_user_id)}>{refName[0].toUpperCase()}</div>
                   <div className="ac-info">
                     <div className="ac-name">
-                      {refName}
+                      <span style={{cursor:'pointer'}} onClick={() => setProfileUserId(b.referred_user_id)}>{refName}</span>
                       {isWinner && <span className="ac-my-badge won">🏆 ПОБЕДА</span>}
                       {!isWinner && b.auction_status === 'completed' && <span className="ac-my-badge lost">ПРОИГРАНО</span>}
                       {b.auction_status === 'active' && isTop && <span className="ac-my-badge leading">ЛИДЕР</span>}
@@ -414,6 +572,12 @@ export default function Auction({ onBack, user }) {
               Мин. шаг: <b>{parseFloat(bidModal.min_step).toFixed(4)} TON</b>
               {isTest && <><br/><span style={{color:'#ffb300'}}>🔬 Тестовый режим — баланс не списывается</span></>}
             </div>
+            <button
+              className="ac-view-profile-btn full"
+              onClick={() => { setBidModal(null); setProfileUserId(bidModal.referred_user_id) }}
+            >
+              👤 ПОСМОТРЕТЬ АКТИВНОСТЬ РЕФЕРАЛА
+            </button>
             <div className="ac-field">
               <span className="ac-field-label">СУММА СТАВКИ (TON)</span>
               <input
@@ -433,6 +597,11 @@ export default function Auction({ onBack, user }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Referral Profile Modal */}
+      {profileUserId && (
+        <RefProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
       )}
     </div>
   )
