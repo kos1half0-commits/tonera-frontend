@@ -54,6 +54,7 @@ export default function App() {
   const [showSupport, setShowSupport] = useState(false)
   const [showPartnership, setShowPartnership] = useState(false)
   const [showAuction, setShowAuction] = useState(false)
+  const [auctionRef, setAuctionRef] = useState(null)
   const [partnershipStatus, setPartnershipStatus] = useState('1')
   const [minerStatus, setMinerStatus] = useState('0')
   const [gameScreen, setGameScreen] = useState(null) // null | 'spin'
@@ -127,8 +128,8 @@ export default function App() {
             onAdOrder={() => setPage('adorder')} minerStatus={minerStatus} isAdmin={isAdmin} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
-        {tab === 'referrals' && !showAuction && <Referrals user={user} onAuction={() => setShowAuction(true)} />}
-        {tab === 'referrals' && showAuction && <Auction user={user} onBack={() => setShowAuction(false)} />}
+        {tab === 'referrals' && !showAuction && <Referrals user={user} onAuction={(ref) => { setShowAuction(true); setAuctionRef(ref || null) }} />}
+        {tab === 'referrals' && showAuction && <Auction user={user} onBack={() => { setShowAuction(false); setAuctionRef(null) }} initialRef={auctionRef} />}
         {tab === 'wallet'    && <Wallet    user={user} />}
         {tab === 'games'     && <Games     onGame={setTab} isAdmin={isAdmin} />}
         {tab === 'spin'      && <Spin      user={user} onBack={() => setTab('games')} />}

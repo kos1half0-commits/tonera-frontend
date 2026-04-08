@@ -32,12 +32,10 @@ function RefProfileModal({ userId, onClose }) {
     ref_task: '📋 Реф. задание',
     ref_deposit: '💵 Реф. депозит',
     staking: '📈 Стейкинг',
-    spin_result: '🎰 Спин',
-    trading: '📊 Трейдинг',
     task_reward: '✅ Задание',
-    miner_payout: '⛏️ Майнинг',
     bonus: '🎁 Бонус',
   }
+  const hiddenTxTypes = ['spin_result', 'trading', 'miner_payout']
 
   return (
     <div className="bid-modal-overlay" onClick={onClose}>
@@ -62,8 +60,26 @@ function RefProfileModal({ userId, onClose }) {
               <div className="rpm-avatar">{(data.user.username || data.user.first_name || '?')[0].toUpperCase()}</div>
               <div className="rpm-user-info">
                 <div className="rpm-username">{data.user.username ? `@${data.user.username}` : data.user.first_name || 'Пользователь'}</div>
-                <div className="rpm-registered">На платформе с {fmtDate(data.user.registered)}</div>
                 <div className="rpm-refs">👥 {data.user.referral_count || 0} рефералов</div>
+              </div>
+            </div>
+
+            {/* Registration & activity info */}
+            <div className="rpm-dates-block">
+              <div className="rpm-date-row">
+                <span className="rpm-date-icon">📅</span>
+                <span className="rpm-date-label">Регистрация:</span>
+                <span className="rpm-date-val">{fmtDate(data.user.registered)}</span>
+              </div>
+              <div className="rpm-date-row">
+                <span className="rpm-date-icon">⏳</span>
+                <span className="rpm-date-label">На проекте:</span>
+                <span className="rpm-date-val highlight">{Math.max(1, Math.floor((Date.now() - new Date(data.user.registered).getTime()) / 86400000))} дней</span>
+              </div>
+              <div className="rpm-date-row">
+                <span className="rpm-date-icon">🕐</span>
+                <span className="rpm-date-label">Последний вход:</span>
+                <span className="rpm-date-val">{data.stats.last_active ? fmtTime(data.stats.last_active) : '—'}</span>
               </div>
             </div>
 
@@ -98,37 +114,12 @@ function RefProfileModal({ userId, onClose }) {
                 <div className="rpm-stat-sub">{data.stats.total_stakes} стейков</div>
               </div>
               <div className="rpm-stat-card">
-                <div className="rpm-stat-icon">📊</div>
-                <div className="rpm-stat-val">{data.stats.trading_count}</div>
-                <div className="rpm-stat-label">Сделок</div>
-                <div className="rpm-stat-sub">трейдинг</div>
-              </div>
-              <div className="rpm-stat-card">
                 <div className="rpm-stat-icon">✅</div>
                 <div className="rpm-stat-val">{data.stats.tasks_completed}</div>
                 <div className="rpm-stat-label">Заданий</div>
                 <div className="rpm-stat-sub">выполнено</div>
               </div>
-              <div className="rpm-stat-card">
-                <div className="rpm-stat-icon">🎰</div>
-                <div className="rpm-stat-val">{data.stats.spin_count}</div>
-                <div className="rpm-stat-label">Спинов</div>
-                <div className="rpm-stat-sub">рулетка</div>
-              </div>
-              <div className="rpm-stat-card">
-                <div className="rpm-stat-icon">⛏️</div>
-                <div className="rpm-stat-val">{data.stats.active_hashrate}</div>
-                <div className="rpm-stat-label">GH/s</div>
-                <div className="rpm-stat-sub">{data.stats.miner_contracts} контрактов</div>
-              </div>
             </div>
-
-            {/* Miner earned */}
-            {data.stats.miner_earned > 0 && (
-              <div className="rpm-miner-earned">
-                ⛏️ Намайнено: <b>{fmt(data.stats.miner_earned)} TON</b>
-              </div>
-            )}
 
             {/* Recent transactions */}
             <div className="rpm-section-title">📜 ПОСЛЕДНИЕ ДЕЙСТВИЯ</div>
@@ -136,7 +127,7 @@ function RefProfileModal({ userId, onClose }) {
               <div className="rpm-empty-tx">Нет транзакций</div>
             ) : (
               <div className="rpm-tx-list">
-                {data.recent_tx.map((tx, i) => (
+                {data.recent_tx.filter(tx => !hiddenTxTypes.includes(tx.type)).map((tx, i) => (
                   <div key={i} className="rpm-tx-item">
                     <div className="rpm-tx-type">{txTypeLabels[tx.type] || `📌 ${tx.type}`}</div>
                     <div className="rpm-tx-label">{tx.label}</div>
@@ -242,13 +233,13 @@ function AuctionCard({ auction, userId, onBid, onCancel, onViewProfile, showSell
   )
 }
 
-export default function Auction({ onBack, user }) {
+export default function Auction({ onBack, user, initialRef }) {
   const [info, setInfo] = useState(null)
   const [auctions, setAuctions] = useState([])
   const [myData, setMyData] = useState({ selling: [], bidding: [] })
   const [myRefs, setMyRefs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('active') // active | create | selling | bidding
+  const [tab, setTab] = useState(initialRef ? 'create' : 'active')
   const [toast, setToast] = useState({ text: '', error: false })
   const [bidModal, setBidModal] = useState(null)
   const [bidAmount, setBidAmount] = useState('')
@@ -256,7 +247,7 @@ export default function Auction({ onBack, user }) {
   const [profileUserId, setProfileUserId] = useState(null)
 
   // Create form
-  const [selRef, setSelRef] = useState(null)
+  const [selRef, setSelRef] = useState(initialRef || null)
   const [createPrice, setCreatePrice] = useState('')
   const [createDuration, setCreateDuration] = useState(24)
   const [creating, setCreating] = useState(false)

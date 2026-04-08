@@ -24,3 +24,8 @@
 .ref-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:600;color:#e8f2ff;}
 .ref-date{font-size:11px;color:rgba(232,242,255,0.3);margin-top:2px;}
 .ref-bonus{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#00e676;}
+
+/* Sell button on referral item */
+.ref-sell-btn{padding:4px 10px;border:1px solid rgba(168,85,247,0.3);border-radius:8px;background:rgba(168,85,247,0.1);color:#a855f7;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.ref-sell-btn:hover{background:rgba(168,85,247,0.2);border-color:rgba(168,85,247,0.5);}
+.ref-on-auction{font-family:'Orbitron',sans-serif;font-size:7px;font-weight:700;color:#ffb300;letter-spacing:.04em;white-space:nowrap;}

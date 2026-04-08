@@ -12,6 +12,8 @@ export default function Referrals({ user, onAuction }) {
   const [fromDeposits, setFromDeposits] = useState(0)
   const [earned, setEarned] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [auctionEnabled, setAuctionEnabled] = useState(false)
+  const [onAuctionIds, setOnAuctionIds] = useState([])
 
   const refLink = user?.ref_code
     ? `https://t.me/${BOT_USERNAME}?start=${user.ref_code}`
@@ -33,6 +35,18 @@ export default function Referrals({ user, onAuction }) {
     // Получаем заработок только от рефералов
     api.get('/api/referrals').then(r => {
       if (r.data?.earned !== undefined) setEarned(parseFloat(r.data.earned) || 0)
+    }).catch(() => {})
+
+    // Check auction status
+    api.get('/api/auction/info').then(r => {
+      setAuctionEnabled(r.data?.enabled !== '0')
+    }).catch(() => {})
+
+    // Check which refs are already on auction
+    api.get('/api/auction/my/all').then(r => {
+      const selling = r.data?.selling || []
+      const activeIds = selling.filter(a => a.status === 'active').map(a => a.referral_id)
+      setOnAuctionIds(activeIds)
     }).catch(() => {})
   }, [])
 
@@ -92,16 +106,30 @@ export default function Referrals({ user, onAuction }) {
       {refs.length > 0 && (
         <div className="refs-list">
           <div className="refs-list-title">ПРИГЛАШЁННЫЕ</div>
-          {refs.map((r, i) => (
-            <div className="ref-item" key={i}>
-              <div className="ref-avatar">{(r.username || r.first_name || '?')[0].toUpperCase()}</div>
-              <div className="ref-info">
-                <div className="ref-name">{r.username || r.first_name || 'Пользователь'}</div>
-                <div className="ref-date">{new Date(r.created_at).toLocaleDateString('ru')}</div>
+          {refs.map((r, i) => {
+            const isActive = r.is_active !== false
+            const isOnAuction = onAuctionIds.includes(r.referral_id || r.id)
+            return (
+              <div className="ref-item" key={i}>
+                <div className="ref-avatar">{(r.username || r.first_name || '?')[0].toUpperCase()}</div>
+                <div className="ref-info">
+                  <div className="ref-name">{r.username || r.first_name || 'Пользователь'}</div>
+                  <div className="ref-date">{new Date(r.created_at).toLocaleDateString('ru')}</div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
+                  <div className="ref-bonus">+{parseFloat(r.earned || regBonus).toFixed(4)} TON</div>
+                  {auctionEnabled && isActive && !isOnAuction && (
+                    <button className="ref-sell-btn" onClick={() => onAuction && onAuction(r)}>
+                      🏛 Продать
+                    </button>
+                  )}
+                  {isOnAuction && (
+                    <span className="ref-on-auction">🏛 На аукционе</span>
+                  )}
+                </div>
               </div>
-              <div className="ref-bonus">+{parseFloat(r.earned || regBonus).toFixed(4)} TON</div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
