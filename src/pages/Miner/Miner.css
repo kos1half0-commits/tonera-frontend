@@ -39,10 +39,29 @@
 .mn-hash-counter{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:#00d4ff;margin-bottom:4px;text-shadow:0 0 20px rgba(0,212,255,0.3);}
 .mn-hash-label{font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(232,242,255,0.35);letter-spacing:.1em;}
 
-/* Earnings */
-.mn-earnings{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:14px;padding:20px;margin-bottom:12px;text-align:center;}
-.mn-earn-label{font-family:'Orbitron',sans-serif;font-size:9px;color:rgba(232,242,255,0.35);letter-spacing:.1em;margin-bottom:8px;}
-.mn-earn-value{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#00d4ff;margin-bottom:6px;word-break:break-all;}
+/* Earnings — Real-time counter */
+.mn-earnings{background:linear-gradient(135deg,#0e1c3a 0%,#0a1628 100%);border:1px solid rgba(0,212,255,0.2);border-radius:14px;padding:20px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden;}
+.mn-earnings::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.4),transparent);}
+.mn-earn-label{font-family:'Orbitron',sans-serif;font-size:8px;color:rgba(0,212,255,0.5);letter-spacing:.15em;margin-bottom:12px;text-transform:uppercase;}
+
+/* Live counter wrapper */
+.mn-live-wrap{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:12px;}
+.mn-live-currency{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:rgba(0,212,255,0.5);letter-spacing:.05em;}
+
+/* Individual digits */
+.mn-live-digits{display:inline-flex;align-items:baseline;font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;line-height:1;}
+.mn-digit{color:#00d4ff;text-shadow:0 0 10px rgba(0,212,255,0.4);transition:color .15s;display:inline-block;min-width:0.6em;text-align:center;}
+.mn-digit.dim{color:rgba(0,212,255,0.6);font-size:16px;text-shadow:0 0 6px rgba(0,212,255,0.2);}
+.mn-digit.tick{color:rgba(0,212,255,0.35);font-size:13px;text-shadow:none;animation:mnTickGlow .3s ease;}
+.mn-dot{color:rgba(0,212,255,0.4);font-size:20px;margin:0 1px;}
+@keyframes mnTickGlow{0%{color:rgba(0,230,118,0.8);text-shadow:0 0 8px rgba(0,230,118,0.5)}100%{color:rgba(0,212,255,0.35);text-shadow:none}}
+
+/* Mining speed grid */
+.mn-speed-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:12px 0 14px;padding:8px;background:rgba(26,95,255,0.04);border:1px solid rgba(26,95,255,0.1);border-radius:10px;}
+.mn-speed-item{padding:6px 4px;text-align:center;}
+.mn-speed-val{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#e8f2ff;letter-spacing:.02em;}
+.mn-speed-unit{font-family:'DM Sans',sans-serif;font-size:8px;color:rgba(232,242,255,0.25);margin-top:2px;}
+
 .mn-earn-available{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.4);margin-bottom:14px;}
 .mn-earn-available strong{color:#00e676;}
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
 import api from '../../api/index'
 import './Miner.css'
@@ -9,6 +9,83 @@ const PLAN_LABELS = {
   pro:      { name: 'PRO',      icon: '💜', gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)' },
   elite:    { name: 'ELITE',    icon: '💛', gradient: 'linear-gradient(135deg,#d97706,#b45309)' },
   legacy:   { name: 'LEGACY',   icon: '⛏',  gradient: 'linear-gradient(135deg,#64748b,#475569)' },
+}
+
+// ========== REAL-TIME LIVE COUNTER ==========
+const LiveCounter = memo(function LiveCounter({ baseValue, earnPerMs }) {
+  const ref = useRef(null)
+  const startTimeRef = useRef(performance.now())
+  const baseRef = useRef(baseValue)
+  const rateRef = useRef(earnPerMs)
+  const rafRef = useRef(null)
+  const prevDigitsRef = useRef('')
+
+  // Update refs when props change
+  useEffect(() => {
+    baseRef.current = baseValue
+    rateRef.current = earnPerMs
+    startTimeRef.current = performance.now()
+  }, [baseValue, earnPerMs])
+
+  useEffect(() => {
+    const update = () => {
+      const elapsed = performance.now() - startTimeRef.current
+      const current = baseRef.current + rateRef.current * elapsed
+      if (ref.current) {
+        const str = current.toFixed(10)
+        // Only update DOM if digits actually changed
+        if (str !== prevDigitsRef.current) {
+          prevDigitsRef.current = str
+          // Split into integer and decimal parts
+          const [intPart, decPart] = str.split('.')
+          let html = ''
+          // Integer part
+          for (const d of intPart) {
+            html += `<span class="mn-digit">${d}</span>`
+          }
+          html += '<span class="mn-dot">.</span>'
+          // Decimal part — first 4 digits brighter, last 6 dimmer and faster
+          for (let i = 0; i < decPart.length; i++) {
+            const cls = i < 4 ? 'mn-digit' : i < 7 ? 'mn-digit dim' : 'mn-digit tick'
+            html += `<span class="${cls}">${decPart[i]}</span>`
+          }
+          ref.current.innerHTML = html
+        }
+      }
+      rafRef.current = requestAnimationFrame(update)
+    }
+    rafRef.current = requestAnimationFrame(update)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [])
+
+  return <div ref={ref} className="mn-live-digits" />
+})
+
+// Speed indicator component
+function MiningSpeed({ earnPerSecond }) {
+  const perMin = earnPerSecond * 60
+  const perHour = earnPerSecond * 3600
+  const perDay = earnPerSecond * 86400
+  return (
+    <div className="mn-speed-grid">
+      <div className="mn-speed-item">
+        <div className="mn-speed-val">{earnPerSecond.toFixed(10)}</div>
+        <div className="mn-speed-unit">TON / сек</div>
+      </div>
+      <div className="mn-speed-item">
+        <div className="mn-speed-val">{perMin.toFixed(8)}</div>
+        <div className="mn-speed-unit">TON / мин</div>
+      </div>
+      <div className="mn-speed-item">
+        <div className="mn-speed-val">{perHour.toFixed(6)}</div>
+        <div className="mn-speed-unit">TON / час</div>
+      </div>
+      <div className="mn-speed-item">
+        <div className="mn-speed-val">{perDay.toFixed(4)}</div>
+        <div className="mn-speed-unit">TON / день</div>
+      </div>
+    </div>
+  )
 }
 
 export default function Miner({ onBack, isAdmin }) {
@@ -22,12 +99,14 @@ export default function Miner({ onBack, isAdmin }) {
   const [withdrawWallet, setWithdrawWallet] = useState('')
   const [showWithdraw, setShowWithdraw] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
-  const [liveEarned, setLiveEarned] = useState(0)
   const [minerEnabled, setMinerEnabled] = useState(1)
-  const timerRef = useRef(null)
-  const dataRef = useRef(null)
   const [tonConnectUI] = useTonConnectUI()
   const wallet = useTonWallet()
+
+  // Realtime mining calculation values
+  const [baseEarned, setBaseEarned] = useState(0)
+  const [earnPerMs, setEarnPerMs] = useState(0)
+  const [earnPerSecond, setEarnPerSecond] = useState(0)
 
   const showToast = (msg, err = false) => {
     setToast(msg); setToastErr(err)
@@ -38,32 +117,28 @@ export default function Miner({ onBack, isAdmin }) {
     try {
       const r = await api.get('/api/miner/dashboard')
       setData(r.data)
-      dataRef.current = r.data
       setMinerEnabled(r.data.enabled)
-      // Set initial live earned
-      setLiveEarned(r.data.totalEarned || 0)
+      // Calculate real-time rate
+      const activeCons = (r.data.contracts || []).filter(
+        c => c.status === 'active' && new Date(c.expires_at) > new Date()
+      )
+      const totalHashrate = activeCons.reduce((s, c) => s + parseFloat(c.hashrate), 0)
+      const ratePerGh = r.data.ratePerGh || 0.0000001
+      const eps = totalHashrate * ratePerGh / 3600
+      setEarnPerSecond(eps)
+      setEarnPerMs(eps / 1000)
+      setBaseEarned(r.data.totalEarned || 0)
     } catch (e) { console.log('load err:', e.message) }
     setLoading(false)
   }
 
+  useEffect(() => { load() }, [])
+
+  // Refresh data every 60 seconds to stay in sync with server
   useEffect(() => {
-    load()
+    const interval = setInterval(() => { load() }, 60000)
+    return () => clearInterval(interval)
   }, [])
-
-  // Live earnings ticker
-  useEffect(() => {
-    if (!data?.contracts?.length) return
-    const activeCons = data.contracts.filter(c => c.status === 'active' && new Date(c.expires_at) > new Date())
-    const totalHashrate = activeCons.reduce((s, c) => s + parseFloat(c.hashrate), 0)
-    const ratePerGh = data.ratePerGh || 0.0000001
-    const earnPerSecond = totalHashrate * ratePerGh / 3600
-
-    if (timerRef.current) clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => {
-      setLiveEarned(prev => prev + earnPerSecond)
-    }, 1000)
-    return () => clearInterval(timerRef.current)
-  }, [data])
 
   const buyPlan = async (plan) => {
     if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); return }
@@ -122,7 +197,7 @@ export default function Miner({ onBack, isAdmin }) {
 
   const activeContracts = (data?.contracts || []).filter(c => c.status === 'active' && new Date(c.expires_at) > new Date())
   const totalHashrate = activeContracts.reduce((s, c) => s + parseFloat(c.hashrate), 0)
-  const availableBalance = (data?.availableBalance || 0) + (liveEarned - (data?.totalEarned || 0))
+  const availableBalance = data?.availableBalance || 0
   const minWithdraw = data?.minWithdraw || 0.01
   const plans = data?.plans || []
   const network = data?.network || {}
@@ -169,10 +244,14 @@ export default function Miner({ onBack, isAdmin }) {
                 <div className="mn-hash-label">ОБЩИЙ ХЕШРЕЙТ</div>
               </div>
 
-              {/* EARNINGS */}
+              {/* EARNINGS — REAL-TIME */}
               <div className="mn-earnings">
-                <div className="mn-earn-label">ДОБЫТО</div>
-                <div className="mn-earn-value">{liveEarned.toFixed(8)} TON</div>
+                <div className="mn-earn-label">ДОБЫТО В РЕАЛЬНОМ ВРЕМЕНИ</div>
+                <div className="mn-live-wrap">
+                  <LiveCounter baseValue={baseEarned} earnPerMs={earnPerMs} />
+                  <span className="mn-live-currency">TON</span>
+                </div>
+                <MiningSpeed earnPerSecond={earnPerSecond} />
                 <div className="mn-earn-available">
                   Доступно к выводу: <strong>{Math.max(0, availableBalance).toFixed(6)} TON</strong>
                 </div>
