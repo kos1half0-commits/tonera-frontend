@@ -4,6 +4,7 @@ import api from '../../api/index'
 import './Miner.css'
 
 const PLAN_LABELS = {
+  free:     { name: 'FREE',     icon: '🆓', gradient: 'linear-gradient(135deg,#00c853,#00e676)' },
   starter:  { name: 'STARTER',  icon: '💚', gradient: 'linear-gradient(135deg,#0d9668,#0f766e)' },
   advanced: { name: 'ADVANCED', icon: '💙', gradient: 'linear-gradient(135deg,#1a5fff,#0930cc)' },
   pro:      { name: 'PRO',      icon: '💜', gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)' },
@@ -94,6 +95,7 @@ export default function Miner({ onBack, isAdmin }) {
   const [toast, setToast] = useState('')
   const [toastErr, setToastErr] = useState(false)
   const [buying, setBuying] = useState(null)
+  const [activatingFree, setActivatingFree] = useState(false)
   const [screen, setScreen] = useState('dashboard') // dashboard | plans | history
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawWallet, setWithdrawWallet] = useState('')
@@ -160,6 +162,19 @@ export default function Miner({ onBack, isAdmin }) {
       else showToast(e?.response?.data?.error || e?.message || 'Ошибка', true)
     }
     setBuying(null)
+  }
+
+  const activateFreePlan = async () => {
+    setActivatingFree(true)
+    try {
+      await api.post('/api/miner/free')
+      await load()
+      setScreen('dashboard')
+      showToast('✅ Бесплатный тариф активирован!')
+    } catch (e) {
+      showToast(e?.response?.data?.error || 'Ошибка', true)
+    }
+    setActivatingFree(false)
   }
 
   const handleWithdraw = async () => {
@@ -230,7 +245,16 @@ export default function Miner({ onBack, isAdmin }) {
                 Покупайте хешрейт и зарабатывайте TON автоматически 24/7.
                 Без оборудования, без затрат на электричество.
               </div>
-              <button className="mn-empty-btn" onClick={() => setScreen('plans')}>
+              {data?.freePlan?.enabled && !data?.freeUsed && (
+                <button
+                  className="mn-empty-btn free"
+                  onClick={activateFreePlan}
+                  disabled={activatingFree}
+                >
+                  {activatingFree ? 'АКТИВАЦИЯ...' : `🆓 НАЧАТЬ БЕСПЛАТНО · ${data.freePlan.hashrate} GH/s`}
+                </button>
+              )}
+              <button className="mn-empty-btn secondary" onClick={() => setScreen('plans')}>
                 🛒 ВЫБРАТЬ ПЛАН
               </button>
             </div>
@@ -364,6 +388,52 @@ export default function Miner({ onBack, isAdmin }) {
         <div className="mn-plans">
           <div className="mn-plans-title">ВЫБЕРИТЕ ПЛАН</div>
           <div className="mn-plans-subtitle">Покупайте хешрейт и зарабатывайте TON автоматически</div>
+
+          {/* FREE PLAN CARD */}
+          {data?.freePlan?.enabled && (() => {
+            const fp = data.freePlan
+            const ratePerGh = data?.ratePerGh || 0.0000001
+            const dailyEarning = fp.hashrate * ratePerGh * 24
+            const totalEarning = dailyEarning * fp.days
+            const alreadyUsed = data?.freeUsed
+            return (
+              <div className="mn-plan-card mn-plan-free" style={{ '--plan-gradient': 'linear-gradient(135deg,#00c853,#00e676)' }}>
+                <div className="mn-plan-header" style={{ background: 'linear-gradient(135deg,#00c853,#00e676)' }}>
+                  <span className="mn-plan-icon">🆓</span>
+                  <span className="mn-plan-name">FREE</span>
+                  <span className="mn-free-badge">БЕСПЛАТНО</span>
+                </div>
+                <div className="mn-plan-body">
+                  <div className="mn-plan-stats">
+                    <div className="mn-plan-stat">
+                      <div className="mn-ps-val">{fp.hashrate} GH/s</div>
+                      <div className="mn-ps-lbl">хешрейт</div>
+                    </div>
+                    <div className="mn-plan-stat">
+                      <div className="mn-ps-val">{fp.days} дн.</div>
+                      <div className="mn-ps-lbl">срок</div>
+                    </div>
+                    <div className="mn-plan-stat">
+                      <div className="mn-ps-val">{dailyEarning.toFixed(6)}</div>
+                      <div className="mn-ps-lbl">TON/день</div>
+                    </div>
+                  </div>
+                  <div className="mn-plan-forecast">
+                    Прогноз дохода: <strong>{totalEarning.toFixed(6)} TON</strong>
+                  </div>
+                  <button
+                    className="mn-plan-buy mn-plan-buy-free"
+                    style={{ background: 'linear-gradient(135deg,#00c853,#00e676)' }}
+                    onClick={activateFreePlan}
+                    disabled={alreadyUsed || activatingFree}
+                  >
+                    {alreadyUsed ? '✅ УЖЕ АКТИВИРОВАН' : activatingFree ? 'АКТИВАЦИЯ...' : '🆓 НАЧАТЬ БЕСПЛАТНО'}
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
+
           {plans.map(plan => {
             const label = PLAN_LABELS[plan.id] || PLAN_LABELS.starter
             const ratePerGh = data?.ratePerGh || 0.0000001
