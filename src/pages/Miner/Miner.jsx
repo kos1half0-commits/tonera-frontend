@@ -264,8 +264,12 @@ export default function Miner({ onBack, isAdmin }) {
               <div className="mn-status-card">
                 <div className="mn-status-pulse"></div>
                 <div className="mn-status-label">МАЙНИНГ АКТИВЕН</div>
-                <div className="mn-hash-counter">{totalHashrate.toFixed(0)} GH/s</div>
-                <div className="mn-hash-label">ОБЩИЙ ХЕШРЕЙТ</div>
+                <div className="mn-hash-ring">
+                  <div className="mn-hash-ring-inner">
+                    <div className="mn-hash-counter">{totalHashrate.toFixed(0)}</div>
+                    <div className="mn-hash-label">GH/s</div>
+                  </div>
+                </div>
               </div>
 
               {/* EARNINGS — REAL-TIME */}
