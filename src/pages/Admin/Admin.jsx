@@ -269,44 +269,332 @@ function AdsAdmin() {
 function MinersAdmin() {
   const [contracts, setContracts] = useState([])
   const [withdrawals, setWithdrawals] = useState([])
+  const [minerUsers, setMinerUsers] = useState([])
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [subTab, setSubTab] = useState('contracts') // contracts | withdrawals
+  const [subTab, setSubTab] = useState('users') // users | contracts | withdrawals
   const [toast, setMinerToast] = useState('')
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [editingContract, setEditingContract] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [showCreate, setShowCreate] = useState(false)
+  const [createForm, setCreateForm] = useState({ hashrate: '', days: '', plan_id: 'admin', price_paid: '0', earned: '0' })
+  const [addHashForm, setAddHashForm] = useState({ hashrate: '', days: '' })
+  const [userSearch, setUserSearch] = useState('')
 
   const showToast = m => { setMinerToast(m); setTimeout(()=>setMinerToast(''),3000) }
+
   const load = async () => {
     try {
-      const [c, w, s] = await Promise.all([
+      const [c, w, s, u] = await Promise.all([
         api.get('/api/miner/all'),
         api.get('/api/miner/admin/withdrawals'),
         api.get('/api/miner/admin/stats'),
+        api.get('/api/miner/admin/users'),
       ])
       setContracts(c.data||[])
       setWithdrawals(w.data||[])
       setStats(s.data)
+      setMinerUsers(u.data||[])
     } catch {}
     setLoading(false)
   }
+
   useEffect(()=>{ load() },[])
 
   const approve = async id => { await api.post(`/api/miner/admin/approve/${id}`); load(); showToast('✅ Вывод одобрен') }
   const reject = async id => { await api.post(`/api/miner/admin/reject/${id}`); load(); showToast('❌ Отклонено') }
-  const deleteContract = async id => { if(!confirm('Удалить контракт?'))return; await api.delete(`/api/miner/contract/${id}`); load(); showToast('🗑 Удалено') }
+  const deleteContract = async id => { if(!confirm('Удалить контракт?'))return; await api.delete(`/api/miner/contract/${id}`); load(); loadUser(selectedUser?.telegram_id); showToast('🗑 Удалено') }
+
+  const loadUser = async (tgId) => {
+    if (!tgId) return
+    setProfileLoading(true)
+    try {
+      const r = await api.get(`/api/miner/admin/user/${tgId}`)
+      setUserProfile(r.data)
+      setSelectedUser(r.data.user)
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true); setSelectedUser(null) }
+    setProfileLoading(false)
+  }
+
+  const openUser = (u) => {
+    setSelectedUser(u)
+    loadUser(u.telegram_id)
+    setEditingContract(null)
+    setShowCreate(false)
+  }
+
+  const searchUser = async () => {
+    const q = userSearch.trim()
+    if (!q) return
+    setProfileLoading(true)
+    try {
+      const r = await api.get(`/api/miner/admin/user/${q}`)
+      setUserProfile(r.data)
+      setSelectedUser(r.data.user)
+      setSubTab('users')
+    } catch (e) {
+      showToast('Юзер не найден или нет контрактов')
+    }
+    setProfileLoading(false)
+  }
+
+  const editContract = async (id) => {
+    try {
+      await api.put(`/api/miner/admin/contract/${id}`, editForm)
+      showToast('✅ Контракт обновлён')
+      setEditingContract(null)
+      setEditForm({})
+      loadUser(selectedUser?.telegram_id)
+      load()
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
+  }
+
+  const createContract = async () => {
+    try {
+      await api.post('/api/miner/admin/create-contract', {
+        telegram_id: selectedUser.telegram_id,
+        ...createForm,
+      })
+      showToast('✅ Контракт создан')
+      setShowCreate(false)
+      setCreateForm({ hashrate: '', days: '', plan_id: 'admin', price_paid: '0', earned: '0' })
+      loadUser(selectedUser.telegram_id)
+      load()
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
+  }
+
+  const addHashrate = async () => {
+    try {
+      await api.post(`/api/miner/admin/add-hashrate/${selectedUser.telegram_id}`, addHashForm)
+      showToast(`✅ +${addHashForm.hashrate} GH/s на ${addHashForm.days}д`)
+      setAddHashForm({ hashrate: '', days: '' })
+      loadUser(selectedUser.telegram_id)
+      load()
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
+  }
+
+  const setEarned = async (contractId, val, isAdd) => {
+    try {
+      await api.post(`/api/miner/admin/set-earned/${contractId}`, isAdd ? { add: val } : { earned: val })
+      showToast(`✅ Earned обновлён`)
+      loadUser(selectedUser.telegram_id)
+      load()
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
+  }
 
   const S = {
     stat: {background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:'10px 12px',textAlign:'center'},
     btn: (c={})=>({padding:'6px 10px',border:'none',borderRadius:7,fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer',...c}),
     tab: (active) => ({padding:'8px 14px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',background:active?'rgba(26,95,255,0.3)':'rgba(26,95,255,0.08)',color:active?'#00d4ff':'rgba(232,242,255,0.4)'}),
+    input: (c={}) => ({background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'7px 10px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:11,outline:'none',width:'100%',boxSizing:'border-box',...c}),
+    label: {fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)',marginBottom:3,display:'block'},
   }
 
   if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
 
   const pendingWds = withdrawals.filter(w=>w.status==='pending').length
 
+  // =================== USER PROFILE VIEW ===================
+  if (selectedUser) {
+    const p = userProfile
+    return (
+      <div>
+        {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+
+        <button onClick={()=>{setSelectedUser(null);setUserProfile(null)}} style={{marginBottom:10,padding:'7px 14px',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,background:'transparent',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,cursor:'pointer'}}>← НАЗАД</button>
+
+        {profileLoading && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>}
+
+        {p && !profileLoading && (<>
+          {/* USER INFO */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:10}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:700,color:'#e8f2ff',marginBottom:8}}>
+              {p.user.username?'@'+p.user.username:p.user.first_name}
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+              {[
+                ['Telegram ID', p.user.telegram_id],
+                ['Хешрейт', `${parseFloat(p.totalHashrate).toFixed(0)} GH/s`],
+                ['Заработано', `${parseFloat(p.totalEarned).toFixed(6)} TON`],
+                ['Выведено', `${parseFloat(p.totalWithdrawn).toFixed(6)} TON`],
+                ['Доступно', `${parseFloat(p.availableBalance).toFixed(6)} TON`],
+                ['Контрактов', p.contracts.length],
+              ].map(([k,v]) => (
+                <div key={k} style={{background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 8px'}}>
+                  <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)'}}>{k}</div>
+                  <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* QUICK ADD HASHRATE */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(0,230,118,0.2)',borderRadius:12,padding:12,marginBottom:10}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)',letterSpacing:'.08em',marginBottom:8}}>🎁 БЫСТРОЕ ДОБАВЛЕНИЕ ХЕШРЕЙТА</div>
+            <div style={{display:'flex',gap:6,marginBottom:6}}>
+              <div style={{flex:1}}>
+                <div style={S.label}>GH/s</div>
+                <input style={S.input()} type="number" placeholder="100" value={addHashForm.hashrate} onChange={e=>setAddHashForm(f=>({...f,hashrate:e.target.value}))}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={S.label}>Дней</div>
+                <input style={S.input()} type="number" placeholder="30" value={addHashForm.days} onChange={e=>setAddHashForm(f=>({...f,days:e.target.value}))}/>
+              </div>
+              <button style={S.btn({background:'rgba(0,230,118,0.2)',color:'#00e676',alignSelf:'flex-end',padding:'9px 14px'})} onClick={addHashrate}>➕</button>
+            </div>
+            <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+              {[
+                {h:100,d:7},{h:500,d:30},{h:1000,d:30},{h:1500,d:60},{h:5000,d:90}
+              ].map(({h,d},i) => (
+                <button key={i} style={S.btn({background:'rgba(0,230,118,0.08)',color:'#00e676',border:'1px solid rgba(0,230,118,0.2)'})}
+                  onClick={()=>{setAddHashForm({hashrate:String(h),days:String(d)})}}>{h} GH/s · {d}д</button>
+              ))}
+            </div>
+          </div>
+
+          {/* CREATE CONTRACT */}
+          {showCreate ? (
+            <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:12,marginBottom:10}}>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)',letterSpacing:'.08em',marginBottom:8}}>📝 СОЗДАТЬ КОНТРАКТ</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
+                <div><div style={S.label}>Хешрейт (GH/s)</div><input style={S.input()} type="number" value={createForm.hashrate} onChange={e=>setCreateForm(f=>({...f,hashrate:e.target.value}))}/></div>
+                <div><div style={S.label}>Дней</div><input style={S.input()} type="number" value={createForm.days} onChange={e=>setCreateForm(f=>({...f,days:e.target.value}))}/></div>
+                <div><div style={S.label}>План ID</div><input style={S.input()} value={createForm.plan_id} onChange={e=>setCreateForm(f=>({...f,plan_id:e.target.value}))}/></div>
+                <div><div style={S.label}>Цена (TON)</div><input style={S.input()} type="number" value={createForm.price_paid} onChange={e=>setCreateForm(f=>({...f,price_paid:e.target.value}))}/></div>
+                <div><div style={S.label}>Earned (TON)</div><input style={S.input()} type="number" value={createForm.earned} onChange={e=>setCreateForm(f=>({...f,earned:e.target.value}))}/></div>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676',padding:'9px'})} onClick={createContract}>✅ СОЗДАТЬ</button>
+                <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a',padding:'9px 14px'})} onClick={()=>setShowCreate(false)}>✕</button>
+              </div>
+            </div>
+          ) : (
+            <button style={{...S.btn({width:'100%',background:'rgba(26,95,255,0.08)',color:'#00d4ff',border:'1px solid rgba(26,95,255,0.2)',padding:'10px',marginBottom:10,borderRadius:10}),display:'block'}} onClick={()=>setShowCreate(true)}>
+              ➕ СОЗДАТЬ КОНТРАКТ ВРУЧНУЮ
+            </button>
+          )}
+
+          {/* CONTRACTS LIST */}
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8,marginTop:6}}>⛏ КОНТРАКТЫ ({p.contracts.length})</div>
+          {!p.contracts.length && <div style={{textAlign:'center',padding:15,color:'rgba(232,242,255,0.2)',fontFamily:'DM Sans'}}>Нет контрактов</div>}
+          {p.contracts.map(c => {
+            const isActive = c.status==='active' && new Date(c.expires_at) > new Date()
+            const daysLeft = Math.max(0, Math.ceil((new Date(c.expires_at) - new Date()) / 86400000))
+            const isEditing = editingContract === c.id
+            return (
+              <div key={c.id} style={{background:'#0e1c3a',border:`1px solid ${isActive?'rgba(0,230,118,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,padding:'3px 8px',borderRadius:6,fontWeight:700,
+                    background:isActive?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.15)',
+                    color:isActive?'#00e676':'#ff4d6a'
+                  }}>{c.plan_id.toUpperCase()}</span>
+                  <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)',flex:1}}>ID: {c.id}</span>
+                  <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,color:isActive?'#00e676':'#ff4d6a',fontWeight:700}}>
+                    {isActive?`${daysLeft}д`:c.status==='expired'?'ИСТЁК':'СТОП'}
+                  </span>
+                </div>
+
+                {/* CONTRACT STATS */}
+                <div style={{display:'flex',gap:10,marginBottom:8}}>
+                  <div>
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,color:'#00d4ff',fontWeight:700}}>{parseFloat(c.hashrate).toFixed(0)} GH/s</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)'}}>хешрейт</div>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,color:'#ffb300',fontWeight:700}}>{parseFloat(c.earned).toFixed(6)}</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)'}}>earned</div>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,color:'#a855f7',fontWeight:700}}>{(parseFloat(c.pendingEarned)||0).toFixed(6)}</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)'}}>pending</div>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,color:'#e8f2ff',fontWeight:700}}>{parseFloat(c.price_paid).toFixed(2)}</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)'}}>цена</div>
+                  </div>
+                </div>
+
+                {/* EDIT FORM */}
+                {isEditing ? (
+                  <div style={{background:'rgba(26,95,255,0.04)',border:'1px solid rgba(26,95,255,0.15)',borderRadius:8,padding:10,marginBottom:6}}>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
+                      <div><div style={S.label}>Хешрейт (GH/s)</div><input style={S.input()} type="number" placeholder={parseFloat(c.hashrate).toFixed(0)} onChange={e=>setEditForm(f=>({...f,hashrate:e.target.value||undefined}))}/></div>
+                      <div><div style={S.label}>Earned (TON)</div><input style={S.input()} type="number" placeholder={parseFloat(c.earned).toFixed(6)} onChange={e=>setEditForm(f=>({...f,earned:e.target.value||undefined}))}/></div>
+                      <div><div style={S.label}>+/- Дней</div><input style={S.input()} type="number" placeholder="0" onChange={e=>setEditForm(f=>({...f,days_add:e.target.value||undefined}))}/></div>
+                      <div>
+                        <div style={S.label}>Статус</div>
+                        <select style={{...S.input(),appearance:'auto'}} onChange={e=>setEditForm(f=>({...f,status:e.target.value||undefined}))}>
+                          <option value="">— без изменений —</option>
+                          <option value="active">active</option>
+                          <option value="paused">paused</option>
+                          <option value="expired">expired</option>
+                        </select>
+                      </div>
+                      <div><div style={S.label}>План ID</div><input style={S.input()} placeholder={c.plan_id} onChange={e=>setEditForm(f=>({...f,plan_id:e.target.value||undefined}))}/></div>
+                    </div>
+                    <div style={{display:'flex',gap:6}}>
+                      <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676',padding:'9px'})} onClick={()=>editContract(c.id)}>💾 СОХРАНИТЬ</button>
+                      <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a',padding:'9px 14px'})} onClick={()=>{setEditingContract(null);setEditForm({})}}>✕</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                    <button style={S.btn({background:'rgba(26,95,255,0.1)',color:'#00d4ff'})} onClick={()=>{setEditingContract(c.id);setEditForm({})}}>✏️ РЕДАКТ.</button>
+                    <button style={S.btn({background:'rgba(0,230,118,0.08)',color:'#00e676'})} onClick={()=>{
+                      const v = prompt('Добавить к earned (TON):','0.001')
+                      if(v) setEarned(c.id,parseFloat(v),true)
+                    }}>💰 +EARNED</button>
+                    {isActive && <button style={S.btn({background:'rgba(255,179,0,0.1)',color:'#ffb300'})} onClick={()=>{
+                      const d = prompt('Добавить дней к контракту:','7')
+                      if(d) api.put(`/api/miner/admin/contract/${c.id}`, {days_add:parseInt(d)}).then(()=>{loadUser(selectedUser.telegram_id);load();showToast(`+${d}д`)})
+                    }}>📅 +ДНЕЙ</button>}
+                    <button style={S.btn({background:'rgba(255,77,106,0.08)',color:'#ff4d6a'})} onClick={()=>deleteContract(c.id)}>🗑</button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {/* WITHDRAWALS */}
+          {p.withdrawals?.length > 0 && (<>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8,marginTop:12}}>💰 ВЫВОДЫ ({p.withdrawals.length})</div>
+            {p.withdrawals.map(w => (
+              <div key={w.id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.1)',borderRadius:8,marginBottom:5}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:w.status==='completed'?'#00e676':w.status==='pending'?'#ffb300':'#ff4d6a',minWidth:70}}>
+                  {parseFloat(w.amount).toFixed(6)}
+                </div>
+                <div style={{flex:1,fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>
+                  {w.wallet_address?.slice(0,12)}... · {new Date(w.created_at).toLocaleDateString('ru')}
+                </div>
+                <span style={{fontFamily:'Orbitron,sans-serif',fontSize:7,padding:'2px 6px',borderRadius:4,fontWeight:700,
+                  background:w.status==='pending'?'rgba(255,179,0,0.15)':w.status==='completed'?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.15)',
+                  color:w.status==='pending'?'#ffb300':w.status==='completed'?'#00e676':'#ff4d6a'
+                }}>{w.status==='pending'?'ОЖИДАЕТ':w.status==='completed'?'ВЫПЛАЧЕНО':'ОТКЛОНЕНО'}</span>
+                {w.status === 'pending' && (<>
+                  <button style={S.btn({background:'rgba(0,230,118,0.15)',color:'#00e676',padding:'4px 8px'})} onClick={()=>{approve(w.id);setTimeout(()=>loadUser(selectedUser.telegram_id),500)}}>✅</button>
+                  <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a',padding:'4px 8px'})} onClick={()=>{reject(w.id);setTimeout(()=>loadUser(selectedUser.telegram_id),500)}}>❌</button>
+                </>)}
+              </div>
+            ))}
+          </>)}
+        </>)}
+      </div>
+    )
+  }
+
+  // =================== MAIN LIST VIEW ===================
   return (
     <div>
       {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+
+      {/* SEARCH */}
+      <div style={{display:'flex',gap:6,marginBottom:10}}>
+        <input value={userSearch} onChange={e=>setUserSearch(e.target.value)} onKeyDown={e=>e.key==='Enter'&&searchUser()} placeholder="🔍 Telegram ID пользователя" style={{flex:1,...S.input()}}/>
+        <button style={S.btn({background:'rgba(26,95,255,0.2)',color:'#00d4ff',padding:'8px 14px'})} onClick={searchUser}>НАЙТИ</button>
+      </div>
 
       {/* STATS */}
       {stats && (
@@ -317,7 +605,7 @@ function MinersAdmin() {
           </div>
           <div style={S.stat}>
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#00e676'}}>{parseFloat(stats.total_revenue).toFixed(2)}</div>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Заработано TON</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Выручка TON</div>
           </div>
           <div style={S.stat}>
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#ffb300'}}>{parseFloat(stats.network_hashrate).toFixed(0)}</div>
@@ -340,13 +628,35 @@ function MinersAdmin() {
 
       {/* TABS */}
       <div style={{display:'flex',gap:6,marginBottom:12}}>
+        <button style={S.tab(subTab==='users')} onClick={()=>setSubTab('users')}>👤 ЮЗЕРЫ ({minerUsers.length})</button>
         <button style={S.tab(subTab==='contracts')} onClick={()=>setSubTab('contracts')}>⛏ КОНТРАКТЫ ({contracts.length})</button>
         <button style={S.tab(subTab==='withdrawals')} onClick={()=>setSubTab('withdrawals')}>
           💰 ВЫВОДЫ {pendingWds>0?`(${pendingWds} ⏳)`:`(${withdrawals.length})`}
         </button>
       </div>
 
-      {/* CONTRACTS */}
+      {/* USERS TAB */}
+      {subTab==='users' && (
+        <div>
+          {!minerUsers.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет юзеров с контрактами</div>}
+          {minerUsers.map(u => (
+            <div key={u.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,marginBottom:6,cursor:'pointer'}} onClick={()=>openUser(u)}>
+              <div style={{width:36,height:36,borderRadius:8,background:parseInt(u.active_count)>0?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>⛏</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff'}}>{u.username ? '@'+u.username : u.first_name || 'User'}</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>ID: {u.telegram_id} · {u.contract_count} контр. · {parseInt(u.active_count)} актив.</div>
+              </div>
+              <div style={{textAlign:'right',flexShrink:0}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>{parseFloat(u.total_hashrate).toFixed(0)} GH/s</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{parseFloat(u.total_earned).toFixed(4)} TON</div>
+              </div>
+              <div style={{color:'rgba(232,242,255,0.2)',fontSize:14}}>›</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* CONTRACTS TAB */}
       {subTab==='contracts' && (
         <div>
           {!contracts.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет контрактов</div>}
@@ -355,7 +665,7 @@ function MinersAdmin() {
             const daysLeft = Math.max(0, Math.ceil((new Date(c.expires_at) - new Date()) / 86400000))
             const progress = Math.min(100, ((c.duration_days - daysLeft) / c.duration_days) * 100)
             return (
-              <div key={c.id} style={{background:'#0e1c3a',border:`1px solid ${isActive?'rgba(0,230,118,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
+              <div key={c.id} style={{background:'#0e1c3a',border:`1px solid ${isActive?'rgba(0,230,118,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6,cursor:'pointer'}} onClick={()=>openUser({telegram_id:c.telegram_id,username:c.username,first_name:c.first_name})}>
                 <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                   <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>
                     {c.username?'@'+c.username:c.first_name}
@@ -382,21 +692,20 @@ function MinersAdmin() {
                 <div style={{height:3,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
                   <div style={{height:'100%',width:`${progress}%`,background:isActive?'linear-gradient(90deg,#1a5fff,#00d4ff)':'rgba(255,77,106,0.4)',borderRadius:2}}/>
                 </div>
-                <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a',fontSize:8})} onClick={()=>deleteContract(c.id)}>🗑</button>
               </div>
             )
           })}
         </div>
       )}
 
-      {/* WITHDRAWALS */}
+      {/* WITHDRAWALS TAB */}
       {subTab==='withdrawals' && (
         <div>
           {!withdrawals.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
           {withdrawals.map(w => (
             <div key={w.id} style={{background:'#0e1c3a',border:`1px solid ${w.status==='pending'?'rgba(255,179,0,0.2)':w.status==='completed'?'rgba(0,230,118,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
               <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>
+                <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1,cursor:'pointer',textDecoration:'underline',textDecorationColor:'rgba(26,95,255,0.3)'}} onClick={()=>openUser({telegram_id:w.telegram_id,username:w.username,first_name:w.first_name})}>
                   {w.username?'@'+w.username:w.first_name}
                 </span>
                 <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,padding:'3px 8px',borderRadius:6,fontWeight:700,
