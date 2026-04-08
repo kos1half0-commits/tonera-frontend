@@ -5,7 +5,7 @@ import './Referrals.css'
 
 const BOT_USERNAME = import.meta.env.VITE_BOT_USERNAME || 'tonera_bot'
 
-export default function Referrals({ user }) {
+export default function Referrals({ user, onAuction }) {
   const [refs, setRefs] = useState([])
   const [regBonus, setRegBonus] = useState(0.001)
   const [fromTasks, setFromTasks] = useState(0)
@@ -66,6 +66,18 @@ export default function Referrals({ user }) {
           <button className="btn-copy" onClick={handleCopy}>{copied ? '✓' : 'КОПИРОВАТЬ'}</button>
         </div>
       </div>
+
+      {/* Auction button */}
+      <button className="auction-ref-btn" onClick={onAuction} style={{
+        width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:8,
+        padding:'14px',border:'1px solid rgba(168,85,247,0.3)',borderRadius:14,
+        background:'linear-gradient(135deg,rgba(168,85,247,0.12),rgba(26,95,255,0.08))',
+        color:'#a855f7',fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,
+        letterSpacing:'.06em',cursor:'pointer',marginBottom:10,
+        boxShadow:'0 4px 20px rgba(168,85,247,0.15)',transition:'all .2s'
+      }}>
+        🏛 АУКЦИОН РЕФЕРАЛОВ
+      </button>
 
       <div className="hiw-card">
         <div className="hiw-title">КАК ЭТО РАБОТАЕТ</div>

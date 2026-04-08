@@ -16,6 +16,7 @@ import Miner from './pages/Miner/Miner'
 import AdOrder from './pages/AdOrder/AdOrder'
 import Partnership from './pages/Partnership/Partnership'
 import Trading from './pages/Trading/Trading'
+import Auction from './pages/Auction/Auction'
 import WelcomeBonus from './components/WelcomeBonus'
 import './App.css'
 
@@ -52,6 +53,7 @@ export default function App() {
   const [blockMsg, setBlockMsg] = useState(null)
   const [showSupport, setShowSupport] = useState(false)
   const [showPartnership, setShowPartnership] = useState(false)
+  const [showAuction, setShowAuction] = useState(false)
   const [partnershipStatus, setPartnershipStatus] = useState('1')
   const [minerStatus, setMinerStatus] = useState('0')
   const [gameScreen, setGameScreen] = useState(null) // null | 'spin'
@@ -125,7 +127,8 @@ export default function App() {
             onAdOrder={() => setPage('adorder')} minerStatus={minerStatus} isAdmin={isAdmin} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
-        {tab === 'referrals' && <Referrals user={user} />}
+        {tab === 'referrals' && !showAuction && <Referrals user={user} onAuction={() => setShowAuction(true)} />}
+        {tab === 'referrals' && showAuction && <Auction user={user} onBack={() => setShowAuction(false)} />}
         {tab === 'wallet'    && <Wallet    user={user} />}
         {tab === 'games'     && <Games     onGame={setTab} isAdmin={isAdmin} />}
         {tab === 'spin'      && <Spin      user={user} onBack={() => setTab('games')} />}
@@ -138,7 +141,7 @@ export default function App() {
       <WelcomeBonus onClaim={() => setTab('staking')} />
       <nav className="bottom-nav">
         {visibleTabs.map(t => (
-          <button key={t.id} className={`nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setGameScreen(null); setShowSupport(false); setShowPartnership(false) }}>
+          <button key={t.id} className={`nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setGameScreen(null); setShowSupport(false); setShowPartnership(false); setShowAuction(false) }}>
             <span className="nav-icon">{t.icon}</span>
             <span className="nav-label">{t.label}</span>
           </button>

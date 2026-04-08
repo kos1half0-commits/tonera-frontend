@@ -115,6 +115,18 @@ const SETTING_GROUPS = [
       { key: 'ref_deposit_percent', label: '% от депозита реферала' },
     ]
   },
+  {
+    id: 'auction',
+    title: '🏛 Аукцион рефералов',
+    settings: [
+      { key: 'auction_enabled',      label: 'Статус (0=откл, 1=вкл)' },
+      { key: 'auction_test_mode',    label: 'Тестовый режим (1=тест, 0=боевой)' },
+      { key: 'auction_min_price',    label: 'Мин. начальная цена (TON)' },
+      { key: 'auction_min_step',     label: 'Мин. шаг ставки (TON)' },
+      { key: 'auction_commission',   label: 'Комиссия платформы (%)' },
+      { key: 'auction_max_duration', label: 'Макс. длительность (часов)' },
+    ]
+  },
 ]
 
 function AdOrdersAdmin() {
@@ -831,6 +843,207 @@ function MinersAdmin() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function AuctionsAdmin() {
+  const [auctions, setAuctions] = useState([])
+  const [stats, setStats] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [toast, setAucToast] = useState('')
+  const [filter, setFilter] = useState('all') // all | active | completed | cancelled
+
+  const showToast = m => { setAucToast(m); setTimeout(()=>setAucToast(''),3000) }
+  const load = async () => {
+    try {
+      const [a, s] = await Promise.all([
+        api.get('/api/admin/auctions'),
+        api.get('/api/admin/auction-stats'),
+      ])
+      setAuctions(a.data || [])
+      setStats(s.data)
+    } catch {}
+    setLoading(false)
+  }
+  useEffect(()=>{ load() },[])
+
+  const closeAuction = async (id) => {
+    if (!confirm('Принудительно закрыть аукцион?')) return
+    try {
+      await api.post(`/api/admin/auctions/${id}/close`)
+      showToast('✅ Аукцион закрыт')
+      load()
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
+  }
+
+  const deleteAuction = async (id) => {
+    if (!confirm('Удалить аукцион и все его ставки?')) return
+    try {
+      await api.delete(`/api/admin/auctions/${id}`)
+      showToast('🗑 Аукцион удалён')
+      load()
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
+  }
+
+  const S = {
+    stat: {background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:'10px 12px',textAlign:'center'},
+    btn: (c={})=>({padding:'6px 10px',border:'none',borderRadius:7,fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer',...c}),
+    tab: (active) => ({padding:'8px 14px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',background:active?'rgba(168,85,247,0.3)':'rgba(26,95,255,0.08)',color:active?'#a855f7':'rgba(232,242,255,0.4)',border:active?'1px solid rgba(168,85,247,0.3)':'1px solid transparent'}),
+  }
+
+  if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+
+  const filtered = filter === 'all' ? auctions : auctions.filter(a => a.status === filter)
+
+  return (
+    <div>
+      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+
+      {/* STATS */}
+      {stats && (
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:12}}>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#a855f7'}}>{parseInt(stats.total_auctions)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Всего аукционов</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00e676'}}>{parseInt(stats.active_auctions)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Активных</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00d4ff'}}>{parseInt(stats.completed_auctions)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Завершённых</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#ffb300'}}>{parseInt(stats.total_bids)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Всего ставок</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#e8f2ff'}}>{parseFloat(stats.total_volume).toFixed(4)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Объём TON</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:parseInt(stats.test_auctions)>0?'#ffb300':'#00e676'}}>{parseInt(stats.test_auctions)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Тестовых</div>
+          </div>
+        </div>
+      )}
+
+      {/* FILTER TABS */}
+      <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
+        {[
+          {id:'all',label:`ВСЕ (${auctions.length})`},
+          {id:'active',label:`АКТИВНЫЕ (${auctions.filter(a=>a.status==='active').length})`},
+          {id:'completed',label:`ЗАВЕРШЁННЫЕ (${auctions.filter(a=>a.status==='completed').length})`},
+          {id:'cancelled',label:`ОТМЕН. (${auctions.filter(a=>a.status==='cancelled').length})`},
+        ].map(f => (
+          <button key={f.id} style={S.tab(filter===f.id)} onClick={()=>setFilter(f.id)}>{f.label}</button>
+        ))}
+      </div>
+
+      {/* AUCTION LIST */}
+      {!filtered.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет аукционов</div>}
+      {filtered.map(a => {
+        const isActive = a.status === 'active'
+        const isCompleted = a.status === 'completed'
+        const isCancelled = a.status === 'cancelled'
+        const sellerName = a.seller_username ? '@'+a.seller_username : a.seller_name || 'User'
+        const refName = a.ref_username ? '@'+a.ref_username : a.ref_name || 'User'
+        const winnerName = a.winner_username ? '@'+a.winner_username : a.winner_name || ''
+        const timeLeft = isActive ? Math.max(0, Math.ceil((new Date(a.ends_at) - new Date()) / 60000)) : 0
+        const timeStr = timeLeft > 60 ? `${Math.floor(timeLeft/60)}ч ${timeLeft%60}м` : `${timeLeft}м`
+
+        return (
+          <div key={a.id} style={{
+            background:'#0e1c3a',
+            border:`1px solid ${isActive?'rgba(0,230,118,0.2)':isCompleted?'rgba(0,212,255,0.2)':'rgba(255,77,106,0.15)'}`,
+            borderRadius:12,padding:12,marginBottom:8,position:'relative'
+          }}>
+            {/* HEADER */}
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+              <div style={{
+                width:36,height:36,borderRadius:10,
+                background:isActive?'rgba(0,230,118,0.1)':isCompleted?'rgba(0,212,255,0.1)':'rgba(255,77,106,0.08)',
+                display:'flex',alignItems:'center',justifyContent:'center',
+                fontFamily:'Orbitron,sans-serif',fontWeight:700,color:isActive?'#00e676':isCompleted?'#00d4ff':'#ff4d6a',
+                fontSize:14,flexShrink:0
+              }}>{refName[0].toUpperCase()}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                  {refName}
+                </div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.35)'}}>
+                  продавец: {sellerName}
+                </div>
+              </div>
+              <div style={{display:'flex',gap:4,flexShrink:0}}>
+                <span style={{
+                  padding:'3px 8px',borderRadius:6,fontFamily:'Orbitron,sans-serif',fontSize:7,fontWeight:700,
+                  background:isActive?'rgba(0,230,118,0.12)':isCompleted?'rgba(0,212,255,0.12)':'rgba(255,77,106,0.12)',
+                  color:isActive?'#00e676':isCompleted?'#00d4ff':'#ff4d6a'
+                }}>
+                  {isActive?'АКТИВЕН':isCompleted?'ПРОДАН':'ОТМЕНА'}
+                </span>
+                {a.is_test && <span style={{padding:'3px 8px',borderRadius:6,fontFamily:'Orbitron,sans-serif',fontSize:7,fontWeight:700,background:'rgba(255,179,0,0.12)',color:'#ffb300'}}>ТЕСТ</span>}
+              </div>
+            </div>
+
+            {/* STATS ROW */}
+            <div style={{display:'flex',gap:8,marginBottom:8}}>
+              <div style={{flex:1,textAlign:'center',background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 4px'}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#00e676'}}>{parseFloat(a.current_price).toFixed(4)}</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>ТЕКУЩАЯ</div>
+              </div>
+              <div style={{flex:1,textAlign:'center',background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 4px'}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#00d4ff'}}>{parseFloat(a.start_price).toFixed(4)}</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>НАЧАЛЬНАЯ</div>
+              </div>
+              <div style={{flex:1,textAlign:'center',background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 4px'}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#a855f7'}}>{a.bid_count || 0}</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>СТАВКИ</div>
+              </div>
+              {isActive && (
+                <div style={{flex:1,textAlign:'center',background:'rgba(255,179,0,0.06)',borderRadius:8,padding:'6px 4px'}}>
+                  <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#ffb300'}}>{timeStr}</div>
+                  <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>ОСТАЛОСЬ</div>
+                </div>
+              )}
+            </div>
+
+            {/* WINNER */}
+            {isCompleted && winnerName && (
+              <div style={{textAlign:'center',padding:'6px',fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:6}}>
+                🏆 Победитель: <span style={{color:'#00e676',fontWeight:700}}>{winnerName}</span>
+              </div>
+            )}
+
+            {/* META */}
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.25)',marginBottom:8}}>
+              ID: {a.id} · {a.duration_hours}ч · {new Date(a.created_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+            </div>
+
+            {/* ACTIONS */}
+            <div style={{display:'flex',gap:6}}>
+              {isActive && (
+                <button style={S.btn({flex:1,background:'rgba(255,179,0,0.15)',color:'#ffb300',padding:'8px'})} onClick={()=>closeAuction(a.id)}>
+                  ⏹ ЗАКРЫТЬ
+                </button>
+              )}
+              <button style={S.btn({flex:isActive?0:1,background:'rgba(255,77,106,0.1)',color:'#ff4d6a',padding:'8px'})} onClick={()=>deleteAuction(a.id)}>
+                🗑 УДАЛИТЬ
+              </button>
+            </div>
+          </div>
+        )
+      })}
+
+      {/* REFRESH */}
+      <button style={{
+        width:'100%',padding:'10px',border:'1px solid rgba(26,95,255,0.2)',borderRadius:10,
+        background:'rgba(26,95,255,0.06)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',
+        fontSize:9,fontWeight:700,cursor:'pointer',marginTop:8
+      }} onClick={load}>↻ ОБНОВИТЬ</button>
     </div>
   )
 }
@@ -1798,6 +2011,7 @@ export default function Admin() {
           {id:'ads',icon:'📣',label:'РЕКЛАМА'},
           {id:'adorders',icon:'📋',label:'ЗАЯВКИ РЕК'},
           {id:'miners',icon:'⛏',label:'МАЙНЕРЫ'},
+          {id:'auctions',icon:'🏛',label:'АУКЦИОН'},
           {id:'admins',icon:'👑',label:'АДМИНЫ'},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (
@@ -2316,6 +2530,12 @@ export default function Admin() {
       {tab === 'miners' && (
         <div className="admin-section">
           <MinersAdmin />
+        </div>
+      )}
+
+      {tab === 'auctions' && (
+        <div className="admin-section">
+          <AuctionsAdmin />
         </div>
       )}
 

@@ -1,0 +1,108 @@
+.auction-wrap{padding:16px;height:100%;overflow-y:auto;padding-bottom:80px;}
+.auction-back{display:flex;align-items:center;gap:6px;background:none;border:1px solid rgba(26,95,255,0.3);border-radius:10px;padding:8px 14px;color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;cursor:pointer;margin-bottom:14px;letter-spacing:.04em;}
+.auction-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#e8f2ff;letter-spacing:.03em;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.auction-title span{font-size:24px;}
+
+/* Test mode banner */
+.auction-test-banner{background:rgba(255,179,0,0.08);border:1px solid rgba(255,179,0,0.25);border-radius:14px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.auction-test-banner .atb-icon{font-size:22px;flex-shrink:0;}
+.auction-test-banner .atb-text{font-family:'DM Sans',sans-serif;font-size:12px;color:#ffb300;line-height:1.4;}
+.auction-test-banner .atb-text b{color:#ffd54f;}
+
+/* Disabled banner */
+.auction-off-banner{background:rgba(255,77,106,0.06);border:1px solid rgba(255,77,106,0.2);border-radius:14px;padding:20px;text-align:center;margin-bottom:14px;}
+.auction-off-banner .aob-icon{font-size:36px;margin-bottom:8px;}
+.auction-off-banner .aob-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#ff4d6a;letter-spacing:.06em;}
+.auction-off-banner .aob-sub{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.35);margin-top:4px;}
+
+/* Tabs */
+.auction-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;}
+.auction-tab{padding:8px 14px;border:none;border-radius:10px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.04em;}
+.auction-tab.active{background:rgba(26,95,255,0.3);color:#00d4ff;border:1px solid rgba(0,212,255,0.3);}
+.auction-tab:not(.active){background:rgba(26,95,255,0.06);color:rgba(232,242,255,0.35);border:1px solid rgba(26,95,255,0.1);}
+
+/* Auction card */
+.auction-card{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;padding:14px;margin-bottom:10px;transition:all .2s;position:relative;overflow:hidden;}
+.auction-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#1a5fff,transparent);opacity:0;transition:opacity .3s;}
+.auction-card:hover::before{opacity:1;}
+.auction-card.test{border-color:rgba(255,179,0,0.2);}
+.auction-card.completed{border-color:rgba(0,230,118,0.2);opacity:.7;}
+.auction-card.cancelled{border-color:rgba(255,77,106,0.15);opacity:.6;}
+
+.ac-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.ac-avatar{width:40px;height:40px;border-radius:12px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:700;color:#00d4ff;font-size:16px;flex-shrink:0;}
+.ac-info{flex:1;min-width:0;}
+.ac-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#e8f2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ac-seller{font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(232,242,255,0.35);margin-top:2px;}
+.ac-badge{padding:3px 8px;border-radius:6px;font-family:'Orbitron',sans-serif;font-size:7px;font-weight:700;letter-spacing:.06em;flex-shrink:0;}
+.ac-badge.active{background:rgba(0,230,118,0.12);color:#00e676;}
+.ac-badge.completed{background:rgba(0,212,255,0.12);color:#00d4ff;}
+.ac-badge.cancelled{background:rgba(255,77,106,0.12);color:#ff4d6a;}
+.ac-badge.test{background:rgba(255,179,0,0.12);color:#ffb300;}
+
+.ac-stats{display:flex;gap:10px;margin-bottom:10px;}
+.ac-stat{flex:1;text-align:center;background:rgba(26,95,255,0.04);border-radius:8px;padding:8px 4px;}
+.ac-stat-val{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:#00d4ff;}
+.ac-stat-val.price{color:#00e676;}
+.ac-stat-val.bids{color:#a855f7;}
+.ac-stat-label{font-family:'DM Sans',sans-serif;font-size:8px;color:rgba(232,242,255,0.3);margin-top:2px;}
+
+/* Timer */
+.ac-timer{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;background:rgba(26,95,255,0.06);border-radius:8px;margin-bottom:10px;}
+.ac-timer-icon{font-size:14px;}
+.ac-timer-text{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#ffb300;letter-spacing:.04em;}
+.ac-timer-text.expired{color:#ff4d6a;}
+
+/* Bid button */
+.ac-bid-btn{width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(135deg,#1a5fff,#0930cc);color:#fff;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:.06em;cursor:pointer;box-shadow:0 4px 16px rgba(26,95,255,0.3);transition:all .2s;}
+.ac-bid-btn:hover{box-shadow:0 6px 24px rgba(26,95,255,0.45);transform:translateY(-1px);}
+.ac-bid-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
+.ac-bid-btn.cancel{background:rgba(255,77,106,0.15);color:#ff4d6a;box-shadow:none;}
+
+/* Create form */
+.auction-create{background:#0e1c3a;border:1px solid rgba(0,230,118,0.2);border-radius:16px;padding:16px;margin-bottom:14px;}
+.auction-create-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:rgba(232,242,255,0.4);letter-spacing:.1em;margin-bottom:12px;}
+.ac-field{margin-bottom:10px;}
+.ac-field-label{font-family:'DM Sans',sans-serif;font-size:9px;color:rgba(232,242,255,0.35);margin-bottom:4px;display:block;letter-spacing:.06em;}
+.ac-field-input{width:100%;background:#0b1630;border:1px solid rgba(26,95,255,0.3);border-radius:10px;padding:10px 14px;color:#e8f2ff;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box;transition:border-color .2s;}
+.ac-field-input:focus{border-color:rgba(0,212,255,0.5);}
+.ac-field-select{width:100%;background:#0b1630;border:1px solid rgba(26,95,255,0.3);border-radius:10px;padding:10px 14px;color:#e8f2ff;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box;appearance:auto;}
+
+/* Ref select for create */
+.ac-ref-item{display:flex;align-items:center;gap:10px;background:rgba(26,95,255,0.04);border:1px solid rgba(26,95,255,0.12);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all .2s;}
+.ac-ref-item:hover{border-color:rgba(0,212,255,0.3);}
+.ac-ref-item.selected{border-color:rgba(0,230,118,0.4);background:rgba(0,230,118,0.06);}
+.ac-ref-avatar{width:32px;height:32px;border-radius:50%;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:700;color:#00d4ff;font-size:12px;flex-shrink:0;}
+.ac-ref-name{font-family:'DM Sans',sans-serif;font-size:12px;color:#e8f2ff;flex:1;}
+
+/* Duration chips */
+.ac-dur-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.ac-dur-chip{padding:8px 14px;border:1px solid rgba(26,95,255,0.2);border-radius:8px;background:rgba(26,95,255,0.06);color:rgba(232,242,255,0.4);font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;cursor:pointer;transition:all .2s;}
+.ac-dur-chip.active{border-color:rgba(0,212,255,0.4);background:rgba(0,212,255,0.1);color:#00d4ff;}
+
+/* Bid modal overlay */
+.bid-modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(5,10,26,0.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease;}
+.bid-modal{background:#0e1c3a;border:1px solid rgba(26,95,255,0.3);border-radius:20px;padding:24px;width:100%;max-width:340px;animation:slideUp .3s ease;}
+.bid-modal-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#e8f2ff;text-align:center;margin-bottom:16px;}
+.bid-modal-info{font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(232,242,255,0.5);text-align:center;margin-bottom:16px;}
+.bid-modal-btns{display:flex;gap:8px;margin-top:16px;}
+.bid-modal-btns button{flex:1;}
+
+/* Empty state */
+.auction-empty{text-align:center;padding:40px 20px;}
+.auction-empty-icon{font-size:48px;margin-bottom:12px;}
+.auction-empty-text{font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(232,242,255,0.3);}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* My section badges */
+.ac-my-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'Orbitron',sans-serif;font-size:7px;font-weight:700;margin-left:6px;}
+.ac-my-badge.won{background:rgba(0,230,118,0.12);color:#00e676;}
+.ac-my-badge.lost{background:rgba(255,77,106,0.1);color:#ff4d6a;}
+.ac-my-badge.leading{background:rgba(0,212,255,0.12);color:#00d4ff;}
+
+/* Toast */
+.auction-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);border-radius:10px;padding:10px 20px;font-family:'Orbitron',sans-serif;font-size:10px;color:#00e676;z-index:400;animation:slideUp .3s ease;}
+.auction-toast.error{background:rgba(255,77,106,0.12);border-color:rgba(255,77,106,0.3);color:#ff4d6a;}
