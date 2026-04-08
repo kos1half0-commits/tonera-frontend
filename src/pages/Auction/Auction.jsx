@@ -274,22 +274,40 @@ export default function Auction({ onBack, user }) {
             <div className="auction-create-title">➕ ВЫСТАВИТЬ РЕФЕРАЛА НА АУКЦИОН</div>
 
             <div className="ac-field">
-              <span className="ac-field-label">ВЫБЕРИТЕ РЕФЕРАЛА</span>
+              <span className="ac-field-label">ВЫБЕРИТЕ РЕФЕРАЛА (только активные)</span>
               {myRefs.length === 0 ? (
                 <div style={{padding:12,textAlign:'center',color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans',fontSize:12}}>
                   У вас нет рефералов для продажи
                 </div>
-              ) : myRefs.map((r, i) => {
-                const name = r.username ? `@${r.username}` : r.first_name || 'Пользователь'
-                const isSelected = selRef && (selRef.referral_id || selRef.id) === (r.referral_id || r.id)
-                return (
-                  <div key={i} className={`ac-ref-item ${isSelected ? 'selected' : ''}`} onClick={() => setSelRef(r)}>
-                    <div className="ac-ref-avatar">{name[0].toUpperCase()}</div>
-                    <div className="ac-ref-name">{name}</div>
-                    {isSelected && <span style={{color:'#00e676',fontSize:16}}>✓</span>}
-                  </div>
-                )
-              })}
+              ) : myRefs.filter(r => r.is_active).length === 0 ? (
+                <div style={{padding:12,textAlign:'center',color:'rgba(255,179,0,0.6)',fontFamily:'DM Sans',fontSize:12}}>
+                  ⚠️ Нет активных рефералов. Реферал считается активным, если был активен за последние 30 дней.
+                </div>
+              ) : (<>
+                {myRefs.map((r, i) => {
+                  const name = r.username ? `@${r.username}` : r.first_name || 'Пользователь'
+                  const isSelected = selRef && (selRef.referral_id || selRef.id) === (r.referral_id || r.id)
+                  const active = r.is_active !== false
+                  return (
+                    <div
+                      key={i}
+                      className={`ac-ref-item ${isSelected ? 'selected' : ''} ${!active ? 'inactive' : ''}`}
+                      onClick={() => active && setSelRef(r)}
+                      style={!active ? {opacity:0.35,cursor:'not-allowed'} : {}}
+                    >
+                      <div className="ac-ref-avatar" style={active ? {} : {background:'rgba(255,77,106,0.08)',borderColor:'rgba(255,77,106,0.2)',color:'#ff4d6a'}}>{name[0].toUpperCase()}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div className="ac-ref-name">{name}</div>
+                        {active
+                          ? <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#00e676',marginTop:1}}>● активен</div>
+                          : <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#ff4d6a',marginTop:1}}>● неактивен (30д)</div>
+                        }
+                      </div>
+                      {isSelected && <span style={{color:'#00e676',fontSize:16}}>✓</span>}
+                    </div>
+                  )
+                })}
+              </>)}
             </div>
 
             <div className="ac-field">
