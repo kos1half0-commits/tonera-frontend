@@ -3,250 +3,405 @@ import { useTonConnectUI, useTonWallet } from '@tonconnect/ui-react'
 import api from '../../api/index'
 import './Miner.css'
 
+const PLAN_LABELS = {
+  starter:  { name: 'STARTER',  icon: '💚', gradient: 'linear-gradient(135deg,#0d9668,#0f766e)' },
+  advanced: { name: 'ADVANCED', icon: '💙', gradient: 'linear-gradient(135deg,#1a5fff,#0930cc)' },
+  pro:      { name: 'PRO',      icon: '💜', gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)' },
+  elite:    { name: 'ELITE',    icon: '💛', gradient: 'linear-gradient(135deg,#d97706,#b45309)' },
+  legacy:   { name: 'LEGACY',   icon: '⛏',  gradient: 'linear-gradient(135deg,#64748b,#475569)' },
+}
+
 export default function Miner({ onBack, isAdmin }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
   const [toastErr, setToastErr] = useState(false)
-  const [buying, setBuying] = useState(false)
-  const [collecting, setCollecting] = useState(false)
-  const [upgrading, setUpgrading] = useState(false)
-  const [pending, setPending] = useState(0)
-  const [projectWallet, setProjectWallet] = useState('')
+  const [buying, setBuying] = useState(null)
+  const [screen, setScreen] = useState('dashboard') // dashboard | plans | history
+  const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [withdrawWallet, setWithdrawWallet] = useState('')
+  const [showWithdraw, setShowWithdraw] = useState(false)
+  const [withdrawing, setWithdrawing] = useState(false)
+  const [liveEarned, setLiveEarned] = useState(0)
   const [minerEnabled, setMinerEnabled] = useState(1)
-  const [collectWallet, setCollectWallet] = useState('')
-  const [showCollectInput, setShowCollectInput] = useState(false)
-  const [history, setHistory] = useState([])
   const timerRef = useRef(null)
-  const speedRef = useRef(0)
-  const isFirstLoad = useRef(true)
+  const dataRef = useRef(null)
   const [tonConnectUI] = useTonConnectUI()
   const wallet = useTonWallet()
 
-  const showToast = (msg, err=false) => {
+  const showToast = (msg, err = false) => {
     setToast(msg); setToastErr(err)
     setTimeout(() => setToast(''), 4000)
   }
 
   const load = async () => {
     try {
-      const r = await api.get('/api/miner/status')
+      const r = await api.get('/api/miner/dashboard')
       setData(r.data)
-      if (isFirstLoad.current && r.data.miner) {
-        setPending(r.data.miner.pendingTon || 0)
-        isFirstLoad.current = false
-      }
-    } catch(e) { console.log('load err:', e.message) }
+      dataRef.current = r.data
+      setMinerEnabled(r.data.enabled)
+      // Set initial live earned
+      setLiveEarned(r.data.totalEarned || 0)
+    } catch (e) { console.log('load err:', e.message) }
     setLoading(false)
   }
 
   useEffect(() => {
     load()
-    api.get('/api/deposit/info').then(r => setProjectWallet(r.data?.wallet||'')).catch(()=>{})
-    api.get('/api/settings/miner_enabled').then(r => setMinerEnabled(parseInt(r.data?.value??1))).catch(()=>{})
-    api.get('/api/miner/history').then(r => setHistory(r.data||[])).catch(()=>{})
   }, [])
 
+  // Live earnings ticker
   useEffect(() => {
-    if (!data?.miner) return
-    const speed = parseFloat(data.miner.speed)
-    speedRef.current = speed
-    if (!timerRef.current) {
-      timerRef.current = setInterval(() => {
-        setPending(p => p + speedRef.current / 3600)
-      }, 1000)
-    }
-    return () => {}
-  }, [data?.miner?.speed])
+    if (!data?.contracts?.length) return
+    const activeCons = data.contracts.filter(c => c.status === 'active' && new Date(c.expires_at) > new Date())
+    const totalHashrate = activeCons.reduce((s, c) => s + parseFloat(c.hashrate), 0)
+    const ratePerGh = data.ratePerGh || 0.0000001
+    const earnPerSecond = totalHashrate * ratePerGh / 3600
 
-  useEffect(() => {
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setLiveEarned(prev => prev + earnPerSecond)
+    }, 1000)
     return () => clearInterval(timerRef.current)
-  }, [])
+  }, [data])
 
-  const buy = async () => {
-    if (!wallet) { tonConnectUI.openModal(); showToast('Підключіть гаманець TON', true); return }
-    if (!projectWallet) { showToast('Гаманець проекту не налаштовано', true); return }
-    setBuying(true)
+  const buyPlan = async (plan) => {
+    if (!wallet) { tonConnectUI.openModal(); showToast('Подключите кошелёк TON', true); return }
+    const minerWallet = data?.minerWallet
+    if (!minerWallet) { showToast('Кошелёк майнера не настроен', true); return }
+    setBuying(plan.id)
     try {
-      const price = data?.settings?.price ?? 1
-      const amountNano = Math.floor(price * 1e9).toString()
+      const amountNano = Math.floor(plan.price * 1e9).toString()
       const result = await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 300,
-        messages: [{ address: projectWallet, amount: amountNano }]
+        messages: [{ address: minerWallet, amount: amountNano }]
       })
-      await api.post('/api/miner/buy', { tx_hash: result?.boc || '' })
-      isFirstLoad.current = true
+      await api.post('/api/miner/buy', { plan_id: plan.id, tx_hash: result?.boc || '' })
       await load()
-      api.get('/api/miner/history').then(r => setHistory(r.data||[])).catch(()=>{})
-      showToast('✅ Майнер куплено! LVL 1')
+      setScreen('dashboard')
+      showToast(`✅ Контракт ${plan.id.toUpperCase()} активирован!`)
     } catch (e) {
-      if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('СКАСОВАНО', true)
-      else showToast(e?.response?.data?.error || e?.message || 'Помилка', true)
+      if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('ОТМЕНЕНО', true)
+      else showToast(e?.response?.data?.error || e?.message || 'Ошибка', true)
     }
-    setBuying(false)
+    setBuying(null)
   }
 
-  const collect = async () => {
-    if (!collectWallet.trim()) { showToast('Введіть адресу TON гаманця', true); return }
-    setCollecting(true)
+  const handleWithdraw = async () => {
+    if (!withdrawWallet.trim()) { showToast('Укажите адрес кошелька', true); return }
+    const amt = parseFloat(withdrawAmount)
+    if (!amt || amt <= 0) { showToast('Укажите сумму', true); return }
+    setWithdrawing(true)
     try {
-      const r = await api.post('/api/miner/collect', { wallet_address: collectWallet })
-      setPending(0)
-      isFirstLoad.current = false
+      await api.post('/api/miner/withdraw', { amount: amt, wallet_address: withdrawWallet })
       await load()
-      api.get('/api/miner/history').then(r => setHistory(r.data||[])).catch(()=>{})
-      showToast(`✅ Запит на вивід ${parseFloat(r.data.earned).toFixed(6)} TON створено!`)
-      setShowCollectInput(false)
-    } catch (e) { showToast(e?.response?.data?.error || 'Помилка', true) }
-    setCollecting(false)
+      setShowWithdraw(false)
+      setWithdrawAmount('')
+      setWithdrawWallet('')
+      showToast(`✅ Запрос на вывод ${amt.toFixed(6)} TON создан!`)
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+    setWithdrawing(false)
   }
 
-  const upgrade = async () => {
-    if (!wallet) { tonConnectUI.openModal(); showToast('Підключіть гаманець TON', true); return }
-    if (!projectWallet) { showToast('Гаманець проекту не налаштовано', true); return }
-    setUpgrading(true)
-    try {
-      const upgradePrice = miner?.upgradePrice ?? data?.settings?.upgradePrice ?? 0.5
-      const amountNano = Math.floor(upgradePrice * 1e9).toString()
-      const result = await tonConnectUI.sendTransaction({
-        validUntil: Math.floor(Date.now() / 1000) + 300,
-        messages: [{ address: projectWallet, amount: amountNano }]
-      })
-      await api.post('/api/miner/upgrade', { tx_hash: result?.boc || '' })
-      await load()
-      api.get('/api/miner/history').then(r => setHistory(r.data||[])).catch(()=>{})
-      showToast('✅ Апгрейд виконано!')
-    } catch (e) {
-      if (e?.message?.includes('User rejects') || e?.message?.includes('cancel')) showToast('СКАСОВАНО', true)
-      else showToast(e?.response?.data?.error || e?.message || 'Помилка', true)
-    }
-    setUpgrading(false)
-  }
+  if (loading) return <div className="mn-wrap"><div className="mn-loading">⛏ Загрузка...</div></div>
 
-  if (loading) return <div className="miner-wrap"><div className="miner-loading">⛏ Завантаження...</div></div>
-
-  const settings = data?.settings || {}
-  const miner = data?.miner
-  const price = settings?.price ?? 1
-  const speedBase = settings?.speedBase ?? 0.001
-  const minCollect = settings?.minCollect ?? 0.01
-
-  if (minerEnabled === 0) return (
-    <div className="miner-wrap">
-      <div className="miner-header">
-        <button className="miner-back" onClick={onBack}>← НАЗАД</button>
-        <div className="miner-title">⛏ МАЙНІНГ</div>
+  // 0=off, 1=on, 2=admin only
+  if (minerEnabled === 0 || (minerEnabled === 2 && !isAdmin)) return (
+    <div className="mn-wrap">
+      <div className="mn-header">
+        <button className="mn-back" onClick={onBack}>← НАЗАД</button>
+        <div className="mn-title">⛏ МАЙНИНГ</div>
       </div>
-      <div className="miner-locked">
-        <div className="ml-icon">🔧</div>
-        <div className="ml-title">В РОЗРОБЦІ</div>
-        <div className="ml-desc">Розділ тимчасово недоступний</div>
+      <div className="mn-locked">
+        <div className="mn-locked-icon">{minerEnabled === 0 ? '🔒' : '🔧'}</div>
+        <div className="mn-locked-title">{minerEnabled === 0 ? 'ОТКЛЮЧЕНО' : 'В РАЗРАБОТКЕ'}</div>
+        <div className="mn-locked-desc">Раздел временно недоступен</div>
       </div>
     </div>
   )
 
+  const activeContracts = (data?.contracts || []).filter(c => c.status === 'active' && new Date(c.expires_at) > new Date())
+  const totalHashrate = activeContracts.reduce((s, c) => s + parseFloat(c.hashrate), 0)
+  const availableBalance = (data?.availableBalance || 0) + (liveEarned - (data?.totalEarned || 0))
+  const minWithdraw = data?.minWithdraw || 0.01
+  const plans = data?.plans || []
+  const network = data?.network || {}
+
   return (
-    <div className="miner-wrap">
-      {toast && <div className={`miner-toast ${toastErr?'err':''}`}>{toast}</div>}
-      <div className="miner-header">
-        <button className="miner-back" onClick={onBack}>← НАЗАД</button>
-        <div className="miner-title">⛏ МАЙНІНГ</div>
+    <div className="mn-wrap">
+      {toast && <div className={`mn-toast ${toastErr ? 'err' : ''}`}>{toast}</div>}
+
+      <div className="mn-header">
+        <button className="mn-back" onClick={onBack}>← НАЗАД</button>
+        <div className="mn-title">⛏ МАЙНИНГ</div>
+        {minerEnabled === 2 && <span className="mn-admin-badge">ТЕСТ</span>}
       </div>
 
-      {!miner ? (
-        <>
-          <div className="miner-how">
-            <div className="mhow-title">ЯК ПРАЦЮЄ МАЙНЕР</div>
-            <div className="mhow-step"><span>1</span><div><b>Купи майнер</b> через TON Connect — разова оплата</div></div>
-            <div className="mhow-step"><span>2</span><div><b>Майнер добуває TON</b> автоматично кожну годину</div></div>
-            <div className="mhow-step"><span>3</span><div><b>Виводь дохід</b> на свій TON гаманець коли набереться мінімальна сума</div></div>
-            <div className="mhow-step"><span>4</span><div><b>Покращуй майнер</b> через TON Connect — кожен апгрейд збільшує швидкість</div></div>
-          </div>
+      {/* NAVIGATION */}
+      <div className="mn-nav">
+        <button className={`mn-nav-btn ${screen === 'dashboard' ? 'on' : ''}`} onClick={() => setScreen('dashboard')}>📊 ДАШБОРД</button>
+        <button className={`mn-nav-btn ${screen === 'plans' ? 'on' : ''}`} onClick={() => setScreen('plans')}>🛒 ПЛАНЫ</button>
+        <button className={`mn-nav-btn ${screen === 'history' ? 'on' : ''}`} onClick={() => setScreen('history')}>📋 ИСТОРИЯ</button>
+      </div>
 
-          <div className="miner-buy-block">
-            <div className="mb-icon">⛏</div>
-            <div className="mb-title">КУПИТИ МАЙНЕР</div>
-            <div className="mb-desc">Почни добувати TON автоматично 24/7</div>
-            <div className="mb-stats">
-              <div className="mb-stat"><div className="mb-sv">{speedBase} TON</div><div className="mb-sl">в годину</div></div>
-              <div className="mb-stat"><div className="mb-sv">LVL 1</div><div className="mb-sl">початковий рівень</div></div>
+      {/* ========== DASHBOARD ========== */}
+      {screen === 'dashboard' && (
+        <>
+          {activeContracts.length === 0 ? (
+            <div className="mn-empty">
+              <div className="mn-empty-icon">⛏</div>
+              <div className="mn-empty-title">ОБЛАЧНЫЙ МАЙНИНГ TON</div>
+              <div className="mn-empty-desc">
+                Покупайте хешрейт и зарабатывайте TON автоматически 24/7.
+                Без оборудования, без затрат на электричество.
+              </div>
+              <button className="mn-empty-btn" onClick={() => setScreen('plans')}>
+                🛒 ВЫБРАТЬ ПЛАН
+              </button>
             </div>
-            <button className="mb-buy-btn" onClick={buy} disabled={buying}>
-              {buying ? 'КУПІВЛЯ...' : `⛏ КУПИТИ ЗА ${price} TON`}
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* СТАТУС */}
-          <div className="miner-status-block active">
-            <div className="msb-icon">⛏</div>
-            <div className="msb-status">МАЙНЕР АКТИВНИЙ · LVL {miner.level}</div>
-          </div>
+          ) : (
+            <>
+              {/* MINING STATUS */}
+              <div className="mn-status-card">
+                <div className="mn-status-pulse"></div>
+                <div className="mn-status-label">МАЙНИНГ АКТИВЕН</div>
+                <div className="mn-hash-counter">{totalHashrate.toFixed(0)} GH/s</div>
+                <div className="mn-hash-label">ОБЩИЙ ХЕШРЕЙТ</div>
+              </div>
 
-          {/* НАМАЙНОВАНО */}
-          <div className="miner-pending">
-            <div className="mp-label">НАМАЙНОВАНО</div>
-            <div className="mp-value">{pending.toFixed(8)} TON</div>
-            <div className="mp-min">Мін. вивід: {parseFloat(minCollect).toFixed(4)} TON</div>
-            {showCollectInput ? (
-              <div className="mp-collect-form">
-                <input value={collectWallet} onChange={e=>setCollectWallet(e.target.value)}
-                  placeholder="Адреса TON гаманця" className="mp-wallet-input"/>
-                <div className="mp-collect-btns">
-                  <button className="mp-collect-btn" onClick={collect} disabled={collecting || pending < minCollect}>
-                    {collecting ? '...' : '💰 ВИВЕСТИ'}
+              {/* EARNINGS */}
+              <div className="mn-earnings">
+                <div className="mn-earn-label">ДОБЫТО</div>
+                <div className="mn-earn-value">{liveEarned.toFixed(8)} TON</div>
+                <div className="mn-earn-available">
+                  Доступно к выводу: <strong>{Math.max(0, availableBalance).toFixed(6)} TON</strong>
+                </div>
+
+                {showWithdraw ? (
+                  <div className="mn-withdraw-form">
+                    <input
+                      value={withdrawWallet}
+                      onChange={e => setWithdrawWallet(e.target.value)}
+                      placeholder="Адрес TON кошелька"
+                      className="mn-input"
+                    />
+                    <input
+                      value={withdrawAmount}
+                      onChange={e => setWithdrawAmount(e.target.value)}
+                      placeholder={`Сумма (мин. ${minWithdraw})`}
+                      type="number"
+                      className="mn-input"
+                    />
+                    <div className="mn-withdraw-btns">
+                      <button className="mn-btn-withdraw" onClick={handleWithdraw} disabled={withdrawing}>
+                        {withdrawing ? '...' : '💰 ОТПРАВИТЬ'}
+                      </button>
+                      <button className="mn-btn-cancel" onClick={() => setShowWithdraw(false)}>✕</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="mn-btn-withdraw"
+                    onClick={() => setShowWithdraw(true)}
+                    disabled={availableBalance < minWithdraw}
+                  >
+                    💰 ВЫВЕСТИ НА КОШЕЛЁК
                   </button>
-                  <button className="mp-cancel-btn" onClick={()=>setShowCollectInput(false)}>✕</button>
+                )}
+              </div>
+
+              {/* PENDING WITHDRAWALS */}
+              {data?.pendingWithdrawals?.length > 0 && (
+                <div className="mn-pending-wd">
+                  <div className="mn-section-title">⏳ ОЖИДАЮТ ВЫПЛАТЫ</div>
+                  {data.pendingWithdrawals.map(w => (
+                    <div key={w.id} className="mn-wd-item">
+                      <div className="mn-wd-amount">{parseFloat(w.amount).toFixed(6)} TON</div>
+                      <div className="mn-wd-addr">{w.wallet_address.slice(0, 12)}...{w.wallet_address.slice(-6)}</div>
+                      <div className="mn-wd-date">{new Date(w.created_at).toLocaleDateString('ru', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* ACTIVE CONTRACTS */}
+              <div className="mn-section-title">⛏ АКТИВНЫЕ КОНТРАКТЫ</div>
+              {activeContracts.map(c => {
+                const daysLeft = Math.max(0, Math.ceil((new Date(c.expires_at) - new Date()) / 86400000))
+                const progress = Math.min(100, ((c.duration_days - daysLeft) / c.duration_days) * 100)
+                const label = PLAN_LABELS[c.plan_id] || PLAN_LABELS.legacy
+                return (
+                  <div key={c.id} className="mn-contract-card">
+                    <div className="mn-contract-header">
+                      <span className="mn-contract-plan" style={{ background: label.gradient }}>
+                        {label.icon} {label.name}
+                      </span>
+                      <span className="mn-contract-days">{daysLeft}д осталось</span>
+                    </div>
+                    <div className="mn-contract-stats">
+                      <div>
+                        <div className="mn-cs-val">{parseFloat(c.hashrate).toFixed(0)} GH/s</div>
+                        <div className="mn-cs-lbl">хешрейт</div>
+                      </div>
+                      <div>
+                        <div className="mn-cs-val earned">{parseFloat(c.totalContractEarned || c.earned).toFixed(6)}</div>
+                        <div className="mn-cs-lbl">добыто TON</div>
+                      </div>
+                    </div>
+                    <div className="mn-progress-bar">
+                      <div className="mn-progress-fill" style={{ width: `${progress}%` }}></div>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* NETWORK STATS */}
+              <div className="mn-section-title">🌐 СТАТИСТИКА СЕТИ</div>
+              <div className="mn-network">
+                <div className="mn-net-item">
+                  <div className="mn-net-val">{parseFloat(network.hashrate || 0).toFixed(0)}</div>
+                  <div className="mn-net-lbl">GH/s сеть</div>
+                </div>
+                <div className="mn-net-item">
+                  <div className="mn-net-val">{network.miners || 0}</div>
+                  <div className="mn-net-lbl">майнеров</div>
+                </div>
+                <div className="mn-net-item">
+                  <div className="mn-net-val">{parseFloat(network.totalMined || 0).toFixed(4)}</div>
+                  <div className="mn-net-lbl">добыто TON</div>
                 </div>
               </div>
-            ) : (
-              <button className="mp-collect-btn" onClick={()=>setShowCollectInput(true)} disabled={pending < minCollect}>
-                💰 ВИВЕСТИ НА ГАМАНЕЦЬ
+
+              <button className="mn-btn-buy-more" onClick={() => setScreen('plans')}>
+                🛒 КУПИТЬ ЕЩЁ КОНТРАКТ
               </button>
-            )}
-          </div>
-
-          {/* ІНФО */}
-          <div className="miner-info">
-            <div className="mi-row"><span>Рівень</span><b>LVL {miner.level}</b></div>
-            <div className="mi-row"><span>Швидкість</span><b>{parseFloat(miner.speed).toFixed(6)} TON/год</b></div>
-            <div className="mi-row"><span>На день</span><b>{(parseFloat(miner.speed)*24).toFixed(6)} TON</b></div>
-          </div>
-
-          {/* АПГРЕЙД */}
-          <div className="miner-upgrade">
-            <div className="mu-title">АПГРЕЙД МАЙНЕРА</div>
-            <div className="mu-info">
-              LVL {miner.level} → LVL {miner.level+1} · {parseFloat(miner.speed).toFixed(6)} → {parseFloat(miner.nextSpeed??miner.speed).toFixed(6)} TON/год
-            </div>
-            <button className="mu-btn" onClick={upgrade} disabled={upgrading}>
-              {upgrading ? '...' : `⬆️ АПГРЕЙД ЗА ${parseFloat(miner.upgradePrice??0.5).toFixed(4)} TON`}
-            </button>
-          </div>
-
-          {/* ІСТОРІЯ */}
-          <div className="miner-history">
-            <div className="mh-title">📋 ІСТОРІЯ</div>
-            {history.length === 0
-              ? <div className="mh-empty">Немає записів</div>
-              : history.map((h,i) => (
-                <div key={i} className="mh-item">
-                  <div className="mh-icon">
-                    {h.type==='miner_buy'?'⛏':h.type==='miner_upgrade'?'⬆️':'💰'}
-                  </div>
-                  <div className="mh-info">
-                    <div className="mh-label">{h.label?.split('→')[0] || h.label}</div>
-                    <div className="mh-date">{new Date(h.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
-                  </div>
-                  <div className={`mh-amount ${parseFloat(h.amount)>0?'pos':'neg'}`}>
-                    {parseFloat(h.amount)>0?'+':''}{parseFloat(h.amount).toFixed(4)} TON
-                  </div>
-                </div>
-              ))
-            }
-          </div>
+            </>
+          )}
         </>
+      )}
+
+      {/* ========== PLANS ========== */}
+      {screen === 'plans' && (
+        <div className="mn-plans">
+          <div className="mn-plans-title">ВЫБЕРИТЕ ПЛАН</div>
+          <div className="mn-plans-subtitle">Покупайте хешрейт и зарабатывайте TON автоматически</div>
+          {plans.map(plan => {
+            const label = PLAN_LABELS[plan.id] || PLAN_LABELS.starter
+            const ratePerGh = data?.ratePerGh || 0.0000001
+            const dailyEarning = plan.hashrate * ratePerGh * 24
+            const totalEarning = dailyEarning * plan.days
+            return (
+              <div key={plan.id} className="mn-plan-card" style={{ '--plan-gradient': label.gradient }}>
+                <div className="mn-plan-header" style={{ background: label.gradient }}>
+                  <span className="mn-plan-icon">{label.icon}</span>
+                  <span className="mn-plan-name">{label.name}</span>
+                </div>
+                <div className="mn-plan-body">
+                  <div className="mn-plan-stats">
+                    <div className="mn-plan-stat">
+                      <div className="mn-ps-val">{plan.hashrate} GH/s</div>
+                      <div className="mn-ps-lbl">хешрейт</div>
+                    </div>
+                    <div className="mn-plan-stat">
+                      <div className="mn-ps-val">{plan.days} дн.</div>
+                      <div className="mn-ps-lbl">срок</div>
+                    </div>
+                    <div className="mn-plan-stat">
+                      <div className="mn-ps-val">{dailyEarning.toFixed(6)}</div>
+                      <div className="mn-ps-lbl">TON/день</div>
+                    </div>
+                  </div>
+                  <div className="mn-plan-forecast">
+                    Прогноз дохода: <strong>{totalEarning.toFixed(6)} TON</strong>
+                  </div>
+                  <button
+                    className="mn-plan-buy"
+                    style={{ background: label.gradient }}
+                    onClick={() => buyPlan(plan)}
+                    disabled={buying === plan.id}
+                  >
+                    {buying === plan.id ? 'ПОКУПКА...' : `⛏ КУПИТЬ ЗА ${plan.price} TON`}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ========== HISTORY ========== */}
+      {screen === 'history' && <MinerHistory />}
+    </div>
+  )
+}
+
+function MinerHistory() {
+  const [data, setData] = useState(null)
+  const [tab, setTab] = useState('contracts')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get('/api/miner/history').then(r => { setData(r.data); setLoading(false) }).catch(() => setLoading(false))
+  }, [])
+
+  if (loading) return <div className="mn-loading">Загрузка...</div>
+
+  const contracts = data?.contracts || []
+  const withdrawals = data?.withdrawals || []
+
+  return (
+    <div>
+      <div className="mn-hist-tabs">
+        <button className={`mn-hist-tab ${tab === 'contracts' ? 'on' : ''}`} onClick={() => setTab('contracts')}>
+          ⛏ Контракты ({contracts.length})
+        </button>
+        <button className={`mn-hist-tab ${tab === 'withdrawals' ? 'on' : ''}`} onClick={() => setTab('withdrawals')}>
+          💰 Выводы ({withdrawals.length})
+        </button>
+      </div>
+
+      {tab === 'contracts' && (
+        contracts.length === 0
+          ? <div className="mn-hist-empty">Нет контрактов</div>
+          : contracts.map(c => {
+            const label = PLAN_LABELS[c.plan_id] || PLAN_LABELS.legacy
+            const isActive = c.status === 'active' && new Date(c.expires_at) > new Date()
+            return (
+              <div key={c.id} className={`mn-hist-item ${isActive ? 'active' : 'expired'}`}>
+                <div className="mn-hi-icon" style={{ background: label.gradient }}>{label.icon}</div>
+                <div className="mn-hi-info">
+                  <div className="mn-hi-title">{label.name} · {parseFloat(c.hashrate).toFixed(0)} GH/s</div>
+                  <div className="mn-hi-sub">{c.duration_days}д · {isActive ? 'Активен' : 'Истёк'}</div>
+                </div>
+                <div className="mn-hi-earned">
+                  <div className="mn-hi-amt">{parseFloat(c.earned).toFixed(6)}</div>
+                  <div className="mn-hi-cur">TON</div>
+                </div>
+              </div>
+            )
+          })
+      )}
+
+      {tab === 'withdrawals' && (
+        withdrawals.length === 0
+          ? <div className="mn-hist-empty">Нет выводов</div>
+          : withdrawals.map(w => (
+            <div key={w.id} className={`mn-hist-item ${w.status}`}>
+              <div className={`mn-hi-icon status-${w.status}`}>
+                {w.status === 'completed' ? '✅' : w.status === 'pending' ? '⏳' : '❌'}
+              </div>
+              <div className="mn-hi-info">
+                <div className="mn-hi-title">{parseFloat(w.amount).toFixed(6)} TON</div>
+                <div className="mn-hi-sub">
+                  {w.wallet_address.slice(0, 10)}...
+                  · {new Date(w.created_at).toLocaleDateString('ru', { day: 'numeric', month: 'short' })}
+                </div>
+              </div>
+              <div className={`mn-hi-status ${w.status}`}>
+                {w.status === 'completed' ? 'ВЫПЛАЧЕНО' : w.status === 'pending' ? 'ОЖИДАЕТ' : 'ОТКЛОНЕНО'}
+              </div>
+            </div>
+          ))
       )}
     </div>
   )

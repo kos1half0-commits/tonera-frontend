@@ -21,17 +21,24 @@ const SETTING_GROUPS = [
   },
   {
     id: 'miner',
-    title: '⛏ Майнинг',
+    title: '⛏ Майнинг (CT Pool)',
     settings: [
       { key: 'miner_enabled',                  label: 'Статус (0=откл, 1=вкл, 2=только админ)' },
-      { key: 'miner_price',                    label: 'Цена майнера (TON)' },
-      { key: 'miner_speed_base',               label: 'Базовая скорость (TON/час)' },
-      { key: 'miner_electricity_percent',      label: 'Стоимость электричества (% от дневного заработка)' },
-      { key: 'miner_electricity_120',           label: 'Кнопка оплаты 120 дней (0=скрыта, 1=показана)' },
-      { key: 'miner_electricity_hours',        label: 'Интервал оплаты (часов)' },
-      { key: 'miner_upgrade_multiplier',   label: 'Множитель скорости за апгрейд' },
-      { key: 'miner_upgrade_price',              label: 'Цена апгрейда (фиксированная, TON)' },
-      { key: 'miner_min_collect',               label: 'Мин. вывод дохода (TON)' },
+      { key: 'miner_wallet',                   label: 'Кошелёк для оплаты майнера (отдельный)' },
+      { key: 'miner_rate_per_gh',              label: 'Ставка TON за 1 GH/s в час' },
+      { key: 'miner_min_withdraw',             label: 'Мин. вывод с майнера (TON)' },
+      { key: 'miner_plan_starter_price',       label: '💚 Starter: Цена (TON)' },
+      { key: 'miner_plan_starter_hashrate',    label: '💚 Starter: Хешрейт (GH/s)' },
+      { key: 'miner_plan_starter_days',        label: '💚 Starter: Дней' },
+      { key: 'miner_plan_advanced_price',      label: '💙 Advanced: Цена (TON)' },
+      { key: 'miner_plan_advanced_hashrate',   label: '💙 Advanced: Хешрейт (GH/s)' },
+      { key: 'miner_plan_advanced_days',       label: '💙 Advanced: Дней' },
+      { key: 'miner_plan_pro_price',           label: '💜 Pro: Цена (TON)' },
+      { key: 'miner_plan_pro_hashrate',        label: '💜 Pro: Хешрейт (GH/s)' },
+      { key: 'miner_plan_pro_days',            label: '💜 Pro: Дней' },
+      { key: 'miner_plan_elite_price',         label: '💛 Elite: Цена (TON)' },
+      { key: 'miner_plan_elite_hashrate',      label: '💛 Elite: Хешрейт (GH/s)' },
+      { key: 'miner_plan_elite_days',          label: '💛 Elite: Дней' },
     ]
   },
   {
@@ -260,173 +267,162 @@ function AdsAdmin() {
 }
 
 function MinersAdmin() {
-  const [miners, setMiners] = useState([])
+  const [contracts, setContracts] = useState([])
+  const [withdrawals, setWithdrawals] = useState([])
+  const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [selected, setSelected] = useState(null)
-  const [history, setHistory] = useState([])
-  const [histLoading, setHistLoading] = useState(false)
+  const [subTab, setSubTab] = useState('contracts') // contracts | withdrawals
+  const [toast, setMinerToast] = useState('')
 
-  useEffect(() => {
-    api.get('/api/miner/all').then(r => { setMiners(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
-  }, [])
-
-  const openMiner = async (m) => {
-    setSelected(m)
-    setHistLoading(true)
+  const showToast = m => { setMinerToast(m); setTimeout(()=>setMinerToast(''),3000) }
+  const load = async () => {
     try {
-      const r = await api.get(`/api/miner/admin/history/${m.user_id}`)
-      setHistory(r.data||[])
+      const [c, w, s] = await Promise.all([
+        api.get('/api/miner/all'),
+        api.get('/api/miner/admin/withdrawals'),
+        api.get('/api/miner/admin/stats'),
+      ])
+      setContracts(c.data||[])
+      setWithdrawals(w.data||[])
+      setStats(s.data)
     } catch {}
-    setHistLoading(false)
+    setLoading(false)
   }
+  useEffect(()=>{ load() },[])
 
-  const editElectricity = async (userId, days) => {
-    try {
-      await api.put(`/api/miner/admin/electricity/${userId}`, { days })
-      const r = await api.get('/api/miner/all')
-      setMiners(r.data||[])
-      const updated = r.data.find(m => m.user_id === userId)
-      if (updated) setSelected(updated)
-      showToast(`✅ Электричество установлено на ${days} дней`)
-    } catch(e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+  const approve = async id => { await api.post(`/api/miner/admin/approve/${id}`); load(); showToast('✅ Вывод одобрен') }
+  const reject = async id => { await api.post(`/api/miner/admin/reject/${id}`); load(); showToast('❌ Отклонено') }
+  const deleteContract = async id => { if(!confirm('Удалить контракт?'))return; await api.delete(`/api/miner/contract/${id}`); load(); showToast('🗑 Удалено') }
+
+  const S = {
+    stat: {background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:'10px 12px',textAlign:'center'},
+    btn: (c={})=>({padding:'6px 10px',border:'none',borderRadius:7,fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer',...c}),
+    tab: (active) => ({padding:'8px 14px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',background:active?'rgba(26,95,255,0.3)':'rgba(26,95,255,0.08)',color:active?'#00d4ff':'rgba(232,242,255,0.4)'}),
   }
 
   if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
 
-  // Детальный просмотр
-  if (selected) {
-    const typeLabel = t => {
-      if (t==='miner_buy') return '⛏ Покупка'
-      if (t==='miner_upgrade') return '⬆️ Апгрейд'
-      if (t==='miner_electricity') return '⚡ Электричество'
-      if (t==='miner_collect') return '💰 Вывод'
-      return t
-    }
-    return (
-      <div>
-        <button onClick={()=>setSelected(null)} style={{marginBottom:12,padding:'7px 14px',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,background:'transparent',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,cursor:'pointer'}}>← НАЗАД</button>
-        <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:10}}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:13,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>
-            {selected.username?'@'+selected.username:selected.first_name}
-          </div>
-          {[
-            ['ID', selected.telegram_id],
-            ['Уровень', `LVL ${selected.level}`],
-            ['Скорость', `${parseFloat(selected.speed).toFixed(6)} TON/ч`],
-            ['В день', `${(parseFloat(selected.speed)*24).toFixed(6)} TON`],
-            ['Статус', selected.active?'✅ Активен':'❌ Остановлен'],
-            ['Куплен', new Date(selected.created_at).toLocaleDateString('ru')],
-            ['Электричество до', selected.last_electricity ? (() => {
-              const exp = new Date(selected.last_electricity)
-              const now = new Date()
-              const diff = exp - now
-              if (diff <= 0) return '❌ Просрочено'
-              const days = Math.floor(diff / 86400000)
-              const hours = Math.floor((diff % 86400000) / 3600000)
-              return `✅ ${days}д ${hours}ч`
-            })() : '❌ Нет данных'],
-          ].map(([k,v]) => (
-            <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid rgba(26,95,255,0.07)'}}>
-              <span style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{k}</span>
-              <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#e8f2ff',fontWeight:700}}>{v}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>ИСТОРИЯ ТРАНЗАКЦИЙ</div>
-        {histLoading && <div style={{textAlign:'center',padding:10,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Загрузка...</div>}
-        {!histLoading && !history.length && <div style={{textAlign:'center',padding:10,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет транзакций</div>}
-        {history.map((h,i) => (
-          <div key={i} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.1)',borderRadius:8,marginBottom:5}}>
-            <div style={{flex:1}}>
-              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'#e8f2ff'}}>{typeLabel(h.type)}</div>
-              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{new Date(h.created_at).toLocaleString('ru')}</div>
-            </div>
-            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:parseFloat(h.amount)>0?'#00e676':'#ff4d6a'}}>
-              {parseFloat(h.amount)>0?'+':''}{parseFloat(h.amount).toFixed(4)} TON
-            </div>
-          </div>
-        ))}
-        <div style={{background:'#0e1c3a',border:'1px solid rgba(255,179,0,0.2)',borderRadius:12,padding:12,marginBottom:10,marginTop:10}}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)',marginBottom:8}}>⚡ РЕДАКТИРОВАТЬ ЭЛЕКТРИЧЕСТВО</div>
-          <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:8}}>
-            {[1,3,7,14,30,60,90,120].map(d => (
-              <button key={d} style={{padding:'5px 8px',border:'1px solid rgba(255,179,0,0.3)',borderRadius:6,background:'rgba(255,179,0,0.08)',color:'#ffb300',fontFamily:'Orbitron,sans-serif',fontSize:8,cursor:'pointer'}}
-                onClick={()=>editElectricity(selected.user_id, d)}>{d}д</button>
-            ))}
-          </div>
-          <div style={{display:'flex',gap:6}}>
-            <input id="elec-days" type="number" placeholder="Кол-во дней"
-              style={{flex:1,background:'#0b1630',border:'1px solid rgba(255,179,0,0.3)',borderRadius:8,padding:'7px 10px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none'}}/>
-            <button style={{padding:'7px 12px',border:'none',borderRadius:8,background:'rgba(255,179,0,0.2)',color:'#ffb300',fontFamily:'Orbitron,sans-serif',fontSize:9,cursor:'pointer',fontWeight:700}}
-              onClick={()=>{
-                const d = parseFloat(document.getElementById('elec-days').value)
-                if (!d) return
-                editElectricity(selected.user_id, d)
-              }}>✅</button>
-          </div>
-        </div>
-
-        <button onClick={async()=>{
-          if(!confirm('Удалить майнер?'))return
-          await api.delete(`/api/miner/${selected.user_id}`)
-          setSelected(null)
-          api.get('/api/miner/all').then(r=>setMiners(r.data||[]))
-        }} style={{width:'100%',padding:'10px',border:'none',borderRadius:10,background:'rgba(255,77,106,0.15)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:10,cursor:'pointer',fontWeight:700}}>
-          🗑 УДАЛИТЬ МАЙНЕР
-        </button>
-      </div>
-    )
-  }
-
-  const active = miners.filter(m => m.active).length
-  const totalSpeed = miners.reduce((s,m) => s + parseFloat(m.speed||0), 0)
-  const avgLevel = miners.length ? (miners.reduce((s,m) => s + m.level, 0) / miners.length).toFixed(1) : 0
-  const totalRevenue = miners.reduce((s,m) => s + Math.abs(parseFloat(m.upgrade_spent||0)), 0)
-
-  const S = {
-    stat: {background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:'10px 12px',flex:1,textAlign:'center'},
-    row: (c={}) => ({display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,marginBottom:6,...c}),
-  }
+  const pendingWds = withdrawals.filter(w=>w.status==='pending').length
 
   return (
     <div>
-      {/* СТАТИСТИКА */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:12}}>
-        <div style={S.stat}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00d4ff'}}>{miners.length}</div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>Всего майнеров</div>
+      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+
+      {/* STATS */}
+      {stats && (
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:12}}>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#00d4ff'}}>{parseInt(stats.active_contracts)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Активных</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#00e676'}}>{parseFloat(stats.total_revenue).toFixed(2)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Заработано TON</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#ffb300'}}>{parseFloat(stats.network_hashrate).toFixed(0)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>GH/s сеть</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#e8f2ff'}}>{parseInt(stats.total_miners)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Майнеров</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#ff4d6a'}}>{parseInt(stats.pending_withdrawals)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Ожид. выводов</div>
+          </div>
+          <div style={S.stat}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#a855f7'}}>{parseFloat(stats.paid_amount).toFixed(4)}</div>
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Выплачено</div>
+          </div>
         </div>
-        <div style={S.stat}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00e676'}}>{active}</div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>Активных</div>
-        </div>
-        <div style={S.stat}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#ffb300'}}>{totalSpeed.toFixed(4)}</div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>TON/час суммарно</div>
-        </div>
-        <div style={S.stat}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#e8f2ff'}}>{avgLevel}</div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>Средний уровень</div>
-        </div>
+      )}
+
+      {/* TABS */}
+      <div style={{display:'flex',gap:6,marginBottom:12}}>
+        <button style={S.tab(subTab==='contracts')} onClick={()=>setSubTab('contracts')}>⛏ КОНТРАКТЫ ({contracts.length})</button>
+        <button style={S.tab(subTab==='withdrawals')} onClick={()=>setSubTab('withdrawals')}>
+          💰 ВЫВОДЫ {pendingWds>0?`(${pendingWds} ⏳)`:`(${withdrawals.length})`}
+        </button>
       </div>
 
-      {/* СПИСОК */}
-      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>СПИСОК МАЙНЕРОВ</div>
-      {!miners.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет майнеров</div>}
-      {miners.map(m => (
-        <div key={m.id} style={{...S.row(),cursor:'pointer'}} onClick={()=>openMiner(m)}>
-          <div style={{width:36,height:36,borderRadius:8,background:m.active?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>⛏</div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff'}}>{m.username ? '@'+m.username : m.first_name}</div>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>LVL {m.level} · {parseFloat(m.speed).toFixed(6)} TON/ч · {new Date(m.created_at).toLocaleDateString('ru')}</div>
-          </div>
-          <div style={{textAlign:'right',marginRight:4}}>
-            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,color:m.active?'#00e676':'#ff4d6a'}}>{m.active?'АКТИВЕН':'СТОП'}</div>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>{parseFloat(m.speed*24).toFixed(4)} TON/д</div>
-          </div>
-          <div style={{color:'rgba(232,242,255,0.2)',fontSize:12}}>›</div>
+      {/* CONTRACTS */}
+      {subTab==='contracts' && (
+        <div>
+          {!contracts.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет контрактов</div>}
+          {contracts.map(c => {
+            const isActive = c.status==='active' && new Date(c.expires_at) > new Date()
+            const daysLeft = Math.max(0, Math.ceil((new Date(c.expires_at) - new Date()) / 86400000))
+            const progress = Math.min(100, ((c.duration_days - daysLeft) / c.duration_days) * 100)
+            return (
+              <div key={c.id} style={{background:'#0e1c3a',border:`1px solid ${isActive?'rgba(0,230,118,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>
+                    {c.username?'@'+c.username:c.first_name}
+                  </span>
+                  <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,padding:'3px 8px',borderRadius:6,fontWeight:700,
+                    background:isActive?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.15)',
+                    color:isActive?'#00e676':'#ff4d6a'
+                  }}>{c.plan_id.toUpperCase()}</span>
+                </div>
+                <div style={{display:'flex',gap:12,marginBottom:6}}>
+                  <div>
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00d4ff',fontWeight:700}}>{parseFloat(c.hashrate).toFixed(0)} GH/s</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>хешрейт</div>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#ffb300',fontWeight:700}}>{parseFloat(c.earned).toFixed(6)}</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>заработано</div>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#e8f2ff',fontWeight:700}}>{isActive?`${daysLeft}д`:'Истёк'}</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>осталось</div>
+                  </div>
+                </div>
+                <div style={{height:3,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
+                  <div style={{height:'100%',width:`${progress}%`,background:isActive?'linear-gradient(90deg,#1a5fff,#00d4ff)':'rgba(255,77,106,0.4)',borderRadius:2}}/>
+                </div>
+                <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a',fontSize:8})} onClick={()=>deleteContract(c.id)}>🗑</button>
+              </div>
+            )
+          })}
         </div>
-      ))}
+      )}
+
+      {/* WITHDRAWALS */}
+      {subTab==='withdrawals' && (
+        <div>
+          {!withdrawals.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
+          {withdrawals.map(w => (
+            <div key={w.id} style={{background:'#0e1c3a',border:`1px solid ${w.status==='pending'?'rgba(255,179,0,0.2)':w.status==='completed'?'rgba(0,230,118,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>
+                  {w.username?'@'+w.username:w.first_name}
+                </span>
+                <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,padding:'3px 8px',borderRadius:6,fontWeight:700,
+                  background:w.status==='pending'?'rgba(255,179,0,0.15)':w.status==='completed'?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.15)',
+                  color:w.status==='pending'?'#ffb300':w.status==='completed'?'#00e676':'#ff4d6a'
+                }}>{w.status==='pending'?'ОЖИДАЕТ':w.status==='completed'?'ВЫПЛАЧЕНО':'ОТКЛОНЕНО'}</span>
+              </div>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:'#00d4ff',marginBottom:4}}>
+                {parseFloat(w.amount).toFixed(6)} TON
+              </div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)',marginBottom:6,wordBreak:'break-all'}}>
+                📬 {w.wallet_address}
+              </div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',marginBottom:6}}>
+                {new Date(w.created_at).toLocaleString('ru')}
+              </div>
+              {w.status === 'pending' && (
+                <div style={{display:'flex',gap:6}}>
+                  <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={()=>approve(w.id)}>✅ ОДОБРИТЬ</button>
+                  <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>reject(w.id)}>❌ ОТКЛОНИТЬ</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
