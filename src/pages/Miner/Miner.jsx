@@ -4,12 +4,12 @@ import api from '../../api/index'
 import './Miner.css'
 
 const PLAN_LABELS = {
-  free:     { name: 'FREE',     icon: '🆓', gradient: 'linear-gradient(135deg,#00c853,#00e676)' },
-  starter:  { name: 'STARTER',  icon: '💚', gradient: 'linear-gradient(135deg,#0d9668,#0f766e)' },
-  advanced: { name: 'ADVANCED', icon: '💙', gradient: 'linear-gradient(135deg,#1a5fff,#0930cc)' },
-  pro:      { name: 'PRO',      icon: '💜', gradient: 'linear-gradient(135deg,#7c3aed,#5b21b6)' },
-  elite:    { name: 'ELITE',    icon: '💛', gradient: 'linear-gradient(135deg,#d97706,#b45309)' },
-  legacy:   { name: 'LEGACY',   icon: '⛏',  gradient: 'linear-gradient(135deg,#64748b,#475569)' },
+  free:     { name: 'FREE',     icon: '🆓', gradient: 'linear-gradient(135deg,#065a24,#04401a)' },
+  starter:  { name: 'STARTER',  icon: '💚', gradient: 'linear-gradient(135deg,#074d38,#053828)' },
+  advanced: { name: 'ADVANCED', icon: '💙', gradient: 'linear-gradient(135deg,#0a2d75,#061850)' },
+  pro:      { name: 'PRO',      icon: '💜', gradient: 'linear-gradient(135deg,#42206e,#2a1055)' },
+  elite:    { name: 'ELITE',    icon: '💛', gradient: 'linear-gradient(135deg,#7a4805,#4d2e03)' },
+  legacy:   { name: 'LEGACY',   icon: '⛏',  gradient: 'linear-gradient(135deg,#3a4558,#232d3e)' },
 }
 
 // ========== REAL-TIME LIVE COUNTER ==========
@@ -397,8 +397,8 @@ export default function Miner({ onBack, isAdmin }) {
             const totalEarning = dailyEarning * fp.days
             const alreadyUsed = data?.freeUsed
             return (
-              <div className="mn-plan-card mn-plan-free" style={{ '--plan-gradient': 'linear-gradient(135deg,#00c853,#00e676)' }}>
-                <div className="mn-plan-header" style={{ background: 'linear-gradient(135deg,#00c853,#00e676)' }}>
+              <div className="mn-plan-card mn-plan-free" style={{ '--plan-gradient': 'linear-gradient(135deg,#065a24,#04401a)' }}>
+                <div className="mn-plan-header" style={{ background: 'linear-gradient(135deg,#065a24,#04401a)' }}>
                   <span className="mn-plan-icon">🆓</span>
                   <span className="mn-plan-name">FREE</span>
                   <span className="mn-free-badge">БЕСПЛАТНО</span>
@@ -423,7 +423,7 @@ export default function Miner({ onBack, isAdmin }) {
                   </div>
                   <button
                     className="mn-plan-buy mn-plan-buy-free"
-                    style={{ background: 'linear-gradient(135deg,#00c853,#00e676)' }}
+                    style={{ background: 'linear-gradient(135deg,#065a24,#0a7e34)' }}
                     onClick={activateFreePlan}
                     disabled={alreadyUsed || activatingFree}
                   >

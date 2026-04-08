@@ -114,9 +114,9 @@
 
 .mn-plan-card{background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:16px;overflow:hidden;margin-bottom:12px;transition:transform .2s;}
 .mn-plan-card:active{transform:scale(0.99);}
-.mn-plan-header{display:flex;align-items:center;gap:8px;padding:14px 16px;color:#fff;}
-.mn-plan-icon{font-size:22px;}
-.mn-plan-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;letter-spacing:.08em;}
+.mn-plan-header{display:flex;align-items:center;gap:8px;padding:14px 16px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.7),0 0 8px rgba(0,0,0,0.3);}
+.mn-plan-icon{font-size:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));}
+.mn-plan-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 4px rgba(0,0,0,0.7),0 0 12px rgba(0,0,0,0.4);}
 .mn-plan-body{padding:16px;}
 .mn-plan-stats{display:flex;gap:10px;margin-bottom:14px;}
 .mn-plan-stat{flex:1;background:rgba(26,95,255,0.06);border:1px solid rgba(26,95,255,0.12);border-radius:10px;padding:10px 8px;text-align:center;}
@@ -124,22 +124,22 @@
 .mn-ps-lbl{font-family:'DM Sans',sans-serif;font-size:8px;color:rgba(232,242,255,0.3);}
 .mn-plan-forecast{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.4);text-align:center;margin-bottom:14px;}
 .mn-plan-forecast strong{color:#00e676;}
-.mn-plan-buy{width:100%;padding:14px;border:none;border-radius:12px;color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:transform .2s;}
+.mn-plan-buy{width:100%;padding:14px;border:none;border-radius:12px;color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:transform .2s;text-shadow:0 1px 3px rgba(0,0,0,0.6),0 0 8px rgba(0,0,0,0.3);}
 .mn-plan-buy:disabled{opacity:.5;cursor:not-allowed;}
 .mn-plan-buy:active:not(:disabled){transform:scale(0.97);}
 
 /* ========== FREE PLAN ========== */
 .mn-plan-free{border:1px solid rgba(0,200,83,0.35);box-shadow:0 0 20px rgba(0,200,83,0.08);}
 .mn-plan-free .mn-plan-header{position:relative;}
-.mn-free-badge{margin-left:auto;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:#fff;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 10px;letter-spacing:.1em;animation:mnFreePulse 2s infinite;}
+.mn-free-badge{margin-left:auto;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;color:#fff;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 10px;letter-spacing:.1em;animation:mnFreePulse 2s infinite;text-shadow:0 1px 3px rgba(0,0,0,0.5);}
 @keyframes mnFreePulse{0%,100%{opacity:1}50%{opacity:.6}}
-.mn-plan-buy-free{text-shadow:0 1px 2px rgba(0,0,0,0.3);}
+.mn-plan-buy-free{text-shadow:0 1px 3px rgba(0,0,0,0.6),0 0 8px rgba(0,0,0,0.3);}
 
 /* Empty state free button */
-.mn-empty-btn.free{display:block;width:100%;padding:16px 32px;border:none;border-radius:14px;background:linear-gradient(135deg,#00c853,#00e676);color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(0,200,83,0.4);transition:transform .2s;margin-bottom:10px;animation:mnFreeGlow 2s ease-in-out infinite;}
+.mn-empty-btn.free{display:block;width:100%;padding:16px 32px;border:none;border-radius:14px;background:linear-gradient(135deg,#0a7e34,#066b2a);color:#fff;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(0,100,40,0.4);transition:transform .2s;margin-bottom:10px;text-shadow:0 1px 2px rgba(0,0,0,0.4);animation:mnFreeGlow 2s ease-in-out infinite;}
 .mn-empty-btn.free:disabled{opacity:.5;cursor:not-allowed;animation:none;}
 .mn-empty-btn.free:active:not(:disabled){transform:scale(0.97);}
-@keyframes mnFreeGlow{0%,100%{box-shadow:0 4px 24px rgba(0,200,83,0.4)}50%{box-shadow:0 4px 32px rgba(0,230,118,0.6)}}
+@keyframes mnFreeGlow{0%,100%{box-shadow:0 4px 24px rgba(0,100,40,0.4)}50%{box-shadow:0 4px 32px rgba(0,130,50,0.6)}}
 .mn-empty-btn.secondary{display:block;width:100%;padding:14px 32px;border:1px solid rgba(26,95,255,0.3);border-radius:14px;background:rgba(26,95,255,0.08);color:#00d4ff;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
 .mn-empty-btn.secondary:active{background:rgba(26,95,255,0.15);}
 

@@ -27,6 +27,9 @@ const SETTING_GROUPS = [
       { key: 'miner_wallet',                   label: 'Кошелёк для оплаты майнера (отдельный)' },
       { key: 'miner_rate_per_gh',              label: 'Ставка TON за 1 GH/s в час' },
       { key: 'miner_min_withdraw',             label: 'Мин. вывод с майнера (TON)' },
+      { key: 'miner_plan_free_enabled',        label: '🆓 Free: Вкл/Выкл (1/0)' },
+      { key: 'miner_plan_free_hashrate',       label: '🆓 Free: Хешрейт (GH/s)' },
+      { key: 'miner_plan_free_days',           label: '🆓 Free: Дней' },
       { key: 'miner_plan_starter_price',       label: '💚 Starter: Цена (TON)' },
       { key: 'miner_plan_starter_hashrate',    label: '💚 Starter: Хешрейт (GH/s)' },
       { key: 'miner_plan_starter_days',        label: '💚 Starter: Дней' },
@@ -283,21 +286,28 @@ function MinersAdmin() {
   const [createForm, setCreateForm] = useState({ hashrate: '', days: '', plan_id: 'admin', price_paid: '0', earned: '0' })
   const [addHashForm, setAddHashForm] = useState({ hashrate: '', days: '' })
   const [userSearch, setUserSearch] = useState('')
+  const [freeStats, setFreeStats] = useState(null)
+  const [freeEditing, setFreeEditing] = useState(false)
+  const [freeForm, setFreeForm] = useState({ hashrate: '', days: '' })
+  const [freeToggling, setFreeToggling] = useState(false)
 
   const showToast = m => { setMinerToast(m); setTimeout(()=>setMinerToast(''),3000) }
 
   const load = async () => {
     try {
-      const [c, w, s, u] = await Promise.all([
+      const [c, w, s, u, fs] = await Promise.all([
         api.get('/api/miner/all'),
         api.get('/api/miner/admin/withdrawals'),
         api.get('/api/miner/admin/stats'),
         api.get('/api/miner/admin/users'),
+        api.get('/api/miner/admin/free-stats'),
       ])
       setContracts(c.data||[])
       setWithdrawals(w.data||[])
       setStats(s.data)
       setMinerUsers(u.data||[])
+      setFreeStats(fs.data)
+      setFreeForm({ hashrate: String(fs.data?.hashrate || 5), days: String(fs.data?.days || 30) })
     } catch {}
     setLoading(false)
   }
@@ -589,6 +599,95 @@ function MinersAdmin() {
   return (
     <div>
       {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+
+      {/* FREE PLAN MANAGEMENT */}
+      {freeStats && (
+        <div style={{background:'#0e1c3a',border:`1px solid ${freeStats.enabled?'rgba(0,200,83,0.3)':'rgba(255,77,106,0.2)'}`,borderRadius:14,padding:14,marginBottom:12}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:20}}>🆓</span>
+              <div>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff'}}>БЕСПЛАТНЫЙ ТАРИФ</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)',marginTop:2}}>
+                  {freeStats.hashrate} GH/s · {freeStats.days} дней
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={async()=>{
+                setFreeToggling(true)
+                try {
+                  const r = await api.post('/api/miner/admin/free-toggle')
+                  setFreeStats(prev=>({...prev, enabled: r.data.enabled}))
+                  showToast(r.data.enabled ? '✅ Free тариф ВКЛЮЧЁН' : '❌ Free тариф ВЫКЛЮЧЕН')
+                } catch(e) { showToast('Ошибка') }
+                setFreeToggling(false)
+              }}
+              disabled={freeToggling}
+              style={{
+                padding:'8px 16px',border:'none',borderRadius:8,
+                fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',
+                background: freeStats.enabled ? 'rgba(0,230,118,0.2)' : 'rgba(255,77,106,0.15)',
+                color: freeStats.enabled ? '#00e676' : '#ff4d6a',
+                transition:'all .2s'
+              }}
+            >
+              {freeToggling ? '...' : freeStats.enabled ? '✅ ВКЛ' : '❌ ВЫКЛ'}
+            </button>
+          </div>
+
+          {/* FREE PLAN STATS */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6,marginBottom:10}}>
+            <div style={{background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 8px',textAlign:'center'}}>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#00d4ff'}}>{freeStats.totalActivated}</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>всего актив.</div>
+            </div>
+            <div style={{background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 8px',textAlign:'center'}}>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#00e676'}}>{freeStats.activeCount}</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>сейчас актив.</div>
+            </div>
+            <div style={{background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 8px',textAlign:'center'}}>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#ffb300'}}>{freeStats.totalEarned.toFixed(4)}</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>заработано TON</div>
+            </div>
+            <div style={{background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 8px',textAlign:'center'}}>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff'}}>{freeStats.activeHashrate.toFixed(0)}</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:7,color:'rgba(232,242,255,0.3)'}}>GH/s нагрузка</div>
+            </div>
+          </div>
+
+          {/* FREE PLAN EDIT */}
+          {freeEditing ? (
+            <div style={{background:'rgba(26,95,255,0.04)',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:10}}>
+              <div style={{display:'flex',gap:6,marginBottom:8}}>
+                <div style={{flex:1}}>
+                  <div style={S.label}>Хешрейт (GH/s)</div>
+                  <input style={S.input()} type="number" value={freeForm.hashrate} onChange={e=>setFreeForm(f=>({...f,hashrate:e.target.value}))}/>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={S.label}>Дней</div>
+                  <input style={S.input()} type="number" value={freeForm.days} onChange={e=>setFreeForm(f=>({...f,days:e.target.value}))}/>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676',padding:'9px'})} onClick={async()=>{
+                  try {
+                    await api.post('/api/miner/admin/free-update', { hashrate: parseFloat(freeForm.hashrate), days: parseInt(freeForm.days) })
+                    setFreeStats(prev=>({...prev, hashrate: parseFloat(freeForm.hashrate), days: parseInt(freeForm.days)}))
+                    setFreeEditing(false)
+                    showToast('✅ Настройки Free обновлены')
+                  } catch { showToast('Ошибка') }
+                }}>💾 СОХРАНИТЬ</button>
+                <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a',padding:'9px 14px'})} onClick={()=>setFreeEditing(false)}>✕</button>
+              </div>
+            </div>
+          ) : (
+            <button style={{...S.btn({width:'100%',background:'rgba(26,95,255,0.08)',color:'#00d4ff',border:'1px solid rgba(26,95,255,0.2)',padding:'8px',borderRadius:8}),display:'block',textAlign:'center'}} onClick={()=>setFreeEditing(true)}>
+              ✏️ НАСТРОИТЬ FREE ТАРИФ
+            </button>
+          )}
+        </div>
+      )}
 
       {/* SEARCH */}
       <div style={{display:'flex',gap:6,marginBottom:10}}>
