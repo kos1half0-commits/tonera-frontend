@@ -486,7 +486,6 @@ export default function Auction({ onBack, user, initialRef }) {
                 )
               })}
             </div>
-            </div>
 
             <div className="ac-field">
               <span className="ac-field-label">НАЧАЛЬНАЯ ЦЕНА (TON)</span>
