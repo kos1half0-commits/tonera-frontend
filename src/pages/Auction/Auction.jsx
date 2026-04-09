@@ -215,9 +215,15 @@ function AuctionCard({ auction, userId, onBid, onCancel, onViewProfile, showSell
           👤 ПРОФИЛЬ
         </button>
         {auction.status === 'active' && !isSeller && !isExpired && (
-          <button className="ac-bid-btn" style={{flex:1}} onClick={() => onBid(auction)}>
-            💰 СДЕЛАТЬ СТАВКУ
-          </button>
+          parseInt(auction.top_bidder_id) === userId ? (
+            <div style={{flex:1,textAlign:'center',padding:'10px 14px',background:'rgba(0,230,118,0.1)',borderRadius:10,fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00e676',letterSpacing:'.05em'}}>
+              🏆 ВЫ ЛИДЕР
+            </div>
+          ) : (
+            <button className="ac-bid-btn" style={{flex:1}} onClick={() => onBid(auction)}>
+              💰 СДЕЛАТЬ СТАВКУ
+            </button>
+          )
         )}
         {auction.status === 'active' && isSeller && parseInt(auction.bid_count || 0) === 0 && !isExpired && (
           <button className="ac-bid-btn cancel" style={{flex:1}} onClick={() => onCancel(auction.id)}>
