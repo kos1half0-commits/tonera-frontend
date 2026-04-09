@@ -124,6 +124,8 @@ const SETTING_GROUPS = [
       { key: 'auction_min_step',     label: 'Мин. шаг ставки (TON)' },
       { key: 'auction_commission',   label: 'Комиссия платформы (%)' },
       { key: 'auction_max_duration', label: 'Макс. длительность (часов)' },
+      { key: 'auction_min_tasks',    label: 'Мин. заданий у реферала для продажи' },
+      { key: 'auction_min_activity_days', label: 'Макс. дней неактивности реферала' },
     ]
   },
 ]

@@ -16,8 +16,9 @@
 .auction-off-banner .aob-sub{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.35);margin-top:4px;}
 
 /* Tabs */
-.auction-tabs{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;}
-.auction-tab{padding:8px 14px;border:none;border-radius:10px;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.04em;}
+.auction-tabs{display:flex;gap:4px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.auction-tabs::-webkit-scrollbar{display:none;}
+.auction-tab{padding:8px 10px;border:none;border-radius:10px;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.03em;flex-shrink:0;}
 .auction-tab.active{background:rgba(26,95,255,0.3);color:#00d4ff;border:1px solid rgba(0,212,255,0.3);}
 .auction-tab:not(.active){background:rgba(26,95,255,0.06);color:rgba(232,242,255,0.35);border:1px solid rgba(26,95,255,0.1);}
 
@@ -96,6 +97,14 @@
 /* Animations */
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Sort bar */
+.ac-sort-bar{display:flex;align-items:center;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;}
+.ac-sort-bar::-webkit-scrollbar{display:none;}
+.ac-sort-label{font-family:'DM Sans',sans-serif;font-size:9px;color:rgba(232,242,255,0.25);white-space:nowrap;flex-shrink:0;}
+.ac-sort-chip{padding:5px 10px;border:1px solid rgba(26,95,255,0.12);border-radius:8px;background:rgba(26,95,255,0.04);color:rgba(232,242,255,0.35);font-family:'Orbitron',sans-serif;font-size:7px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0;letter-spacing:.03em;}
+.ac-sort-chip.active{border-color:rgba(0,212,255,0.35);background:rgba(0,212,255,0.08);color:#00d4ff;box-shadow:0 0 8px rgba(0,212,255,0.08);}
+.ac-sort-chip:hover:not(.active){border-color:rgba(26,95,255,0.25);color:rgba(232,242,255,0.5);}
 
 /* My section badges */
 .ac-my-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'Orbitron',sans-serif;font-size:7px;font-weight:700;margin-left:6px;}

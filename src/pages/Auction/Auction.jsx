@@ -245,6 +245,7 @@ export default function Auction({ onBack, user, initialRef }) {
   const [bidAmount, setBidAmount] = useState('')
   const [bidding, setBidding] = useState(false)
   const [profileUserId, setProfileUserId] = useState(null)
+  const [sortBy, setSortBy] = useState('time_asc') // time_asc, time_desc, price_asc, price_desc, bids_desc
 
   // Create form
   const [selRef, setSelRef] = useState(initialRef || null)
@@ -412,9 +413,37 @@ export default function Auction({ onBack, user, initialRef }) {
               <div className="auction-empty-icon">🏛</div>
               <div className="auction-empty-text">Нет активных аукционов</div>
             </div>
-          ) : auctions.map(a => (
-            <AuctionCard key={a.id} auction={a} userId={userId} onBid={openBidModal} onCancel={handleCancel} onViewProfile={setProfileUserId} />
-          ))}
+          ) : (<>
+            {/* Sort bar */}
+            <div className="ac-sort-bar">
+              <span className="ac-sort-label">⇅ Сортировка:</span>
+              {[
+                { id: 'time_asc',   label: '⏱ Скоро' },
+                { id: 'time_desc',  label: '⏱ Поздно' },
+                { id: 'price_asc',  label: '💰 Дешёвые' },
+                { id: 'price_desc', label: '💰 Дорогие' },
+                { id: 'bids_desc',  label: '🔥 Ставки' },
+              ].map(s => (
+                <button
+                  key={s.id}
+                  className={`ac-sort-chip ${sortBy === s.id ? 'active' : ''}`}
+                  onClick={() => setSortBy(s.id)}
+                >{s.label}</button>
+              ))}
+            </div>
+            {[...auctions].sort((a, b) => {
+              switch (sortBy) {
+                case 'time_asc':   return new Date(a.ends_at) - new Date(b.ends_at)
+                case 'time_desc':  return new Date(b.ends_at) - new Date(a.ends_at)
+                case 'price_asc':  return parseFloat(a.current_price) - parseFloat(b.current_price)
+                case 'price_desc': return parseFloat(b.current_price) - parseFloat(a.current_price)
+                case 'bids_desc':  return (parseInt(b.bid_count) || 0) - (parseInt(a.bid_count) || 0)
+                default: return 0
+              }
+            }).map(a => (
+              <AuctionCard key={a.id} auction={a} userId={userId} onBid={openBidModal} onCancel={handleCancel} onViewProfile={setProfileUserId} />
+            ))}
+          </>)}
         </>)}
 
         {/* Create auction */}
