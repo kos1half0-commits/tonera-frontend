@@ -860,6 +860,7 @@ function AuctionsAdmin() {
   const [sellUserId, setSellUserId] = useState(null)
   const [sellPrice, setSellPrice] = useState('0.1')
   const [sellHours, setSellHours] = useState('24')
+  const [orphanCriteria, setOrphanCriteria] = useState(null)
   const [sellLoading, setSellLoading] = useState(false)
 
   const showToast = m => { setAucToast(m); setTimeout(()=>setAucToast(''),3000) }
@@ -879,7 +880,8 @@ function AuctionsAdmin() {
   const loadOrphans = async () => {
     try {
       const r = await api.get('/api/admin/orphan-users')
-      setOrphans(r.data || [])
+      setOrphans(r.data?.users || [])
+      setOrphanCriteria({ min_tasks: r.data?.min_tasks, min_activity_days: r.data?.min_activity_days })
     } catch {}
   }
 
@@ -975,8 +977,13 @@ function AuctionsAdmin() {
         background:showOrphans?'rgba(168,85,247,0.15)':'rgba(168,85,247,0.06)',color:'#a855f7',fontFamily:'Orbitron,sans-serif',
         fontSize:10,fontWeight:700,cursor:'pointer',marginBottom:12
       }} onClick={toggleOrphans}>
-        {showOrphans ? '▼' : '▶'} ЮЗЕРЫ БЕЗ РЕФЕРЕРА ({orphans.length || '...'})
+        {showOrphans ? '▼' : '▶'} БЕЗ РЕФЕРЕРА — ПОДХОДЯТ ({orphans.length || '...'})
       </button>
+      {showOrphans && orphanCriteria && (
+        <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.35)',marginBottom:8,marginTop:-8,textAlign:'center'}}>
+          Фильтр: ≥{orphanCriteria.min_tasks} заданий, активность за {orphanCriteria.min_activity_days} дней
+        </div>
+      )}
 
       {/* ORPHAN USERS LIST */}
       {showOrphans && (
