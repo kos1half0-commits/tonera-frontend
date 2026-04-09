@@ -111,7 +111,6 @@ const SETTING_GROUPS = [
     title: '👥 Рефералы',
     settings: [
       { key: 'ref_register_bonus',  label: 'Бонус за регистрацию (TON)' },
-      { key: 'ref_task_percent',    label: '% от задания реферала' },
       { key: 'ref_deposit_percent', label: '% от депозита реферала' },
     ]
   },
@@ -1658,73 +1657,211 @@ function PartnershipAdmin() {
   )
 }
 
-function AdminChart({ data, metric }) {
+function AdminChart({ data, metric, chartType = 'bar' }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas || !data.length) return
     const ctx = canvas.getContext('2d')
-    const W = canvas.width, H = canvas.height
-    ctx.clearRect(0, 0, W, H)
-    ctx.fillStyle = '#060f2a'
-    ctx.fillRect(0, 0, W, H)
+    const dpr = 2
+    const cssW = 340, cssH = 200
+    canvas.width = cssW * dpr
+    canvas.height = cssH * dpr
+    ctx.scale(dpr, dpr)
+    ctx.clearRect(0, 0, cssW, cssH)
+
+    // Background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, cssH)
+    bgGrad.addColorStop(0, '#0a1428')
+    bgGrad.addColorStop(1, '#060e20')
+    ctx.fillStyle = bgGrad
+    ctx.fillRect(0, 0, cssW, cssH)
 
     const values = data.map(d => parseFloat(d[metric]) || 0)
-    const maxV = Math.max(...values, 1)
-    const pad = { l: 36, r: 12, t: 16, b: 28 }
-    const chartW = W - pad.l - pad.r
-    const chartH = H - pad.t - pad.b
+    const maxV = Math.max(...values, 1) * 1.15
+    const pad = { l: 42, r: 16, t: 20, b: 30 }
+    const chartW = cssW - pad.l - pad.r
+    const chartH = cssH - pad.t - pad.b
 
-    // Grid
+    // Grid lines with subtle gradient
     for (let i = 0; i <= 4; i++) {
       const y = pad.t + chartH * i / 4
-      ctx.strokeStyle = 'rgba(26,95,255,0.1)'
+      ctx.strokeStyle = 'rgba(26,95,255,0.06)'
       ctx.lineWidth = 1
-      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke()
-      ctx.fillStyle = 'rgba(232,242,255,0.3)'
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(cssW - pad.r, y); ctx.stroke()
+      ctx.fillStyle = 'rgba(232,242,255,0.25)'
       ctx.font = '8px Orbitron,sans-serif'
       ctx.textAlign = 'right'
       const lbl = maxV * (1 - i/4)
-      ctx.fillText(lbl >= 1 ? Math.round(lbl) : lbl.toFixed(2), pad.l - 4, y + 3)
+      ctx.fillText(lbl >= 1 ? Math.round(lbl) : lbl.toFixed(2), pad.l - 6, y + 3)
     }
 
-    // Bars
-    const bw = chartW / data.length * 0.6
     const gap = chartW / data.length
+    const colors = {
+      new_users: ['#00d4ff', 'rgba(0,212,255,0.15)'],
+      active_users: ['#a855f7', 'rgba(168,85,247,0.15)'],
+      deposits: ['#00e676', 'rgba(0,230,118,0.15)'],
+      withdrawals: ['#ff4d6a', 'rgba(255,77,106,0.15)'],
+      profit: ['#ffb300', 'rgba(255,179,0,0.15)'],
+      trading_bets: ['#1a5fff', 'rgba(26,95,255,0.15)'],
+      spins: ['#e040fb', 'rgba(224,64,251,0.15)'],
+      ads_viewed: ['#00bcd4', 'rgba(0,188,212,0.15)'],
+    }
+    const [mainColor, subColor] = colors[metric] || ['#1a5fff', 'rgba(26,95,255,0.15)']
 
-    data.forEach((d, i) => {
-      const v = parseFloat(d[metric]) || 0
-      const x = pad.l + i * gap + gap * 0.2
-      const bh = (v / maxV) * chartH
-      const y = pad.t + chartH - bh
+    if (chartType === 'line') {
+      // Smooth line chart with area fill
+      const points = data.map((d, i) => ({
+        x: pad.l + i * gap + gap / 2,
+        y: pad.t + chartH - ((parseFloat(d[metric]) || 0) / maxV) * chartH
+      }))
 
-      const grad = ctx.createLinearGradient(0, y, 0, pad.t + chartH)
-      grad.addColorStop(0, '#1a5fff')
-      grad.addColorStop(1, 'rgba(26,95,255,0.2)')
-      ctx.fillStyle = grad
+      // Area fill
+      const areaGrad = ctx.createLinearGradient(0, pad.t, 0, pad.t + chartH)
+      areaGrad.addColorStop(0, subColor.replace('0.15', '0.25'))
+      areaGrad.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = areaGrad
       ctx.beginPath()
-      ctx.roundRect(x, y, bw, bh, 3)
+      ctx.moveTo(points[0].x, pad.t + chartH)
+      // Bezier curve
+      for (let i = 0; i < points.length; i++) {
+        if (i === 0) {
+          ctx.lineTo(points[i].x, points[i].y)
+        } else {
+          const xc = (points[i - 1].x + points[i].x) / 2
+          ctx.bezierCurveTo(xc, points[i - 1].y, xc, points[i].y, points[i].x, points[i].y)
+        }
+      }
+      ctx.lineTo(points[points.length - 1].x, pad.t + chartH)
+      ctx.closePath()
       ctx.fill()
 
-      // Date label
+      // Line
+      ctx.strokeStyle = mainColor
+      ctx.lineWidth = 2.5
+      ctx.lineJoin = 'round'
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      for (let i = 0; i < points.length; i++) {
+        if (i === 0) {
+          ctx.moveTo(points[i].x, points[i].y)
+        } else {
+          const xc = (points[i - 1].x + points[i].x) / 2
+          ctx.bezierCurveTo(xc, points[i - 1].y, xc, points[i].y, points[i].x, points[i].y)
+        }
+      }
+      ctx.stroke()
+
+      // Dots with glow
+      points.forEach((p, i) => {
+        const v = parseFloat(data[i][metric]) || 0
+        // Glow
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2)
+        ctx.fillStyle = subColor.replace('0.15', '0.3')
+        ctx.fill()
+        // Dot
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2)
+        ctx.fillStyle = mainColor
+        ctx.fill()
+        ctx.strokeStyle = '#0a1428'
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+      })
+    } else {
+      // Animated-style bar chart with rounded tops and glow
+      const bw = Math.min(gap * 0.55, 20)
+      data.forEach((d, i) => {
+        const v = parseFloat(d[metric]) || 0
+        const x = pad.l + i * gap + (gap - bw) / 2
+        const bh = (v / maxV) * chartH
+        const y = pad.t + chartH - bh
+
+        // Bar glow
+        ctx.shadowColor = mainColor
+        ctx.shadowBlur = 8
+        ctx.shadowOffsetY = 0
+
+        const grad = ctx.createLinearGradient(0, y, 0, pad.t + chartH)
+        grad.addColorStop(0, mainColor)
+        grad.addColorStop(0.6, subColor.replace('0.15', '0.4'))
+        grad.addColorStop(1, 'rgba(0,0,0,0.1)')
+        ctx.fillStyle = grad
+        ctx.beginPath()
+        ctx.roundRect(x, y, bw, bh, [4, 4, 0, 0])
+        ctx.fill()
+
+        ctx.shadowColor = 'transparent'
+        ctx.shadowBlur = 0
+
+        // Value on top
+        if (v > 0) {
+          ctx.fillStyle = mainColor
+          ctx.font = 'bold 8px Orbitron,sans-serif'
+          ctx.textAlign = 'center'
+          ctx.fillText(v >= 1 ? Math.round(v) : v.toFixed(2), x + bw/2, y - 6)
+        }
+      })
+    }
+
+    // Date labels
+    data.forEach((d, i) => {
       const date = new Date(d.date)
-      ctx.fillStyle = 'rgba(232,242,255,0.4)'
+      ctx.fillStyle = 'rgba(232,242,255,0.3)'
       ctx.font = '7px DM Sans,sans-serif'
       ctx.textAlign = 'center'
-      ctx.fillText(`${date.getDate()}.${date.getMonth()+1}`, x + bw/2, H - 6)
-
-      // Value on top
-      if (v > 0) {
-        ctx.fillStyle = '#00d4ff'
-        ctx.font = '8px Orbitron,sans-serif'
-        ctx.textAlign = 'center'
-        ctx.fillText(v >= 1 ? Math.round(v) : v.toFixed(2), x + bw/2, y - 4)
-      }
+      const x = pad.l + i * gap + gap / 2
+      ctx.fillText(`${date.getDate()}.${date.getMonth()+1}`, x, cssH - 8)
     })
-  }, [data, metric])
+  }, [data, metric, chartType])
 
-  return <canvas ref={canvasRef} width={340} height={180} style={{width:'100%',height:'auto',borderRadius:12,display:'block'}} />
+  return <canvas ref={canvasRef} width={680} height={400} style={{width:'100%',height:'auto',borderRadius:14,display:'block',border:'1px solid rgba(26,95,255,0.08)'}} />
+}
+
+// Mini donut chart for ratios
+function MiniDonut({ value, max, color = '#00d4ff', size = 44, label }) {
+  const canvasRef = useRef(null)
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const dpr = 2
+    canvas.width = size * dpr
+    canvas.height = size * dpr
+    ctx.scale(dpr, dpr)
+    ctx.clearRect(0, 0, size, size)
+    const cx = size / 2, cy = size / 2, r = size / 2 - 4, lw = 5
+    const pct = max > 0 ? Math.min(value / max, 1) : 0
+    // Background arc
+    ctx.beginPath()
+    ctx.arc(cx, cy, r, 0, Math.PI * 2)
+    ctx.strokeStyle = 'rgba(26,95,255,0.1)'
+    ctx.lineWidth = lw
+    ctx.stroke()
+    // Value arc
+    if (pct > 0) {
+      ctx.beginPath()
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct)
+      ctx.strokeStyle = color
+      ctx.lineWidth = lw
+      ctx.lineCap = 'round'
+      ctx.stroke()
+    }
+    // Center text
+    ctx.fillStyle = '#e8f2ff'
+    ctx.font = `bold ${size > 36 ? 10 : 8}px Orbitron,sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(Math.round(pct * 100) + '%', cx, cy)
+  }, [value, max, color, size])
+  return (
+    <div className="mini-donut-wrap">
+      <canvas ref={canvasRef} width={size * 2} height={size * 2} style={{width:size,height:size}} />
+      {label && <div className="mini-donut-label">{label}</div>}
+    </div>
+  )
 }
 
 export default function Admin() {
@@ -1764,6 +1901,7 @@ export default function Admin() {
   const [replyId, setReplyId] = useState(null)
   const [chartDays, setChartDays] = useState(7)
   const [chartMetric, setChartMetric] = useState('new_users')
+  const [chartType, setChartType] = useState('bar')
   const chartRef = useRef(null)
   const [withdrawals, setWithdrawals] = useState([])
   const [maintenance, setMaintenance] = useState(false)
@@ -2024,84 +2162,380 @@ export default function Admin() {
 
       {/* STATS */}
       {tab === 'stats' && stats && (
-        <div className="admin-section">
-          <div className="stats-section-title">👥 ПОЛЬЗОВАТЕЛИ</div>
-          <div className="stats-cards">
-            <div className="astat-card"><div className="astat-lbl">Всего</div><div className="astat-val">{stats.total_users}</div></div>
-            <div className="astat-card"><div className="astat-lbl">Заблокировано</div><div className="astat-val">{stats.blocked_users}</div></div>
-            <div className="astat-card"><div className="astat-lbl">Заданий выполнено</div><div className="astat-val">{stats.tasks_completed}</div></div>
+        <div className="admin-section dash-stats">
+
+          {/* ===== HERO SUMMARY ===== */}
+          <div className="dash-hero">
+            <div className="dash-hero-left">
+              <div className="dash-hero-label">Баланс проекта</div>
+              <div className="dash-hero-value">{(parseFloat(stats.total_deposited||0) - parseFloat(stats.total_withdrawn||0)).toFixed(2)} <span>TON</span></div>
+            </div>
+            <div className="dash-hero-right">
+              <MiniDonut value={parseFloat(stats.total_withdrawn||0)} max={parseFloat(stats.total_deposited||0) || 1} color="#ff4d6a" size={52} label="Выведено" />
+            </div>
           </div>
 
-          <div className="stats-section-title">📈 СТЕЙКИНГ</div>
-          <div className="stats-cards">
-            <div className="astat-card"><div className="astat-lbl">Активных стейков</div><div className="astat-val">{stats.active_stakes}</div></div>
-            <div className="astat-card"><div className="astat-lbl">TON в стейке</div><div className="astat-val">{parseFloat(stats.total_staked).toFixed(2)}</div></div>
-            <div className="astat-card fee"><div className="astat-lbl">Комиссия стейкинга</div><div className="astat-val">{parseFloat(stats.staking_fee_earned||0).toFixed(4)}</div></div>
+          {/* ===== QUICK METRICS BAR ===== */}
+          <div className="dash-quick-row">
+            <div className="dash-quick-item">
+              <div className="dqi-icon">👥</div>
+              <div className="dqi-val">{stats.total_users}</div>
+              <div className="dqi-lbl">Юзеры</div>
+            </div>
+            <div className="dash-quick-item">
+              <div className="dqi-icon">📈</div>
+              <div className="dqi-val">{stats.today_users || 0}</div>
+              <div className="dqi-lbl">Сегодня</div>
+            </div>
+            <div className="dash-quick-item">
+              <div className="dqi-icon">🔥</div>
+              <div className="dqi-val">{stats.week_users || 0}</div>
+              <div className="dqi-lbl">За неделю</div>
+            </div>
+            <div className="dash-quick-item">
+              <div className="dqi-icon">🚫</div>
+              <div className="dqi-val">{stats.blocked_users}</div>
+              <div className="dqi-lbl">Блок</div>
+            </div>
           </div>
 
-          <div className="stats-section-title">✅ ЗАДАНИЯ</div>
-          <div className="stats-cards">
-            <div className="astat-card"><div className="astat-lbl">Активных заданий</div><div className="astat-val">{stats.active_tasks||0}</div></div>
-            <div className="astat-card fee"><div className="astat-lbl">Комиссия заданий</div><div className="astat-val">{parseFloat(stats.task_fee_earned||0).toFixed(4)}</div></div>
-          </div>
-
-          {/* CHART */}
-          <div className="stats-section-title">📊 ГРАФИК</div>
-          <div className="chart-controls">
-            {[7,14,30].map(d => (
-              <button key={d} className={`chart-day-btn ${chartDays===d?'on':''}`} onClick={async()=>{
-                setChartDays(d)
-                const r = await api.get(`/api/admin/chart?days=${d}`)
-                setChartData(r.data || [])
-              }}>{d}д</button>
-            ))}
-            <select className="chart-metric-sel" value={chartMetric} onChange={e=>setChartMetric(e.target.value)}>
-              <option value="new_users">Новые юзеры</option>
-              <option value="active_users">Активные юзеры</option>
-              <option value="deposits">Депозиты (TON)</option>
-              <option value="withdrawals">Выводы (TON)</option>
-              <option value="profit">Доход проекта</option>
-              <option value="trading_bets">Ставки трейдинга</option>
-              <option value="spins">Спины</option>
-              <option value="ads_viewed">Просмотры рекламы</option>
+          {/* ===== CHART ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">📊</div>
+              <div className="dash-sh-title">АНАЛИТИКА</div>
+            </div>
+            <div className="dash-chart-controls">
+              <div className="dash-chart-days">
+                {[7,14,30].map(d => (
+                  <button key={d} className={`dcc-day ${chartDays===d?'on':''}`} onClick={async()=>{
+                    setChartDays(d)
+                    const r = await api.get(`/api/admin/chart?days=${d}`)
+                    setChartData(r.data || [])
+                  }}>{d}д</button>
+                ))}
+              </div>
+              <div className="dash-chart-type-toggle">
+                <button className={`dctt-btn ${chartType==='bar'?'on':''}`} onClick={()=>setChartType('bar')}>▊</button>
+                <button className={`dctt-btn ${chartType==='line'?'on':''}`} onClick={()=>setChartType('line')}>╱</button>
+              </div>
+            </div>
+            <select className="dash-chart-metric" value={chartMetric} onChange={e=>setChartMetric(e.target.value)}>
+              <option value="new_users">👥 Новые юзеры</option>
+              <option value="active_users">🔥 Активные юзеры</option>
+              <option value="deposits">💎 Депозиты (TON)</option>
+              <option value="withdrawals">💸 Выводы (TON)</option>
+              <option value="profit">💰 Доход проекта</option>
+              <option value="trading_bets">📈 Ставки трейдинга</option>
+              <option value="spins">🎰 Спины</option>
+              <option value="ads_viewed">📣 Просмотры рекламы</option>
             </select>
-          </div>
-          <AdminChart data={chartData} metric={chartMetric} />
-
-          <div className="stats-section-title">📈 ТРЕЙДИНГ</div>
-          <div className="stats-cards">
-            <div className="astat-card"><div className="astat-lbl">Всего ставок</div><div className="astat-val">{stats.trading_total||0}</div></div>
-            <div className="astat-card green"><div className="astat-lbl">Выигрышей</div><div className="astat-val">{stats.trading_wins||0}</div></div>
-            <div className="astat-card red"><div className="astat-lbl">Проигрышей</div><div className="astat-val">{stats.trading_loses||0}</div></div>
-            <div className="astat-card"><div className="astat-lbl">Возвратов</div><div className="astat-val">{stats.trading_refunds||0}</div></div>
-            <div className="astat-card" style={{borderColor:'rgba(0,212,255,0.3)',background:'rgba(0,212,255,0.05)'}}><div className="astat-val" style={{color:'#00d4ff'}}>{parseFloat(stats.trading_bank||0).toFixed(4)}</div><div className="astat-lbl">Банк трейдинга</div></div>
-            <div className="astat-card fee"><div className="astat-lbl">Чистая прибыль</div><div className="astat-val">{parseFloat(stats.trading_profit||0).toFixed(4)}</div></div>
+            <AdminChart data={chartData} metric={chartMetric} chartType={chartType} />
           </div>
 
-          <div className="stats-section-title">🎰 СЛОТЫ</div>
-          <div className="stats-cards">
-            <div className="astat-card"><div className="astat-lbl">Всего спинов</div><div className="astat-val">{stats.slots_total||0}</div></div>
-            <div className="astat-card green"><div className="astat-lbl">Выигрышей</div><div className="astat-val">{stats.slots_wins||0}</div></div>
-            <div className="astat-card" style={{borderColor:'rgba(0,212,255,0.3)',background:'rgba(0,212,255,0.05)'}}><div className="astat-val" style={{color:'#00d4ff'}}>{parseFloat(stats.slots_bank||0).toFixed(4)}</div><div className="astat-lbl">Банк слотов</div></div>
+          {/* ===== ФИНАНСЫ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">💰</div>
+              <div className="dash-sh-title">ФИНАНСЫ ПРОЕКТА</div>
+            </div>
+            <div className="dash-finance-row">
+              <div className="dash-fin-card dash-fin-in">
+                <div className="dfc-icon">↗</div>
+                <div className="dfc-info">
+                  <div className="dfc-val">+{parseFloat(stats.total_deposited||0).toFixed(2)}</div>
+                  <div className="dfc-lbl">Пополнения</div>
+                </div>
+              </div>
+              <div className="dash-fin-card dash-fin-out">
+                <div className="dfc-icon">↘</div>
+                <div className="dfc-info">
+                  <div className="dfc-val">-{parseFloat(stats.total_withdrawn||0).toFixed(2)}</div>
+                  <div className="dfc-lbl">Выводы</div>
+                </div>
+              </div>
+            </div>
+            {/* Revenue progress bar */}
+            <div className="dash-progress-card">
+              <div className="dpc-header">
+                <span className="dpc-lbl">Удержание средств</span>
+                <span className="dpc-pct">{(parseFloat(stats.total_deposited||0) > 0 ? ((1 - parseFloat(stats.total_withdrawn||0) / parseFloat(stats.total_deposited||0)) * 100).toFixed(1) : 100)}%</span>
+              </div>
+              <div className="dpc-bar">
+                <div className="dpc-fill" style={{width: `${parseFloat(stats.total_deposited||0) > 0 ? Math.max(0, (1 - parseFloat(stats.total_withdrawn||0) / parseFloat(stats.total_deposited||0)) * 100) : 100}%`}} />
+              </div>
+            </div>
           </div>
 
-          <div className="stats-section-title">🎰 СПИН</div>
-          <div className="stats-cards">
-            <div className="astat-card"><div className="astat-lbl">Всего спинов</div><div className="astat-val">{stats.total_spins||0}</div></div>
-            <div className="astat-card fee"><div className="astat-lbl">Доход со спинов</div><div className="astat-val">{parseFloat(stats.spin_revenue||0).toFixed(4)}</div></div>
-            <div className="astat-card green"><div className="astat-lbl">Чистая прибыль</div><div className="astat-val">{parseFloat(stats.spin_profit||0).toFixed(4)}</div></div>
-            <div className="astat-card" style={{borderColor:'rgba(255,179,0,0.3)',background:'rgba(255,179,0,0.05)'}}><div className="astat-val" style={{color:'#ffb300'}}>{parseFloat(stats.current_jackpot||0).toFixed(4)}</div><div className="astat-lbl">Джекпот сейчас</div></div>
-            <div className="astat-card green"><div className="astat-lbl">Пул выплат</div><div className="astat-val">{parseFloat(stats.spin_pool||0).toFixed(4)}</div></div>
+          {/* ===== СТЕЙКИНГ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">📈</div>
+              <div className="dash-sh-title">СТЕЙКИНГ</div>
+            </div>
+            <div className="dash-grid-3">
+              <div className="dash-metric-card">
+                <div className="dmc-val">{stats.active_stakes}</div>
+                <div className="dmc-lbl">Активных</div>
+              </div>
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{parseFloat(stats.total_staked).toFixed(2)}</div>
+                <div className="dmc-lbl">В стейке TON</div>
+              </div>
+              <div className="dash-metric-card dmc-gold">
+                <div className="dmc-val">{parseFloat(stats.staking_fee_earned||0).toFixed(4)}</div>
+                <div className="dmc-lbl">Комиссия</div>
+              </div>
+            </div>
           </div>
 
-          <div className="stats-section-title">💰 ФИНАНСЫ ПРОЕКТА</div>
-          <div className="stats-cards">
-            <div className="astat-card green"><div className="astat-lbl">Пополнено</div><div className="astat-val">+{parseFloat(stats.total_deposited||0).toFixed(2)}</div></div>
-            <div className="astat-card red"><div className="astat-lbl">Выведено</div><div className="astat-val">-{parseFloat(stats.total_withdrawn||0).toFixed(2)}</div></div>
-            <div className="astat-card fee"><div className="astat-lbl">Баланс проекта</div><div className="astat-val">{(parseFloat(stats.total_deposited||0) - parseFloat(stats.total_withdrawn||0)).toFixed(2)}</div></div>
+          {/* ===== ТРЕЙДИНГ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">📊</div>
+              <div className="dash-sh-title">ТРЕЙДИНГ</div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-metric-card">
+                <div className="dmc-val">{stats.trading_total||0}</div>
+                <div className="dmc-lbl">Всего ставок</div>
+              </div>
+              <div className="dash-metric-card dmc-gold">
+                <div className="dmc-val">{parseFloat(stats.trading_profit||0).toFixed(4)}</div>
+                <div className="dmc-lbl">Прибыль</div>
+              </div>
+            </div>
+            <div className="dash-grid-4">
+              <div className="dash-mini-stat dms-green">
+                <div className="dmst-val">{stats.trading_wins||0}</div>
+                <div className="dmst-lbl">WIN</div>
+              </div>
+              <div className="dash-mini-stat dms-red">
+                <div className="dmst-val">{stats.trading_loses||0}</div>
+                <div className="dmst-lbl">LOSE</div>
+              </div>
+              <div className="dash-mini-stat">
+                <div className="dmst-val">{stats.trading_refunds||0}</div>
+                <div className="dmst-lbl">REF</div>
+              </div>
+              <div className="dash-mini-stat dms-blue">
+                <div className="dmst-val">{parseFloat(stats.trading_bank||0).toFixed(2)}</div>
+                <div className="dmst-lbl">БАНК</div>
+              </div>
+            </div>
+            {/* Win rate donut */}
+            {parseInt(stats.trading_total||0) > 0 && (
+              <div className="dash-donut-row">
+                <MiniDonut value={parseInt(stats.trading_wins||0)} max={parseInt(stats.trading_total||0)} color="#00e676" size={48} label="Винрейт" />
+                <MiniDonut value={parseInt(stats.trading_loses||0)} max={parseInt(stats.trading_total||0)} color="#ff4d6a" size={48} label="Проигрыши" />
+                <MiniDonut value={parseInt(stats.trading_refunds||0)} max={parseInt(stats.trading_total||0)} color="#ffb300" size={48} label="Возвраты" />
+              </div>
+            )}
           </div>
 
-          <button className="reload-btn" onClick={loadAll}>↻ Обновить</button>
+          {/* ===== СЛОТЫ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">🎰</div>
+              <div className="dash-sh-title">СЛОТЫ</div>
+            </div>
+            <div className="dash-grid-3">
+              <div className="dash-metric-card">
+                <div className="dmc-val">{stats.slots_total||0}</div>
+                <div className="dmc-lbl">Спинов</div>
+              </div>
+              <div className="dash-metric-card dmc-green">
+                <div className="dmc-val">{stats.slots_wins||0}</div>
+                <div className="dmc-lbl">Выигрышей</div>
+              </div>
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{parseFloat(stats.slots_bank||0).toFixed(2)}</div>
+                <div className="dmc-lbl">Банк</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== СПИН ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">🎡</div>
+              <div className="dash-sh-title">КОЛЕСО ФОРТУНЫ</div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-metric-card">
+                <div className="dmc-val">{stats.total_spins||0}</div>
+                <div className="dmc-lbl">Всего спинов</div>
+              </div>
+              <div className="dash-metric-card dmc-green">
+                <div className="dmc-val">{parseFloat(stats.spin_profit||0).toFixed(4)}</div>
+                <div className="dmc-lbl">Прибыль</div>
+              </div>
+            </div>
+            <div className="dash-grid-3">
+              <div className="dash-mini-stat dms-gold">
+                <div className="dmst-val">{parseFloat(stats.spin_revenue||0).toFixed(4)}</div>
+                <div className="dmst-lbl">Доход</div>
+              </div>
+              <div className="dash-mini-stat dms-amber">
+                <div className="dmst-val">{parseFloat(stats.current_jackpot||0).toFixed(4)}</div>
+                <div className="dmst-lbl">Джекпот</div>
+              </div>
+              <div className="dash-mini-stat dms-green">
+                <div className="dmst-val">{parseFloat(stats.spin_pool||0).toFixed(4)}</div>
+                <div className="dmst-lbl">Пул</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== ЗАДАНИЯ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">✅</div>
+              <div className="dash-sh-title">ЗАДАНИЯ</div>
+            </div>
+            <div className="dash-grid-3">
+              <div className="dash-metric-card">
+                <div className="dmc-val">{stats.active_tasks||0}</div>
+                <div className="dmc-lbl">Активных</div>
+              </div>
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{stats.tasks_completed}</div>
+                <div className="dmc-lbl">Выполнено</div>
+              </div>
+              <div className="dash-metric-card dmc-gold">
+                <div className="dmc-val">{parseFloat(stats.task_fee_earned||0).toFixed(4)}</div>
+                <div className="dmc-lbl">Комиссия</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== РЕФЕРАЛЫ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">👥</div>
+              <div className="dash-sh-title">РЕФЕРАЛЫ</div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{stats.total_referrals||0}</div>
+                <div className="dmc-lbl">Всего рефералов</div>
+              </div>
+              <div className="dash-metric-card dmc-gold">
+                <div className="dmc-val">{parseFloat(stats.ref_bonuses_paid||0).toFixed(4)}</div>
+                <div className="dmc-lbl">Бонусов выплачено</div>
+              </div>
+            </div>
+            {parseInt(stats.total_users) > 0 && (
+              <div className="dash-donut-row">
+                <MiniDonut value={parseInt(stats.total_referrals||0)} max={parseInt(stats.total_users)} color="#a855f7" size={52} label="Реферальность" />
+              </div>
+            )}
+          </div>
+
+          {/* ===== МАЙНИНГ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">⛏</div>
+              <div className="dash-sh-title">CT POOL МАЙНИНГ</div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{parseInt(stats.miner_active_contracts||0)}</div>
+                <div className="dmc-lbl">Контрактов</div>
+              </div>
+              <div className="dash-metric-card">
+                <div className="dmc-val">{parseInt(stats.miner_total_users||0)}</div>
+                <div className="dmc-lbl">Майнеров</div>
+              </div>
+            </div>
+            <div className="dash-grid-3">
+              <div className="dash-mini-stat dms-blue">
+                <div className="dmst-val">{parseFloat(stats.miner_total_hashrate||0).toFixed(0)}</div>
+                <div className="dmst-lbl">GH/s сеть</div>
+              </div>
+              <div className="dash-mini-stat dms-green">
+                <div className="dmst-val">{parseFloat(stats.miner_total_revenue||0).toFixed(2)}</div>
+                <div className="dmst-lbl">Выручка</div>
+              </div>
+              <div className="dash-mini-stat dms-red">
+                <div className="dmst-val">{parseInt(stats.miner_pending_withdrawals||0)}</div>
+                <div className="dmst-lbl">Ожид. вывод</div>
+              </div>
+            </div>
+            <div className="dash-progress-card">
+              <div className="dpc-header">
+                <span className="dpc-lbl">Выплачено / Заработано</span>
+                <span className="dpc-pct">{parseFloat(stats.miner_total_earned||0) > 0 ? ((parseFloat(stats.miner_paid_amount||0) / parseFloat(stats.miner_total_earned||0)) * 100).toFixed(1) : 0}%</span>
+              </div>
+              <div className="dpc-bar dpc-bar-purple">
+                <div className="dpc-fill dpc-fill-purple" style={{width: `${parseFloat(stats.miner_total_earned||0) > 0 ? Math.min(100, (parseFloat(stats.miner_paid_amount||0) / parseFloat(stats.miner_total_earned||0)) * 100) : 0}%`}} />
+              </div>
+            </div>
+          </div>
+
+          {/* ===== РЕКЛАМА ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">📣</div>
+              <div className="dash-sh-title">РЕКЛАМА</div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-metric-card dmc-green">
+                <div className="dmc-val">{parseInt(stats.ads_active||0)}</div>
+                <div className="dmc-lbl">Активных баннеров</div>
+              </div>
+              <div className="dash-metric-card">
+                <div className="dmc-val">{parseInt(stats.ads_total||0)}</div>
+                <div className="dmc-lbl">Всего баннеров</div>
+              </div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-mini-stat dms-amber">
+                <div className="dmst-val">{parseInt(stats.ad_orders_pending||0)}</div>
+                <div className="dmst-lbl">Ожид. заявок</div>
+              </div>
+              <div className="dash-mini-stat">
+                <div className="dmst-val">{parseInt(stats.ad_orders_total||0)}</div>
+                <div className="dmst-lbl">Всего заявок</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== АУКЦИОН ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">🏛</div>
+              <div className="dash-sh-title">АУКЦИОН РЕФЕРАЛОВ</div>
+            </div>
+            <div className="dash-grid-3">
+              <div className="dash-metric-card dmc-green">
+                <div className="dmc-val">{parseInt(stats.auction_active||0)}</div>
+                <div className="dmc-lbl">Активных</div>
+              </div>
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{parseInt(stats.auction_completed||0)}</div>
+                <div className="dmc-lbl">Завершённых</div>
+              </div>
+              <div className="dash-metric-card">
+                <div className="dmc-val">{parseInt(stats.auction_total||0)}</div>
+                <div className="dmc-lbl">Всего</div>
+              </div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-mini-stat dms-blue">
+                <div className="dmst-val">{parseInt(stats.auction_total_bids||0)}</div>
+                <div className="dmst-lbl">Ставок</div>
+              </div>
+              <div className="dash-mini-stat dms-gold">
+                <div className="dmst-val">{parseFloat(stats.auction_volume||0).toFixed(2)}</div>
+                <div className="dmst-lbl">Объём TON</div>
+              </div>
+            </div>
+          </div>
+
+          <button className="dash-reload-btn" onClick={loadAll}>
+            <span className="drb-icon">↻</span> Обновить данные
+          </button>
         </div>
       )}
 
