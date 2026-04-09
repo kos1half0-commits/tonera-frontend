@@ -107,6 +107,7 @@ export default function Miner({ onBack, isAdmin }) {
 
   // Realtime mining calculation values
   const [baseEarned, setBaseEarned] = useState(0)
+  const [baseAvailable, setBaseAvailable] = useState(0)
   const [earnPerMs, setEarnPerMs] = useState(0)
   const [earnPerSecond, setEarnPerSecond] = useState(0)
 
@@ -130,6 +131,7 @@ export default function Miner({ onBack, isAdmin }) {
       setEarnPerSecond(eps)
       setEarnPerMs(eps / 1000)
       setBaseEarned(r.data.totalEarned || 0)
+      setBaseAvailable(r.data.availableBalance || 0)
     } catch (e) { console.log('load err:', e.message) }
     setLoading(false)
   }
@@ -274,14 +276,17 @@ export default function Miner({ onBack, isAdmin }) {
 
               {/* EARNINGS — REAL-TIME */}
               <div className="mn-earnings">
-                <div className="mn-earn-label">ДОБЫТО В РЕАЛЬНОМ ВРЕМЕНИ</div>
+                <div className="mn-earn-label">ДОБЫТО ВСЕГО</div>
                 <div className="mn-live-wrap">
                   <LiveCounter baseValue={baseEarned} earnPerMs={earnPerMs} />
                   <span className="mn-live-currency">TON</span>
                 </div>
                 <MiningSpeed earnPerSecond={earnPerSecond} />
-                <div className="mn-earn-available">
-                  Доступно к выводу: <strong>{Math.max(0, availableBalance).toFixed(6)} TON</strong>
+                <div className="mn-earn-divider" />
+                <div className="mn-earn-label avail">ДОСТУПНО К ВЫВОДУ</div>
+                <div className="mn-live-wrap avail">
+                  <LiveCounter baseValue={baseAvailable} earnPerMs={earnPerMs} />
+                  <span className="mn-live-currency">TON</span>
                 </div>
 
                 {showWithdraw ? (

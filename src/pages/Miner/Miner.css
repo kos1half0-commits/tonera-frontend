@@ -96,6 +96,13 @@
 
 .mn-earn-available{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.4);margin-bottom:14px;}
 .mn-earn-available strong{color:#00e676;text-shadow:0 0 8px rgba(0,230,118,0.2);}
+.mn-earn-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.15),transparent);margin:14px 0 10px;}
+.mn-earn-label.avail{color:rgba(0,230,118,0.5);}
+.mn-live-wrap.avail .mn-live-currency{color:rgba(0,230,118,0.5);}
+.mn-live-wrap.avail .mn-digit{color:#00e676;text-shadow:0 0 10px rgba(0,230,118,0.4);}
+.mn-live-wrap.avail .mn-digit.dim{color:rgba(0,230,118,0.6);text-shadow:0 0 6px rgba(0,230,118,0.2);}
+.mn-live-wrap.avail .mn-digit.tick{color:rgba(0,230,118,0.35);text-shadow:none;}
+.mn-live-wrap.avail .mn-dot{color:rgba(0,230,118,0.4);}
 
 /* ===== WITHDRAW ===== */
 .mn-withdraw-form{width:100%;margin-top:8px;}
