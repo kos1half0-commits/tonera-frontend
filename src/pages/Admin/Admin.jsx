@@ -854,6 +854,13 @@ function AuctionsAdmin() {
   const [loading, setLoading] = useState(true)
   const [toast, setAucToast] = useState('')
   const [filter, setFilter] = useState('all') // all | active | completed | cancelled
+  const [orphans, setOrphans] = useState([])
+  const [showOrphans, setShowOrphans] = useState(false)
+  const [orphanSearch, setOrphanSearch] = useState('')
+  const [sellUserId, setSellUserId] = useState(null)
+  const [sellPrice, setSellPrice] = useState('0.1')
+  const [sellHours, setSellHours] = useState('24')
+  const [sellLoading, setSellLoading] = useState(false)
 
   const showToast = m => { setAucToast(m); setTimeout(()=>setAucToast(''),3000) }
   const load = async () => {
@@ -868,6 +875,18 @@ function AuctionsAdmin() {
     setLoading(false)
   }
   useEffect(()=>{ load() },[])
+
+  const loadOrphans = async () => {
+    try {
+      const r = await api.get('/api/admin/orphan-users')
+      setOrphans(r.data || [])
+    } catch {}
+  }
+
+  const toggleOrphans = () => {
+    if (!showOrphans && orphans.length === 0) loadOrphans()
+    setShowOrphans(!showOrphans)
+  }
 
   const closeAuction = async (id) => {
     if (!confirm('Принудительно закрыть аукцион?')) return
@@ -887,6 +906,22 @@ function AuctionsAdmin() {
     } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
   }
 
+  const sellOrphan = async (userId) => {
+    setSellLoading(true)
+    try {
+      await api.post('/api/admin/auction/create-orphan', {
+        user_id: userId,
+        start_price: sellPrice,
+        duration_hours: sellHours,
+      })
+      showToast('✅ Юзер выставлен на аукцион')
+      setSellUserId(null)
+      loadOrphans()
+      load()
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка') }
+    setSellLoading(false)
+  }
+
   const S = {
     stat: {background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:10,padding:'10px 12px',textAlign:'center'},
     btn: (c={})=>({padding:'6px 10px',border:'none',borderRadius:7,fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer',...c}),
@@ -896,6 +931,9 @@ function AuctionsAdmin() {
   if (loading) return <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
 
   const filtered = filter === 'all' ? auctions : auctions.filter(a => a.status === filter)
+  const filteredOrphans = orphanSearch
+    ? orphans.filter(o => (o.username||'').toLowerCase().includes(orphanSearch.toLowerCase()) || (o.first_name||'').toLowerCase().includes(orphanSearch.toLowerCase()) || String(o.telegram_id).includes(orphanSearch))
+    : orphans
 
   return (
     <div>
@@ -927,6 +965,73 @@ function AuctionsAdmin() {
           <div style={S.stat}>
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:parseInt(stats.test_auctions)>0?'#ffb300':'#00e676'}}>{parseInt(stats.test_auctions)}</div>
             <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.4)'}}>Тестовых</div>
+          </div>
+        </div>
+      )}
+
+      {/* ORPHAN USERS SELL BUTTON */}
+      <button style={{
+        width:'100%',padding:'10px',border:'1px solid rgba(168,85,247,0.3)',borderRadius:10,
+        background:showOrphans?'rgba(168,85,247,0.15)':'rgba(168,85,247,0.06)',color:'#a855f7',fontFamily:'Orbitron,sans-serif',
+        fontSize:10,fontWeight:700,cursor:'pointer',marginBottom:12
+      }} onClick={toggleOrphans}>
+        {showOrphans ? '▼' : '▶'} ЮЗЕРЫ БЕЗ РЕФЕРЕРА ({orphans.length || '...'})
+      </button>
+
+      {/* ORPHAN USERS LIST */}
+      {showOrphans && (
+        <div style={{marginBottom:16,background:'#0a1628',border:'1px solid rgba(168,85,247,0.15)',borderRadius:12,padding:10}}>
+          <input
+            placeholder="🔍 Поиск по имени или TG ID..."
+            value={orphanSearch}
+            onChange={e => setOrphanSearch(e.target.value)}
+            style={{width:'100%',padding:'8px 12px',background:'rgba(26,95,255,0.06)',border:'1px solid rgba(26,95,255,0.15)',borderRadius:8,color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,marginBottom:8,boxSizing:'border-box',outline:'none'}}
+          />
+          <div style={{maxHeight:400,overflow:'auto'}}>
+            {filteredOrphans.length === 0 && <div style={{textAlign:'center',padding:12,color:'rgba(232,242,255,0.3)',fontSize:11}}>Нет юзеров</div>}
+            {filteredOrphans.map(o => {
+              const name = o.username ? `@${o.username}` : o.first_name || `ID:${o.telegram_id}`
+              const isOnAuction = o.on_auction
+              const isSelected = sellUserId === o.id
+              return (
+                <div key={o.id} style={{
+                  background: isSelected ? 'rgba(168,85,247,0.1)' : 'rgba(26,95,255,0.04)',
+                  border: `1px solid ${isOnAuction ? 'rgba(255,179,0,0.2)' : isSelected ? 'rgba(168,85,247,0.3)' : 'rgba(26,95,255,0.08)'}`,
+                  borderRadius:10,padding:10,marginBottom:6
+                }}>
+                  <div style={{display:'flex',alignItems:'center',gap:8}}>
+                    <div style={{width:32,height:32,borderRadius:8,background:'rgba(168,85,247,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Orbitron',fontSize:12,fontWeight:700,color:'#a855f7',flexShrink:0}}>
+                      {name[0].toUpperCase()}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{name}</div>
+                      <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.35)'}}>
+                        📋 {o.tasks_completed} заданий · 📊 {o.activity_30d} акт./30д
+                      </div>
+                    </div>
+                    {isOnAuction ? (
+                      <span style={{padding:'4px 8px',borderRadius:6,fontFamily:'Orbitron',fontSize:7,fontWeight:700,background:'rgba(255,179,0,0.12)',color:'#ffb300',flexShrink:0}}>НА АУКЦИОНЕ</span>
+                    ) : (
+                      <button style={S.btn({background:'rgba(168,85,247,0.15)',color:'#a855f7',padding:'6px 12px',fontSize:9})} onClick={() => setSellUserId(isSelected ? null : o.id)}>
+                        {isSelected ? '✕' : '🏛 ПРОДАТЬ'}
+                      </button>
+                    )}
+                  </div>
+                  {/* SELL FORM */}
+                  {isSelected && (
+                    <div style={{marginTop:8,display:'flex',gap:6,alignItems:'center'}}>
+                      <input placeholder="Цена" value={sellPrice} onChange={e=>setSellPrice(e.target.value)}
+                        style={{flex:1,padding:'7px 10px',background:'rgba(26,95,255,0.06)',border:'1px solid rgba(26,95,255,0.15)',borderRadius:7,color:'#e8f2ff',fontFamily:'DM Sans',fontSize:11,outline:'none'}} />
+                      <input placeholder="Часы" value={sellHours} onChange={e=>setSellHours(e.target.value)}
+                        style={{width:50,padding:'7px 10px',background:'rgba(26,95,255,0.06)',border:'1px solid rgba(26,95,255,0.15)',borderRadius:7,color:'#e8f2ff',fontFamily:'DM Sans',fontSize:11,outline:'none',textAlign:'center'}} />
+                      <button disabled={sellLoading} style={S.btn({background:'rgba(0,230,118,0.15)',color:'#00e676',padding:'7px 14px',fontSize:9})} onClick={() => sellOrphan(o.id)}>
+                        {sellLoading ? '...' : '✓'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
