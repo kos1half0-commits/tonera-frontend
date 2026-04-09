@@ -85,12 +85,62 @@ export default function Partnership({ onBack }) {
       {p?.status === 'approved' && (
         <div className="p-approved-wrap">
           <div className="p-status approved">
-            <div className="ps-icon">🌟</div>
+            <div className="ps-icon">{info?.level?.emoji || '🌟'}</div>
             <div className="ps-title">ВЫ ПАРТНЁР TONERA</div>
             <div className="ps-desc">Ваш канал добавлен в задания — пользователи подписываются</div>
             <div className="ps-channel">{p.channel_url}</div>
-  
           </div>
+
+          {/* LEVEL CARD */}
+          {info?.level && (
+            <div style={{background:'#0e1c3a',border:`1px solid ${info.level.color}33`,borderRadius:12,padding:14,marginBottom:12}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+                <div style={{fontSize:28}}>{info.level.emoji}</div>
+                <div>
+                  <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:info.level.color}}>{info.level.name.toUpperCase()}</div>
+                  <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>
+                    👥 {info.level.subscribers?.toLocaleString() || 0} подписчиков
+                  </div>
+                </div>
+              </div>
+              {info.level.nextLevel && (
+                <div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.35)',marginBottom:4}}>
+                    <span>{info.level.name}</span>
+                    <span>{info.level.nextLevel.emoji} {info.level.nextLevel.name} ({info.level.nextLevel.min.toLocaleString()})</span>
+                  </div>
+                  <div style={{height:6,background:'rgba(26,95,255,0.1)',borderRadius:3,overflow:'hidden'}}>
+                    <div style={{height:'100%',borderRadius:3,background:`linear-gradient(90deg, ${info.level.color}, ${info.level.nextLevel.color})`,width:`${Math.min(100, (info.level.subscribers / info.level.nextLevel.min) * 100)}%`,transition:'width 0.5s'}}/>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TASK STATS */}
+          {info?.taskStats && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:12}}>
+              <div style={{background:'#0e1c3a',border:'1px solid rgba(0,230,118,0.15)',borderRadius:10,padding:'10px 8px',textAlign:'center'}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00e676'}}>{info.taskStats.executions || 0}</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.4)'}}>Подписок</div>
+              </div>
+              <div style={{background:'#0e1c3a',border:'1px solid rgba(0,212,255,0.15)',borderRadius:10,padding:'10px 8px',textAlign:'center'}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00d4ff'}}>{info.taskStats.total_spent?.toFixed(4) || '0'}</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.4)'}}>TON потрачено</div>
+              </div>
+              <div style={{background:'#0e1c3a',border:'1px solid rgba(168,85,247,0.15)',borderRadius:10,padding:'10px 8px',textAlign:'center'}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:info.taskStats.active?'#00e676':'#ff4d6a'}}>{info.taskStats.active ? 'ВКЛ' : 'ПАУЗА'}</div>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.4)'}}>Статус</div>
+              </div>
+            </div>
+          )}
+
+          {/* LAST CHECK */}
+          {p.last_checked_at && (
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)',textAlign:'center',marginBottom:10}}>
+              🔍 Последняя проверка: {new Date(p.last_checked_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+            </div>
+          )}
 
           {task && (
             <div className="p-task-block">
