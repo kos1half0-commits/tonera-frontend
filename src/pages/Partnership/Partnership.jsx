@@ -38,12 +38,36 @@ export default function Partnership({ onBack }) {
   const botUsername = info?.bot_username || 'tonera_bot'
   const refLink = info?.ref_code ? `t.me/${botUsername}?start=${info.ref_code}` : `t.me/${botUsername}`
   const p = info?.partnership
+  const [promoCode, setPromoCode] = useState(null) // {code, amount, max_uses, expires_at}
+  const [promoLoading, setPromoLoading] = useState(false)
 
-  const defaultPost = `🚀 Зарабатывай TON каждый день!\n\n💎 TonEra — платформа для заработка TON:\n📈 Стейкинг — 1% в день\n🎰 Игры — крути и выигрывай\n✅ Задания — выполняй и получай TON\n\n👇 Заходи прямо сейчас:\n${refLink}`
+  const makeDefaultPost = (code) => {
+    const promoLine = code ? `\n\n🎁 Промокод: ${code.code}\n💰 Награда: ${code.amount} TON (${code.max_uses} активаций)` : ''
+    return `🚀 Зарабатывай TON каждый день!\n\n💎 TonEra — платформа для заработка TON:\n📈 Стейкинг — 1% в день\n🎰 Игры — крути и выигрывай\n✅ Задания — выполняй и получай TON${promoLine}\n\n👇 Заходи прямо сейчас:\n${refLink}`
+  }
 
-  // Initialize post text with default
+  // Auto-generate promo code when entering step 3
+  const goToStep3 = async () => {
+    setPromoLoading(true)
+    try {
+      const r = await api.post('/api/partnership/generate-promo', { channel_url: channelUrl })
+      if (r.data.ok) {
+        setPromoCode(r.data.promo)
+        setPostText(makeDefaultPost(r.data.promo))
+        showToast(`🎁 Промокод ${r.data.promo.code} создан!`)
+      } else {
+        setPostText(makeDefaultPost(null))
+      }
+    } catch {
+      setPostText(makeDefaultPost(null))
+    }
+    setPromoLoading(false)
+    setWizardStep(3)
+  }
+
+  // Initialize post text with default (without promo)
   useEffect(() => {
-    if (refLink && !postText) setPostText(defaultPost)
+    if (refLink && !postText) setPostText(makeDefaultPost(null))
   }, [refLink])
 
   // ===== STEP 1: Check channel =====
@@ -71,7 +95,7 @@ export default function Partnership({ onBack }) {
       if (r.data.ok) {
         setBotChecked(true)
         showToast('✅ Бот — администратор канала!')
-        setWizardStep(3)
+        goToStep3()
       } else {
         showToast(r.data.error || 'Бот не найден', true)
       }
@@ -383,19 +407,34 @@ export default function Partnership({ onBack }) {
                     <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:4}}>📷 Логотип (нельзя изменить)</div>
                   </div>
 
+                  {/* PROMO CODE INFO */}
+                  {promoCode && (
+                    <div style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:8,padding:10,marginBottom:12}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                        <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:'#a855f7'}}>🎁 ПРОМОКОД</div>
+                        <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:900,color:'#e8f2ff',letterSpacing:1}}>{promoCode.code}</div>
+                      </div>
+                      <div style={{display:'flex',gap:12,fontSize:9,color:'rgba(232,242,255,0.4)'}}>
+                        <span>💰 {promoCode.amount} TON</span>
+                        <span>👥 {promoCode.max_uses} использований</span>
+                        <span>⏰ {new Date(promoCode.expires_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div style={S.label}>ТЕКСТ ПОСТА</div>
                   <textarea
                     value={postText}
                     onChange={e => setPostText(e.target.value)}
-                    rows={8}
-                    style={{...S.input,resize:'vertical',lineHeight:1.5,minHeight:140}}
+                    rows={10}
+                    style={{...S.input,resize:'vertical',lineHeight:1.5,minHeight:160}}
                   />
 
                   <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:4,marginBottom:8}}>
                     ⚠️ Пост должен содержать ссылку: <b style={{color:'#00d4ff'}}>{refLink}</b>
                   </div>
 
-                  <button style={S.btnSm('rgba(168,85,247,0.12)','#a855f7')} onClick={() => setPostText(defaultPost)}>↺ СБРОСИТЬ ТЕКСТ</button>
+                  <button style={S.btnSm('rgba(168,85,247,0.12)','#a855f7')} onClick={() => setPostText(makeDefaultPost(promoCode))}>↺ СБРОСИТЬ ТЕКСТ</button>
 
                   <div style={{marginTop:12}}/>
                   <button style={{...S.btn('linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2))','#00e676'),opacity:checking?0.5:1}} onClick={publishPromo} disabled={checking}>

@@ -76,6 +76,15 @@ const SETTING_GROUPS = [
       { key: 'partnership_lvl_silver_execs',  label: '🥈 Silver (5K+): макс. выполнений' },
       { key: 'partnership_lvl_gold_execs',    label: '🥇 Gold (20K+): макс. выполнений' },
       { key: 'partnership_lvl_diamond_execs', label: '💎 Diamond (50K+): макс. выполнений' },
+      { key: 'partner_promo_expiry_hours',    label: '⏰ Промокод: срок действия (часов)' },
+      { key: 'partner_promo_bronze_reward',   label: '🥉 Промо Bronze: награда TON' },
+      { key: 'partner_promo_bronze_uses',     label: '🥉 Промо Bronze: макс. использований' },
+      { key: 'partner_promo_silver_reward',   label: '🥈 Промо Silver: награда TON' },
+      { key: 'partner_promo_silver_uses',     label: '🥈 Промо Silver: макс. использований' },
+      { key: 'partner_promo_gold_reward',     label: '🥇 Промо Gold: награда TON' },
+      { key: 'partner_promo_gold_uses',       label: '🥇 Промо Gold: макс. использований' },
+      { key: 'partner_promo_diamond_reward',  label: '💎 Промо Diamond: награда TON' },
+      { key: 'partner_promo_diamond_uses',    label: '💎 Промо Diamond: макс. использований' },
     ]
   },
   {
