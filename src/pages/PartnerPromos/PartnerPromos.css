@@ -43,6 +43,27 @@
 .pp-step-label{font-size:8px;color:rgba(232,242,255,0.35);text-align:center;line-height:1.3;white-space:pre-line;}
 .pp-step-dot{width:4px;height:4px;border-radius:50%;background:rgba(168,85,247,0.2);flex-shrink:0;}
 
+/* Promo input */
+.pp-promo-section{margin-bottom:14px;}
+.pp-promo-row{display:flex;gap:8px;}
+.pp-promo-input{
+  flex:1;background:#0b1630;border:1px solid rgba(168,85,247,0.2);border-radius:12px;
+  padding:12px 14px;color:#e8f2ff;font-family:'Orbitron',sans-serif;font-size:12px;
+  font-weight:700;letter-spacing:.1em;outline:none;box-sizing:border-box;
+  transition:border-color .2s;
+}
+.pp-promo-input::placeholder{color:rgba(232,242,255,0.2);letter-spacing:.04em;font-size:10px;font-weight:400;font-family:'DM Sans',sans-serif;}
+.pp-promo-input:focus{border-color:rgba(168,85,247,0.4);}
+.pp-promo-btn{
+  width:48px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(0,212,255,0.1));
+  border:1px solid rgba(168,85,247,0.25);
+  font-size:18px;cursor:pointer;transition:all .2s;color:#a855f7;
+  display:flex;align-items:center;justify-content:center;
+}
+.pp-promo-btn:active{transform:scale(0.95);background:rgba(168,85,247,0.25);}
+.pp-promo-btn:disabled{opacity:.3;cursor:not-allowed;}
+
 /* Count badge */
 .pp-count{
   display:flex;align-items:center;gap:6px;

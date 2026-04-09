@@ -8,6 +8,8 @@ export default function PartnerPromos({ onBack }) {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
   const [toastErr, setToastErr] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
 
   const showToast = (msg, err = false) => {
     setToast(msg); setToastErr(err)
@@ -29,6 +31,19 @@ export default function PartnerPromos({ onBack }) {
 
   const openChannel = (url) => {
     if (url) window.open(url, '_blank')
+  }
+
+  const activatePromo = async () => {
+    if (!promoCode.trim()) return
+    setPromoLoading(true)
+    try {
+      const r = await api.post('/api/promo/activate', { code: promoCode.trim() })
+      showToast(`\u2705 +${parseFloat(r.data.amount).toFixed(5)} TON \u043d\u0430\u0447\u0438\u0441\u043b\u0435\u043d\u043e!`)
+      setPromoCode('')
+    } catch (e) {
+      showToast(e?.response?.data?.error || '\u041e\u0448\u0438\u0431\u043a\u0430', true)
+    }
+    setPromoLoading(false)
   }
 
   return (
@@ -70,8 +85,24 @@ export default function PartnerPromos({ onBack }) {
           <div className="pp-step-dot"/>
           <div className="pp-step">
             <div className="pp-step-num">3</div>
-            <div className="pp-step-label">{'\u0412\u0432\u0435\u0434\u0438\u0442\u0435\n\u043d\u0430 \u0433\u043b\u0430\u0432\u043d\u043e\u0439'}</div>
+            <div className="pp-step-label">{'\u0412\u0432\u0435\u0434\u0438\u0442\u0435\n\u043a\u043e\u0434 \u043d\u0438\u0436\u0435'}</div>
           </div>
+        </div>
+      </div>
+
+      {/* Promo input */}
+      <div className="pp-promo-section">
+        <div className="pp-promo-row">
+          <input
+            className="pp-promo-input"
+            placeholder={'\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434'}
+            value={promoCode}
+            onChange={e => setPromoCode(e.target.value.toUpperCase())}
+            onKeyDown={e => e.key === 'Enter' && activatePromo()}
+          />
+          <button className="pp-promo-btn" onClick={activatePromo} disabled={promoLoading || !promoCode.trim()}>
+            {promoLoading ? '\u23F3' : '\uD83C\uDF81'}
+          </button>
         </div>
       </div>
 
