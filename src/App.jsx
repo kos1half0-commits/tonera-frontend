@@ -87,7 +87,7 @@ export default function App() {
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   if (page === 'adorder') return <AdOrder onBack={() => setPage(null)} />
-  if (page === 'promos') return <PartnerPromos onBack={() => setPage(null)} onActivate={(amt) => { const u = useUserStore.getState(); u.updateBalance(amt) }} />
+  if (page === 'promos') return <PartnerPromos onBack={() => setPage(null)} />
 
   if (blockMsg) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',padding:24,textAlign:'center',background:'#050a1a'}}>
