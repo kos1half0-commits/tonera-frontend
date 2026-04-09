@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import api from '../../api/index'
 import './Admin.css'
 import PromoAdmin from './PromoAdmin'
+import AdsAdmin from './AdsAdmin'
 
 const SETTING_GROUPS = [
   {
@@ -190,111 +191,6 @@ function AdOrdersAdmin() {
   )
 }
 
-function AdsAdmin() {
-  const [ads, setAds] = useState([])
-  const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', linkToAdOrder:false })
-  const [editing, setEditing] = useState(null)
-  const [toast, setAdsToast] = useState('')
-
-  const showToast = m => { setAdsToast(m); setTimeout(()=>setAdsToast(''),3000) }
-  const load = () => api.get('/api/ads/all').then(r=>setAds(r.data||[])).catch(()=>{})
-  useEffect(()=>{ load() },[])
-
-  const PAGE_OPTIONS = ['home','tasks','games','staking','miner','wallet']
-
-  const save = async () => {
-    if (editing) {
-      await api.put(`/api/ads/${editing}`, {...form, active:true})
-      setEditing(null)
-    } else {
-      await api.post('/api/ads', form)
-    }
-    setForm({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet' })
-    await load(); showToast('✅ Сохранено')
-  }
-
-  const S = {
-    input: {width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',marginBottom:8},
-    label: {fontFamily:'Orbitron,sans-serif',fontSize:8,color:'rgba(232,242,255,0.35)',letterSpacing:'.08em',display:'block',marginBottom:3},
-    btn: (c={}) => ({padding:'7px 12px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',...c}),
-  }
-
-  return (
-    <div>
-      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
-
-      <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:12}}>
-        <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>
-          {editing ? 'РЕДАКТИРОВАТЬ' : 'СОЗДАТЬ БАННЕР'}
-        </div>
-        <span style={S.label}>ЗАГОЛОВОК</span>
-        <input style={S.input} value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder="Заголовок рекламы"/>
-        <span style={S.label}>ТЕКСТ</span>
-        <textarea style={{...S.input,resize:'none'}} rows={2} value={form.text} onChange={e=>setForm(p=>({...p,text:e.target.value}))} placeholder="Описание..."/>
-        <span style={S.label}>ФОТО БАННЕРА</span>
-        {form.image_url ? (
-          <div style={{position:'relative',marginBottom:8}}>
-            <img src={form.image_url} style={{width:'100%',borderRadius:8,maxHeight:80,objectFit:'cover'}}/>
-            <button onClick={()=>setForm(p=>({...p,image_url:''}))} style={{position:'absolute',top:4,right:4,padding:'3px 7px',border:'none',borderRadius:5,background:'rgba(255,77,106,0.8)',color:'#fff',cursor:'pointer',fontSize:10}}>✕</button>
-          </div>
-        ) : (
-          <label style={{display:'block',padding:'10px',border:'1px dashed rgba(26,95,255,0.3)',borderRadius:8,textAlign:'center',cursor:'pointer',color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans,sans-serif',fontSize:12,marginBottom:8}}>
-            📷 Загрузить фото
-            <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
-              const file = e.target.files[0]
-              if (!file) return
-              const reader = new FileReader()
-              reader.onload = ev => setForm(p=>({...p,image_url:ev.target.result}))
-              reader.readAsDataURL(file)
-            }}/>
-          </label>
-        )}
-        <span style={S.label}>ССЫЛКА (КУДА ВЕДЁТ)</span>
-        <input style={{...S.input,opacity:form.linkToAdOrder?0.3:1}} value={form.link} onChange={e=>setForm(p=>({...p,link:e.target.value}))} placeholder="https://..." disabled={form.linkToAdOrder}/>
-        <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',marginTop:4,marginBottom:4}}>
-          <input type="checkbox" checked={!!form.linkToAdOrder} onChange={e=>setForm(p=>({...p,linkToAdOrder:e.target.checked,link:e.target.checked?'__adorder__':p.link}))}/>
-          <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,color:'rgba(232,242,255,0.6)'}}>📣 Ссылка на страницу заказа рекламы</span>
-        </label>
-        <span style={S.label}>СТРАНИЦЫ</span>
-        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
-          {PAGE_OPTIONS.map(p => {
-            const active = form.pages.split(',').includes(p)
-            return (
-              <button key={p} style={S.btn({background:active?'rgba(26,95,255,0.3)':'rgba(26,95,255,0.08)',color:active?'#00d4ff':'rgba(232,242,255,0.3)',border:`1px solid ${active?'rgba(0,212,255,0.4)':'rgba(26,95,255,0.15)'}`})}
-                onClick={()=>{
-                  const cur = form.pages.split(',').filter(Boolean)
-                  const next = active ? cur.filter(x=>x!==p) : [...cur,p]
-                  setForm(f=>({...f,pages:next.join(',')}))
-                }}>{p}</button>
-            )
-          })}
-        </div>
-        <div style={{display:'flex',gap:6}}>
-          <button style={S.btn({flex:1,background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',padding:'10px'})} onClick={save}>
-            {editing ? '✅ СОХРАНИТЬ' : '+ СОЗДАТЬ'}
-          </button>
-          {editing && <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>{setEditing(null);setForm({title:'',text:'',image_url:'',link:'',pages:'home,tasks,games,staking,miner,wallet'})}}>✕</button>}
-        </div>
-      </div>
-
-      {ads.map(ad => (
-        <div key={ad.id} style={{background:'#0e1c3a',border:`1px solid ${ad.active?'rgba(26,95,255,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
-          {ad.image_url && <img src={ad.image_url} style={{width:'100%',borderRadius:8,marginBottom:6,maxHeight:80,objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>}
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff',marginBottom:2}}>{ad.title||'Без заголовка'}</div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:4}}>{ad.text}</div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(26,95,255,0.6)',marginBottom:8}}>📍 {ad.pages}</div>
-          <div style={{display:'flex',gap:6}}>
-            <button style={S.btn({flex:1,background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={()=>{setEditing(ad.id);setForm({title:ad.title||'',text:ad.text||'',image_url:ad.image_url||'',link:ad.link||'',pages:ad.pages||''})}}>✏️ РЕДАКТИРОВАТЬ</button>
-            <button style={S.btn({background:ad.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:ad.active?'#ffb300':'#00e676'})} onClick={async()=>{await api.put(`/api/ads/${ad.id}`,{...ad,active:!ad.active});load()}}>
-              {ad.active?'⏸':'▶️'}
-            </button>
-            <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})} onClick={async()=>{await api.delete(`/api/ads/${ad.id}`);load()}}>🗑</button>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 function MinersAdmin() {
   const [contracts, setContracts] = useState([])

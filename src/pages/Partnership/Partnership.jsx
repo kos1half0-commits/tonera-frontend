@@ -22,6 +22,11 @@ export default function Partnership({ onBack }) {
   const [newTitle, setNewTitle]       = useState('')
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [cancelling, setCancelling]   = useState(false)
+  const [banner, setBanner]           = useState(null)
+  const [canCreateBanner, setCanCreateBanner] = useState(false)
+  const [bannerForm, setBannerForm]   = useState({title:'',text:'',image_url:'',link:''})
+  const [showBannerForm, setShowBannerForm] = useState(false)
+  const [bannerSaving, setBannerSaving] = useState(false)
 
   useEffect(() => {
     api.get('/api/partnership/my').then(r => {
@@ -30,6 +35,7 @@ export default function Partnership({ onBack }) {
         api.get(`/api/tasks/${r.data.partnership.task_id}`).then(t => setTask(t.data)).catch(() => {})
       }
     }).catch(() => {})
+    api.get('/api/ads/my-banner').then(r => { setBanner(r.data?.banner || null); setCanCreateBanner(r.data?.can_create || false) }).catch(()=>{})
   }, [])
 
   const showToast = (msg, err=false) => {
@@ -259,6 +265,71 @@ export default function Partnership({ onBack }) {
             </div>
           )}
 
+
+          {/* Partner Banner */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:14,marginBottom:12}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff',marginBottom:10,letterSpacing:'.08em'}}>{'\uD83D\uDCE2 \u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u042B\u0419 \u0411\u0410\u041D\u041D\u0415\u0420'}</div>
+            {banner && (
+              <div style={{background:'#0b1630',border:'1px solid rgba(26,95,255,0.2)',borderRadius:10,padding:12}}>
+                {banner.image_url && <img src={banner.image_url} style={{width:'100%',borderRadius:8,maxHeight:80,objectFit:'cover',marginBottom:8}} onError={e=>e.target.style.display='none'}/>}
+                <div style={{fontFamily:'DM Sans',fontSize:12,fontWeight:700,color:'#e8f2ff',marginBottom:4}}>{banner.title}</div>
+                {banner.text && <div style={{fontFamily:'DM Sans',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:6}}>{banner.text}</div>}
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'rgba(232,242,255,0.3)'}}>
+                  <span>{banner.active ? '\u2705 \u0410\u043A\u0442\u0438\u0432\u0435\u043D' : '\u23F8 \u041D\u0435\u0430\u043A\u0442\u0438\u0432\u0435\u043D'}</span>
+                  {banner.expires_at && <span>{'\u23F0 \u0414\u043E: '+new Date(banner.expires_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</span>}
+                </div>
+                {banner.expires_at && (
+                  <div style={{height:4,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden',marginTop:6}}>
+                    <div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,#1a5fff,#00d4ff)',width:Math.max(0,Math.min(100,(new Date(banner.expires_at)-new Date())/(14*24*60*60*1000)*100))+'%',transition:'width .5s'}}/>
+                  </div>
+                )}
+              </div>
+            )}
+            {!banner && canCreateBanner && !showBannerForm && (
+              <div style={{textAlign:'center'}}>
+                <div style={{fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:10,fontFamily:'DM Sans'}}>{'\u0412\u0430\u043C \u0434\u043E\u0441\u0442\u0443\u043F\u0435\u043D 1 \u0431\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u0431\u0430\u043D\u043D\u0435\u0440 \u043D\u0430 2 \u043D\u0435\u0434\u0435\u043B\u0438!'}</div>
+                <button style={S.btn('linear-gradient(135deg,#1a5fff,#0930cc)','#fff')} onClick={()=>setShowBannerForm(true)}>
+                  {'\u2728 \u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0431\u0430\u043D\u043D\u0435\u0440'}
+                </button>
+              </div>
+            )}
+            {!banner && !canCreateBanner && (
+              <div style={{textAlign:'center',fontSize:11,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>
+                {'\u0411\u0435\u0441\u043F\u043B\u0430\u0442\u043D\u044B\u0439 \u0431\u0430\u043D\u043D\u0435\u0440 \u0443\u0436\u0435 \u0431\u044B\u043B \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u043D'}
+              </div>
+            )}
+            {showBannerForm && (
+              <div style={{marginTop:10}}>
+                <div style={{marginBottom:6}}>
+                  <span style={S.label}>{'\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A'}</span>
+                  <input style={S.input} value={bannerForm.title} onChange={e=>setBannerForm(f=>({...f,title:e.target.value}))} placeholder={'\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u0430\u043D\u0430\u043B\u0430'}/>
+                </div>
+                <div style={{marginBottom:6}}>
+                  <span style={S.label}>{'\u041E\u043F\u0438\u0441\u0430\u043D\u0438\u0435'}</span>
+                  <textarea style={{...S.input,resize:'none'}} rows={2} value={bannerForm.text} onChange={e=>setBannerForm(f=>({...f,text:e.target.value}))} placeholder={'\u041A\u0440\u0430\u0442\u043A\u043E\u0435 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u0435...'}/>
+                </div>
+                <div style={{marginBottom:6}}>
+                  <span style={S.label}>{'\u0421\u0441\u044B\u043B\u043A\u0430 (\u043E\u043F\u0446.)'}</span>
+                  <input style={S.input} value={bannerForm.link} onChange={e=>setBannerForm(f=>({...f,link:e.target.value}))} placeholder={'https://t.me/...'}/>
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <button style={S.btn('linear-gradient(135deg,#1a5fff,#0930cc)','#fff')} disabled={bannerSaving || !bannerForm.title.trim()}
+                    onClick={async()=>{
+                      setBannerSaving(true)
+                      try {
+                        await api.post('/api/ads/partner-banner', bannerForm)
+                        showToast('\u2705 \u0411\u0430\u043D\u043D\u0435\u0440 \u0441\u043E\u0437\u0434\u0430\u043D!')
+                        setShowBannerForm(false)
+                        const r = await api.get('/api/ads/my-banner')
+                        setBanner(r.data?.banner||null); setCanCreateBanner(r.data?.can_create||false)
+                      } catch(e) { showToast(e?.response?.data?.error||'\u041E\u0448\u0438\u0431\u043A\u0430',true) }
+                      setBannerSaving(false)
+                    }}>{bannerSaving ? '\u23F3...' : '\uD83D\uDCE2 \u041E\u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C'}</button>
+                  <button style={S.btnSm('rgba(255,77,106,0.1)','#ff4d6a')} onClick={()=>setShowBannerForm(false)}>{'\u2715'}</button>
+                </div>
+              </div>
+            )}
+          </div>
           {/* Cancel partnership button */}
           {!confirmCancel ? (
             <button style={{width:'100%',marginTop:16,padding:'12px',border:'1px solid rgba(255,77,106,0.2)',borderRadius:10,background:'rgba(255,77,106,0.06)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,cursor:'pointer',letterSpacing:'.05em',transition:'all .2s'}}
