@@ -2,21 +2,16 @@ import { useState, useEffect } from 'react'
 import api from '../../api/index'
 import './Partnership.css'
 
-const STEPS = [
-  { n: 1, icon: '📢', title: 'Опубликуйте пост',    desc: 'Скопируйте пример поста и опубликуйте его в своём канале с логотипом' },
-  { n: 2, icon: '🤖', title: 'Добавьте бота',        desc: 'Добавьте @{bot} в канал как администратора с правом публикации постов' },
-  { n: 3, icon: '📋', title: 'Подайте заявку',       desc: 'Укажите ссылку на канал и ссылку на пост с рекламой' },
-  { n: 4, icon: '✅', title: 'Ожидайте одобрения',   desc: 'Мы проверим канал и одобрим заявку в течение 24 часов' },
-  { n: 5, icon: '🎯', title: 'Получайте трафик',     desc: 'Ваш канал появится в заданиях — тысячи пользователей будут подписываться' },
-]
-
 export default function Partnership({ onBack }) {
   const [info, setInfo]               = useState(null)
-  const [step, setStep]               = useState(0) // 0=info, 1=form
+  const [wizardStep, setWizardStep]   = useState(0) // 0=landing, 1=channel, 2=bot, 3=post, 4=verify
   const [channelUrl, setChannelUrl]   = useState('')
+  const [channelInfo, setChannelInfo] = useState(null) // {count, title}
+  const [botChecked, setBotChecked]   = useState(false)
+  const [postText, setPostText]       = useState('')
   const [postUrl, setPostUrl]         = useState('')
-  const [checking, setChecking]       = useState(false)
   const [postChecked, setPostChecked] = useState(false)
+  const [checking, setChecking]       = useState(false)
   const [loading, setLoading]         = useState(false)
   const [copied, setCopied]           = useState(false)
   const [toast, setToast]             = useState('')
@@ -40,40 +35,109 @@ export default function Partnership({ onBack }) {
     setTimeout(() => setToast(''), 4000)
   }
 
-  const checkPost = async () => {
-    if (!postUrl.trim()) { showToast('Введите ссылку на пост', true); return }
+  const botUsername = info?.bot_username || 'tonera_bot'
+  const refLink = info?.ref_code ? `t.me/${botUsername}?start=${info.ref_code}` : `t.me/${botUsername}`
+  const p = info?.partnership
+
+  const defaultPost = `🚀 Зарабатывай TON каждый день!\n\n💎 TonEra — платформа для заработка TON:\n📈 Стейкинг — 1% в день\n🎰 Игры — крути и выигрывай\n✅ Задания — выполняй и получай TON\n\n👇 Заходи прямо сейчас:\n${refLink}`
+
+  // Initialize post text with default
+  useEffect(() => {
+    if (refLink && !postText) setPostText(defaultPost)
+  }, [refLink])
+
+  // ===== STEP 1: Check channel =====
+  const checkChannel = async () => {
+    if (!channelUrl.trim()) { showToast('Введите ссылку на канал', true); return }
     setChecking(true)
     try {
-      const r = await api.post('/api/partnership/check', { post_url: postUrl })
-      if (r.data.ok) { setPostChecked(true); showToast('✅ Пост проверен!') }
-      else showToast(r.data.error || 'Пост не прошёл проверку', true)
+      const r = await api.post('/api/partnership/check-channel', { channel_url: channelUrl })
+      if (r.data.ok) {
+        setChannelInfo({ count: r.data.count, title: r.data.title })
+        showToast(`✅ Канал подходит! ${r.data.count} подписчиков`)
+        setWizardStep(2)
+      } else {
+        showToast(r.data.error || 'Канал не подходит', true)
+      }
     } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
     setChecking(false)
   }
 
-  const apply = async () => {
-    if (!channelUrl.trim()) { showToast('Введите ссылку на канал', true); return }
-    if (!postChecked) { showToast('Сначала проверьте пост', true); return }
+  // ===== STEP 2: Check bot admin =====
+  const checkBotAdmin = async () => {
+    setChecking(true)
+    try {
+      const r = await api.post('/api/partnership/check-bot-admin', { channel_url: channelUrl })
+      if (r.data.ok) {
+        setBotChecked(true)
+        showToast('✅ Бот — администратор канала!')
+        setWizardStep(3)
+      } else {
+        showToast(r.data.error || 'Бот не найден', true)
+      }
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+    setChecking(false)
+  }
+
+  // ===== STEP 4: Check post published =====
+  const checkPostPublished = async () => {
+    if (!postUrl.trim()) { showToast('Вставьте ссылку на пост', true); return }
+    setChecking(true)
+    try {
+      const r = await api.post('/api/partnership/check', { post_url: postUrl })
+      if (r.data.ok) {
+        setPostChecked(true)
+        showToast('✅ Пост проверен!')
+      } else {
+        showToast(r.data.error || 'Пост не прошёл проверку', true)
+      }
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
+    setChecking(false)
+  }
+
+  // ===== STEP 3: Publish promo post via bot =====
+  const publishPromo = async () => {
+    if (!postText.includes('t.me/')) { showToast('Текст должен содержать ссылку t.me/', true); return }
+    setChecking(true)
+    try {
+      const r = await api.post('/api/partnership/publish-promo', { channel_url: channelUrl, text: postText })
+      if (r.data.ok) {
+        setPostUrl(r.data.post_url)
+        showToast('✅ Пост опубликован в канале!')
+        setWizardStep(4)
+      } else {
+        showToast(r.data.error || 'Не удалось опубликовать', true)
+      }
+    } catch (e) { showToast(e?.response?.data?.error || 'Ошибка публикации', true) }
+    setChecking(false)
+  }
+
+  // ===== Submit application =====
+  const submitApplication = async () => {
     setLoading(true)
     try {
       await api.post('/api/partnership/apply', { channel_url: channelUrl, post_url: postUrl })
       showToast('✅ Заявка отправлена!')
       const r = await api.get('/api/partnership/my')
       setInfo(r.data)
+      setWizardStep(0)
     } catch (e) { showToast(e?.response?.data?.error || 'Ошибка', true) }
     setLoading(false)
   }
 
-  const botUsername = info?.bot_username || 'tonera_bot'
-  const minSubs     = info?.min_subs || 1000
-  const refLink     = info?.ref_code
-    ? `t.me/${botUsername}?start=${info.ref_code}`
-    : `t.me/${botUsername}`
-  const p = info?.partnership
-  const postText = `🚀 Зарабатывай TON каждый день!\n\n💎 TonEra — платформа для заработка TON:\n📈 Стейкинг — 1% в день\n🎰 Игры — крути и выигрывай\n✅ Задания — выполняй и получай TON\n\n👇 Заходи прямо сейчас:\n${refLink}`
+  const S = {
+    wrap: { fontFamily: 'DM Sans, sans-serif' },
+    stepNum: { display:'inline-flex',alignItems:'center',justifyContent:'center',width:28,height:28,borderRadius:'50%',fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:900,flexShrink:0 },
+    card: { background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:14,marginBottom:12 },
+    input: { width:'100%',padding:'10px 14px',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:10,color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:13,outline:'none',boxSizing:'border-box' },
+    btn: (bg,color) => ({ width:'100%',padding:'12px',border:'none',borderRadius:10,fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,cursor:'pointer',background:bg,color }),
+    btnSm: (bg,color) => ({ padding:'8px 16px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',background:bg,color }),
+    stepLine: (active,done) => ({ height:3,flex:1,borderRadius:2,background:done?'#00e676':active?'rgba(0,230,118,0.3)':'rgba(26,95,255,0.1)',transition:'all 0.3s' }),
+    label: { fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,letterSpacing:'.08em',color:'rgba(232,242,255,0.4)',marginBottom:6,display:'block' },
+  }
 
   return (
-    <div className="partner-wrap">
+    <div className="partner-wrap" style={S.wrap}>
       {toast && <div className={`partner-toast ${toastErr?'err':''}`}>{toast}</div>}
 
       <div className="partner-header">
@@ -81,7 +145,7 @@ export default function Partnership({ onBack }) {
         <div className="partner-title">🤝 ПАРТНЁРСТВО</div>
       </div>
 
-      {/* СТАТУС ЗАЯВКИ */}
+      {/* ======== APPROVED ======== */}
       {p?.status === 'approved' && (
         <div className="p-approved-wrap">
           <div className="p-status approved">
@@ -91,21 +155,18 @@ export default function Partnership({ onBack }) {
             <div className="ps-channel">{p.channel_url}</div>
           </div>
 
-          {/* LEVEL CARD */}
           {info?.level && (
-            <div style={{background:'#0e1c3a',border:`1px solid ${info.level.color}33`,borderRadius:12,padding:14,marginBottom:12}}>
+            <div style={{...S.card, borderColor: info.level.color + '33'}}>
               <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
                 <div style={{fontSize:28}}>{info.level.emoji}</div>
                 <div>
                   <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:900,color:info.level.color}}>{info.level.name.toUpperCase()}</div>
-                  <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.4)'}}>
-                    👥 {info.level.subscribers?.toLocaleString() || 0} подписчиков
-                  </div>
+                  <div style={{fontSize:10,color:'rgba(232,242,255,0.4)'}}>👥 {info.level.subscribers?.toLocaleString() || 0} подписчиков</div>
                 </div>
               </div>
               {info.level.nextLevel && (
                 <div>
-                  <div style={{display:'flex',justifyContent:'space-between',fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.35)',marginBottom:4}}>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'rgba(232,242,255,0.35)',marginBottom:4}}>
                     <span>{info.level.name}</span>
                     <span>{info.level.nextLevel.emoji} {info.level.nextLevel.name} ({info.level.nextLevel.min.toLocaleString()})</span>
                   </div>
@@ -117,27 +178,25 @@ export default function Partnership({ onBack }) {
             </div>
           )}
 
-          {/* TASK STATS */}
           {info?.taskStats && (
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:12}}>
-              <div style={{background:'#0e1c3a',border:'1px solid rgba(0,230,118,0.15)',borderRadius:10,padding:'10px 8px',textAlign:'center'}}>
-                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00e676'}}>{info.taskStats.executions || 0}</div>
-                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.4)'}}>Подписок</div>
+              <div style={{...S.card,textAlign:'center',borderColor:'rgba(0,230,118,0.15)'}}>
+                <div style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:'#00e676'}}>{info.taskStats.executions || 0}</div>
+                <div style={{fontSize:8,color:'rgba(232,242,255,0.4)'}}>Подписок</div>
               </div>
-              <div style={{background:'#0e1c3a',border:'1px solid rgba(0,212,255,0.15)',borderRadius:10,padding:'10px 8px',textAlign:'center'}}>
-                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#00d4ff'}}>{info.taskStats.total_spent?.toFixed(4) || '0'}</div>
-                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.4)'}}>TON потрачено</div>
+              <div style={{...S.card,textAlign:'center',borderColor:'rgba(0,212,255,0.15)'}}>
+                <div style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:'#00d4ff'}}>{info.taskStats.total_spent?.toFixed(4) || '0'}</div>
+                <div style={{fontSize:8,color:'rgba(232,242,255,0.4)'}}>TON потрачено</div>
               </div>
-              <div style={{background:'#0e1c3a',border:'1px solid rgba(168,85,247,0.15)',borderRadius:10,padding:'10px 8px',textAlign:'center'}}>
-                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:info.taskStats.active?'#00e676':'#ff4d6a'}}>{info.taskStats.active ? 'ВКЛ' : 'ПАУЗА'}</div>
-                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.4)'}}>Статус</div>
+              <div style={{...S.card,textAlign:'center',borderColor:'rgba(168,85,247,0.15)'}}>
+                <div style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:info.taskStats.active?'#00e676':'#ff4d6a'}}>{info.taskStats.active?'ВКЛ':'ПАУЗА'}</div>
+                <div style={{fontSize:8,color:'rgba(232,242,255,0.4)'}}>Статус</div>
               </div>
             </div>
           )}
 
-          {/* LAST CHECK */}
           {p.last_checked_at && (
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)',textAlign:'center',marginBottom:10}}>
+            <div style={{fontSize:10,color:'rgba(232,242,255,0.3)',textAlign:'center',marginBottom:10}}>
               🔍 Последняя проверка: {new Date(p.last_checked_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
             </div>
           )}
@@ -146,53 +205,28 @@ export default function Partnership({ onBack }) {
             <div className="p-task-block">
               <div className="ptb-title">📋 ВАШЕ ЗАДАНИЕ</div>
               <div className="ptb-stats">
-                <div className="ptb-stat">
-                  <div className="ptb-val">{task.executions || 0}</div>
-                  <div className="ptb-lbl">Выполнено</div>
-                </div>
-                <div className="ptb-stat">
-                  <div className="ptb-val">{task.max_executions || 0}</div>
-                  <div className="ptb-lbl">Максимум</div>
-                </div>
-                <div className="ptb-stat">
-                  <div className="ptb-val" style={{color: task.active ? '#00e676' : '#ff4d6a'}}>
-                    {task.active ? 'АКТИВНО' : 'ПАУЗА'}
-                  </div>
-                  <div className="ptb-lbl">Статус</div>
-                </div>
+                <div className="ptb-stat"><div className="ptb-val">{task.executions||0}</div><div className="ptb-lbl">Выполнено</div></div>
+                <div className="ptb-stat"><div className="ptb-val">{task.max_executions||0}</div><div className="ptb-lbl">Максимум</div></div>
+                <div className="ptb-stat"><div className="ptb-val" style={{color:task.active?'#00e676':'#ff4d6a'}}>{task.active?'АКТИВНО':'ПАУЗА'}</div><div className="ptb-lbl">Статус</div></div>
               </div>
-
               <div className="ptb-progress-wrap">
-                <div className="ptb-progress-bar">
-                  <div className="ptb-progress-fill" style={{width: `${Math.min(100, ((task.executions||0)/(task.max_executions||1))*100)}%`}}/>
-                </div>
+                <div className="ptb-progress-bar"><div className="ptb-progress-fill" style={{width:`${Math.min(100,((task.executions||0)/(task.max_executions||1))*100)}%`}}/></div>
                 <div className="ptb-progress-label">{Math.round(((task.executions||0)/(task.max_executions||1))*100)}%</div>
               </div>
-
               {editDesc ? (
                 <div className="ptb-edit">
                   <div className="ptb-edit-label">НАЗВАНИЕ</div>
-                  <input className="ptb-input" value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder="Название задания"/>
+                  <input className="ptb-input" value={newTitle} onChange={e=>setNewTitle(e.target.value)} placeholder="Название"/>
                   <div className="ptb-edit-label">ОПИСАНИЕ</div>
-                  <textarea className="ptb-textarea" value={newDesc} onChange={e=>setNewDesc(e.target.value)} rows={3} placeholder="Описание задания..."/>
+                  <textarea className="ptb-textarea" value={newDesc} onChange={e=>setNewDesc(e.target.value)} rows={3} placeholder="Описание..."/>
                   <div className="ptb-edit-btns">
-                    <button className="ptb-save-btn" onClick={async()=>{
-                      await api.put(`/api/tasks/${task.id}`, { title: newTitle, description: newDesc })
-                      await new Promise(r => setTimeout(r, 300))
-                      const r = await api.get(`/api/tasks/${task.id}`)
-                      setTask({...r.data})
-                      setEditDesc(false)
-                      showToast('✅ Задание обновлено')
-                    }}>СОХРАНИТЬ</button>
+                    <button className="ptb-save-btn" onClick={async()=>{ await api.put(`/api/tasks/${task.id}`,{title:newTitle,description:newDesc}); const r=await api.get(`/api/tasks/${task.id}`); setTask(r.data); setEditDesc(false); showToast('✅ Обновлено') }}>СОХРАНИТЬ</button>
                     <button className="ptb-cancel-btn" onClick={()=>setEditDesc(false)}>ОТМЕНА</button>
                   </div>
                 </div>
               ) : (
                 <div className="ptb-info-block">
-                  <div className="ptb-name-row">
-                    <div className="ptb-name">{task.title}</div>
-                    <button className="ptb-edit-btn" onClick={()=>{ setEditDesc(true); setNewDesc(task.description||''); setNewTitle(task.title||'') }}>✏️</button>
-                  </div>
+                  <div className="ptb-name-row"><div className="ptb-name">{task.title}</div><button className="ptb-edit-btn" onClick={()=>{setEditDesc(true);setNewDesc(task.description||'');setNewTitle(task.title||'')}}>✏️</button></div>
                   <div className="ptb-desc">{task.description || 'Нет описания'}</div>
                 </div>
               )}
@@ -201,134 +235,216 @@ export default function Partnership({ onBack }) {
         </div>
       )}
 
+      {/* ======== PENDING ======== */}
       {p?.status === 'pending' && (
         <div className="p-status pending">
           <div className="ps-icon">⏳</div>
           <div className="ps-title">ЗАЯВКА НА РАССМОТРЕНИИ</div>
-          <div className="ps-desc">Мы проверяем вашу заявку. Обычно это занимает до 24 часов. После одобрения ваш канал появится в заданиях TonEra.</div>
+          <div className="ps-desc">Мы проверяем вашу заявку. После одобрения ваш канал появится в заданиях TonEra.</div>
           <div className="ps-channel">{p.channel_url}</div>
         </div>
       )}
 
+      {/* ======== REJECTED ======== */}
       {p?.status === 'rejected' && (
         <div className="p-status rejected">
           <div className="ps-icon">❌</div>
           <div className="ps-title">ЗАЯВКА ОТКЛОНЕНА</div>
-          <div className="ps-desc">Убедитесь что пост содержит ссылку на бота и канал публичный, затем подайте заявку снова</div>
-          <button className="ps-retry-btn" onClick={() => setStep(1)}>ПОДАТЬ ЗАНОВО</button>
+          <div className="ps-desc">Убедитесь что пост содержит ссылку на бота и канал публичный</div>
+          <button style={S.btn('rgba(168,85,247,0.15)','#a855f7')} onClick={() => { setWizardStep(1); setChannelInfo(null); setBotChecked(false); setPostChecked(false) }}>
+            🔄 ПОДАТЬ ЗАНОВО
+          </button>
         </div>
       )}
 
-      {!p && step === 0 && (
+      {/* ======== WIZARD ======== */}
+      {!p && (
         <>
-          {/* ПРЕИМУЩЕСТВА */}
-          <div className="p-benefits">
-            <div className="pb-title">ЧТО ВЫ ПОЛУЧИТЕ</div>
-            <div className="pb-item">
-              <div className="pb-icon">🎯</div>
-              <div>
-                <div className="pb-item-title">Бесплатный трафик</div>
-                <div className="pb-item-desc">Ваш канал появится в заданиях TonEra — тысячи активных пользователей будут подписываться</div>
-              </div>
-            </div>
-
-            <div className="pb-item">
-              <div className="pb-icon">📣</div>
-              <div>
-                <div className="pb-item-title">Публикация постов</div>
-                <div className="pb-item-desc">Мы сможем публиковать посты в вашем канале через нашего бота по взаимной договорённости</div>
-              </div>
-            </div>
-          </div>
-
-          {/* КАК ЭТО РАБОТАЕТ */}
-          <div className="p-how">
-            <div className="ph-title">КАК ЭТО РАБОТАЕТ</div>
-            {STEPS.map(s => (
-              <div key={s.n} className="ph-step">
-                <div className="ph-num">{s.n}</div>
-                <div className="ph-icon">{s.icon}</div>
-                <div className="ph-content">
-                  <div className="ph-step-title">{s.title}</div>
-                  <div className="ph-step-desc">{s.desc.replace('{bot}', botUsername)}</div>
+          {wizardStep === 0 && (
+            <>
+              {/* LANDING */}
+              <div style={S.card}>
+                <div style={{textAlign:'center',marginBottom:14}}>
+                  <div style={{fontSize:40,marginBottom:8}}>🤝</div>
+                  <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#e8f2ff',marginBottom:6}}>СТАНЬТЕ ПАРТНЁРОМ</div>
+                  <div style={{fontSize:12,color:'rgba(232,242,255,0.5)',lineHeight:1.5}}>
+                    Добавьте ваш канал в задания TonEra — тысячи пользователей будут подписываться на вас бесплатно
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* ТРЕБОВАНИЯ */}
-          <div className="p-req">
-            <div className="pr-title">ТРЕБОВАНИЯ</div>
-            <div className="pr-row"><span className="pr-check">✅</span><span>Минимум <b>{minSubs.toLocaleString()}</b> подписчиков в канале</span></div>
-            <div className="pr-row"><span className="pr-check">✅</span><span>Публичный Telegram канал</span></div>
-            <div className="pr-row"><span className="pr-check">✅</span><span>Опубликован пост с рекламой TonEra</span></div>
-            <div className="pr-row"><span className="pr-check">✅</span><span>Бот <b>@{botUsername}</b> добавлен как администратор</span></div>
-          </div>
+              <div style={S.card}>
+                <div style={S.label}>ЧТО ВЫ ПОЛУЧИТЕ</div>
+                {[
+                  {icon:'🎯',title:'Бесплатный трафик',desc:'Ваш канал появится в заданиях — подписчики каждый день'},
+                  {icon:'📣',title:'Публикация постов',desc:'Мы можем публиковать посты в вашем канале по договорённости'},
+                  {icon:'🏅',title:'Уровни партнёрства',desc:'Больше подписчиков = больше выполнений задания'},
+                ].map((b,i) => (
+                  <div key={i} style={{display:'flex',gap:10,alignItems:'flex-start',padding:'8px 0',borderTop:i?'1px solid rgba(26,95,255,0.08)':'none'}}>
+                    <div style={{fontSize:20,flexShrink:0}}>{b.icon}</div>
+                    <div><div style={{fontSize:12,fontWeight:700,color:'#e8f2ff',marginBottom:2}}>{b.title}</div><div style={{fontSize:10,color:'rgba(232,242,255,0.4)'}}>{b.desc}</div></div>
+                  </div>
+                ))}
+              </div>
 
-          <button className="p-start-btn" onClick={() => setStep(1)}>
-            🤝 СТАТЬ ПАРТНЁРОМ
-          </button>
-        </>
-      )}
-
-      {!p && step === 1 && (
-        <>
-          {/* ШАГ 1 — ПРИМЕР ПОСТА */}
-          <div className="p-section">
-            <div className="p-section-num">ШАГ 1</div>
-            <div className="p-section-title">📢 Опубликуйте рекламный пост</div>
-            <div className="p-section-desc">Скопируйте текст ниже, прикрепите логотип и опубликуйте в своём канале</div>
-            <img src="/logo.png" className="pe-logo" alt="TonEra" />
-            <div className="pe-text">{postText}</div>
-            <div className="pe-btn-row">
-              <button className="pe-download-btn" onClick={() => {
-                const tg = window.Telegram?.WebApp
-                if (tg) tg.openLink(window.location.origin + '/logo.png')
-                else window.open('/logo.png', '_blank')
-              }}>⬇️ ЛОГОТИП</button>
-              <button className="pe-copy-btn" onClick={() => {
-                navigator.clipboard.writeText(postText).then(() => {
-                  setCopied(true); setTimeout(() => setCopied(false), 3000)
-                })
-              }}>{copied ? '✅ СКОПИРОВАНО' : '📋 СКОПИРОВАТЬ'}</button>
-            </div>
-          </div>
-
-          {/* ШАГ 2 — ДОБАВИТЬ БОТА */}
-          <div className="p-section">
-            <div className="p-section-num">ШАГ 2</div>
-            <div className="p-section-title">🤖 Добавьте бота в канал</div>
-            <div className="p-section-desc">Добавьте <b>@{botUsername}</b> как администратора канала с правом публикации постов</div>
-            <div className="p-tip">💡 Это нужно чтобы мы могли публиковать посты в вашем канале и проверять подписчиков</div>
-          </div>
-
-          {/* ШАГ 3 — ФОРМА ЗАЯВКИ */}
-          <div className="p-section">
-            <div className="p-section-num">ШАГ 3</div>
-            <div className="p-section-title">📋 Подайте заявку</div>
-            <div className="p-section-desc">Укажите ссылки на канал и опубликованный пост</div>
-
-            <div className="pf-label">ССЫЛКА НА КАНАЛ</div>
-            <input className="pf-input" placeholder="https://t.me/yourchannel"
-              value={channelUrl} onChange={e => setChannelUrl(e.target.value)} />
-
-            <div className="pf-label" style={{marginTop:12}}>ССЫЛКА НА ПОСТ С РЕКЛАМОЙ</div>
-            <div className="pf-hint">Формат: https://t.me/yourchannel/123</div>
-            <div className="pf-post-row">
-              <input className="pf-input" placeholder="https://t.me/yourchannel/123"
-                value={postUrl} onChange={e => { setPostUrl(e.target.value); setPostChecked(false) }} />
-              <button className={`pf-check-btn ${postChecked?'checked':''}`} onClick={checkPost} disabled={checking}>
-                {checking ? '...' : postChecked ? '✓' : 'ПРОВЕРИТЬ'}
+              <button style={S.btn('linear-gradient(135deg,rgba(168,85,247,0.3),rgba(0,212,255,0.3))','#e8f2ff')} onClick={() => setWizardStep(1)}>
+                🚀 НАЧАТЬ ОФОРМЛЕНИЕ
               </button>
-            </div>
-            {postChecked && <div className="pf-verified">✅ Пост содержит ссылку на бота</div>}
+            </>
+          )}
 
-            <button className="pf-submit-btn" onClick={apply} disabled={loading || !postChecked}>
-              {loading ? 'ОТПРАВКА...' : '📨 ОТПРАВИТЬ ЗАЯВКУ'}
-            </button>
+          {wizardStep >= 1 && (
+            <>
+              {/* PROGRESS BAR */}
+              <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:16}}>
+                {[1,2,3,4].map(n => (
+                  <div key={n} style={{display:'flex',alignItems:'center',gap:4,flex:1}}>
+                    <div style={{...S.stepNum, background:wizardStep>=n?'rgba(0,230,118,0.15)':'rgba(26,95,255,0.08)', color:wizardStep>=n?'#00e676':'rgba(232,242,255,0.3)', border:wizardStep===n?'2px solid rgba(0,230,118,0.4)':'2px solid transparent'}}>{wizardStep>n?'✓':n}</div>
+                    {n<4 && <div style={S.stepLine(wizardStep===n,wizardStep>n)}/>}
+                  </div>
+                ))}
+              </div>
 
-            <button className="p-back-link" onClick={() => setStep(0)}>← Назад</button>
-          </div>
+              {/* STEP 1 — CHANNEL CHECK */}
+              {wizardStep === 1 && (
+                <div style={S.card}>
+                  <div style={{textAlign:'center',marginBottom:12}}>
+                    <div style={{fontSize:32,marginBottom:6}}>📢</div>
+                    <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:900,color:'#e8f2ff'}}>ШАГ 1: ПРОВЕРКА КАНАЛА</div>
+                    <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginTop:4}}>
+                      Введите ссылку на ваш публичный Telegram-канал
+                    </div>
+                  </div>
+
+                  <div style={S.label}>ССЫЛКА НА КАНАЛ</div>
+                  <input style={{...S.input,marginBottom:12}} placeholder="https://t.me/yourchannel" value={channelUrl} onChange={e => setChannelUrl(e.target.value)} />
+
+                  <div style={{fontSize:10,color:'rgba(232,242,255,0.3)',marginBottom:12,padding:'8px 10px',background:'rgba(26,95,255,0.04)',borderRadius:8}}>
+                    ℹ️ Минимум <b>{info?.min_subs?.toLocaleString() || '1,000'}</b> подписчиков · Канал должен быть публичным
+                  </div>
+
+                  <button style={{...S.btn('rgba(0,230,118,0.15)','#00e676'),opacity:checking?0.5:1}} onClick={checkChannel} disabled={checking}>
+                    {checking ? '⏳ ПРОВЕРЯЮ...' : '🔍 ПРОВЕРИТЬ КАНАЛ'}
+                  </button>
+
+                  <button style={{...S.btn('transparent','rgba(232,242,255,0.3)'),marginTop:6,fontSize:9}} onClick={() => setWizardStep(0)}>← Назад</button>
+                </div>
+              )}
+
+              {/* STEP 2 — BOT ADMIN */}
+              {wizardStep === 2 && (
+                <div style={S.card}>
+                  <div style={{textAlign:'center',marginBottom:12}}>
+                    <div style={{fontSize:32,marginBottom:6}}>🤖</div>
+                    <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:900,color:'#e8f2ff'}}>ШАГ 2: ДОБАВЬТЕ БОТА</div>
+                    <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginTop:4}}>
+                      Добавьте <b style={{color:'#00d4ff'}}>@{botUsername}</b> как администратора канала
+                    </div>
+                  </div>
+
+                  {channelInfo && (
+                    <div style={{background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.15)',borderRadius:8,padding:10,marginBottom:12,textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:11,fontWeight:700,color:'#00e676'}}>{channelInfo.title}</div>
+                      <div style={{fontSize:10,color:'rgba(232,242,255,0.4)'}}>👥 {channelInfo.count.toLocaleString()} подписчиков</div>
+                    </div>
+                  )}
+
+                  <div style={{fontSize:11,color:'rgba(232,242,255,0.5)',lineHeight:1.6,marginBottom:14,padding:'10px 12px',background:'rgba(26,95,255,0.04)',borderRadius:8}}>
+                    <div style={{marginBottom:6}}><b>Как добавить:</b></div>
+                    <div>1. Откройте настройки канала</div>
+                    <div>2. «Администраторы» → «Добавить админа»</div>
+                    <div>3. Найдите <b style={{color:'#00d4ff'}}>@{botUsername}</b></div>
+                    <div>4. Включите «Публикация сообщений» ✅</div>
+                    <div>5. Нажмите «Сохранить»</div>
+                  </div>
+
+                  <button style={{...S.btn('rgba(0,230,118,0.15)','#00e676'),opacity:checking?0.5:1}} onClick={checkBotAdmin} disabled={checking}>
+                    {checking ? '⏳ ПРОВЕРЯЮ...' : '✅ ПРОВЕРИТЬ БОТА'}
+                  </button>
+
+                  <button style={{...S.btn('transparent','rgba(232,242,255,0.3)'),marginTop:6,fontSize:9}} onClick={() => setWizardStep(1)}>← Назад</button>
+                </div>
+              )}
+
+              {/* STEP 3 — EDIT & PUBLISH POST */}
+              {wizardStep === 3 && (
+                <div style={S.card}>
+                  <div style={{textAlign:'center',marginBottom:12}}>
+                    <div style={{fontSize:32,marginBottom:6}}>📝</div>
+                    <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:900,color:'#e8f2ff'}}>ШАГ 3: РЕКЛАМНЫЙ ПОСТ</div>
+                    <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginTop:4}}>
+                      Отредактируйте текст и нажмите «Опубликовать» — бот опубликует пост в вашем канале
+                    </div>
+                  </div>
+
+                  {/* LOGO PREVIEW */}
+                  <div style={{textAlign:'center',marginBottom:12}}>
+                    <img src="/logo.png" alt="TonEra" style={{width:120,height:120,borderRadius:12,border:'1px solid rgba(26,95,255,0.15)'}} />
+                    <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:4}}>📷 Логотип (нельзя изменить)</div>
+                  </div>
+
+                  <div style={S.label}>ТЕКСТ ПОСТА</div>
+                  <textarea
+                    value={postText}
+                    onChange={e => setPostText(e.target.value)}
+                    rows={8}
+                    style={{...S.input,resize:'vertical',lineHeight:1.5,minHeight:140}}
+                  />
+
+                  <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:4,marginBottom:8}}>
+                    ⚠️ Пост должен содержать ссылку: <b style={{color:'#00d4ff'}}>{refLink}</b>
+                  </div>
+
+                  <button style={S.btnSm('rgba(168,85,247,0.12)','#a855f7')} onClick={() => setPostText(defaultPost)}>↺ СБРОСИТЬ ТЕКСТ</button>
+
+                  <div style={{marginTop:12}}/>
+                  <button style={{...S.btn('linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2))','#00e676'),opacity:checking?0.5:1}} onClick={publishPromo} disabled={checking}>
+                    {checking ? '⏳ ПУБЛИКУЮ...' : '📢 ОПУБЛИКОВАТЬ В КАНАЛЕ'}
+                  </button>
+
+                  <button style={{...S.btn('transparent','rgba(232,242,255,0.3)'),marginTop:6,fontSize:9}} onClick={() => setWizardStep(2)}>← Назад</button>
+                </div>
+              )}
+
+              {/* STEP 4 — VERIFY POST */}
+              {wizardStep === 4 && (
+                <div style={S.card}>
+                  <div style={{textAlign:'center',marginBottom:12}}>
+                    <div style={{fontSize:32,marginBottom:6}}>✅</div>
+                    <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:900,color:'#e8f2ff'}}>ШАГ 4: ПРОВЕРКА ПУБЛИКАЦИИ</div>
+                    <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginTop:4}}>
+                      Проверяем что пост успешно опубликован в канале
+                    </div>
+                  </div>
+
+                  {postUrl && (
+                    <div style={{background:'rgba(26,95,255,0.04)',border:'1px solid rgba(26,95,255,0.1)',borderRadius:8,padding:10,marginBottom:12}}>
+                      <div style={{fontSize:9,color:'rgba(232,242,255,0.3)',marginBottom:4}}>ССЫЛКА НА ПОСТ</div>
+                      <div style={{fontSize:11,color:'#00d4ff',wordBreak:'break-all'}}>{postUrl}</div>
+                    </div>
+                  )}
+
+                  {!postChecked ? (
+                    <button style={{...S.btn('rgba(0,212,255,0.15)','#00d4ff'),opacity:checking?0.5:1}} onClick={checkPostPublished} disabled={checking}>
+                      {checking ? '⏳ ПРОВЕРЯЮ...' : '🔍 ПРОВЕРИТЬ ПОСТ'}
+                    </button>
+                  ) : (
+                    <>
+                      <div style={{background:'rgba(0,230,118,0.08)',border:'1px solid rgba(0,230,118,0.2)',borderRadius:8,padding:10,textAlign:'center',marginBottom:12}}>
+                        <div style={{fontFamily:'Orbitron',fontSize:11,fontWeight:700,color:'#00e676'}}>✅ ПОСТ ПРОВЕРЕН</div>
+                        <div style={{fontSize:10,color:'rgba(232,242,255,0.4)',marginTop:4}}>Содержит ссылку на бота — всё в порядке!</div>
+                      </div>
+                      <button style={{...S.btn('linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2))','#00e676'),opacity:loading?0.5:1}} onClick={submitApplication} disabled={loading}>
+                        {loading ? '⏳ ОТПРАВКА...' : '🚀 ОТПРАВИТЬ ЗАЯВКУ'}
+                      </button>
+                    </>
+                  )}
+
+                  <button style={{...S.btn('transparent','rgba(232,242,255,0.3)'),marginTop:6,fontSize:9}} onClick={() => setWizardStep(3)}>← Назад</button>
+                </div>
+              )}
+            </>
+          )}
         </>
       )}
     </div>
