@@ -59,13 +59,14 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
       return () => clearInterval(t)
     }).catch(() => {})
 
-    api.get('/api/tasks').then(r => {
-      const done = (r.data || []).filter(t => t.completed).length
-      // Also check user_tasks count for tasks that may have been deactivated
-      api.get('/api/tasks/my-completed-count').then(r2 => {
-        setTasksDone(r2.data?.count ?? done)
-      }).catch(() => setTasksDone(done))
-    }).catch(() => setTasksDone(0))
+    api.get('/api/tasks/my-completed-count').then(r => {
+      setTasksDone(r.data?.count ?? 0)
+    }).catch(() => {
+      // fallback: count from active tasks list
+      api.get('/api/tasks').then(r => {
+        setTasksDone((r.data || []).filter(t => t.completed).length)
+      }).catch(() => setTasksDone(0))
+    })
 
     getUserStakes().then(r => {
       const total = (r.data || []).reduce((s, st) => s + parseFloat(st.amount), 0)
