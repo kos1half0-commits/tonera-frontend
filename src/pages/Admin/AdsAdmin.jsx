@@ -3,7 +3,7 @@ import api from '../../api/index'
 
 export default function AdsAdmin() {
   const [ads, setAds] = useState([])
-  const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', linkToAdOrder:false })
+  const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', linkToAdOrder:false, expires_at:'' })
   const [editing, setEditing] = useState(null)
   const [toast, setAdsToast] = useState('')
   const [adsTab, setAdsTab] = useState('manual')
@@ -21,12 +21,16 @@ export default function AdsAdmin() {
     } else {
       await api.post('/api/ads', form)
     }
-    setForm({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet' })
+    setForm({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', expires_at:'' })
     await load(); showToast('\u2705 \u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e')
   }
 
   const manualAds = ads.filter(a => !a.type || a.type === 'manual')
   const partnerAds = ads.filter(a => a.type === 'partner')
+
+  // Totals
+  const totalClicks = ads.reduce((s,a) => s + parseInt(a.clicks||0), 0)
+  const totalViews = ads.reduce((s,a) => s + parseInt(a.views||0), 0)
 
   const S = {
     input: {width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',marginBottom:8,boxSizing:'border-box'},
@@ -38,11 +42,27 @@ export default function AdsAdmin() {
     statLbl: {fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)',marginTop:2},
   }
 
+  const fmtDate = (d) => {
+    if (!d) return ''
+    const dt = new Date(d)
+    return dt.toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})
+  }
+
+  const daysLeft = (d) => {
+    if (!d) return null
+    const diff = Math.ceil((new Date(d) - new Date()) / (1000*60*60*24))
+    return diff
+  }
+
   const renderAd = (ad) => {
     const isPartner = ad.type === 'partner'
     const isExpired = ad.expires_at && new Date(ad.expires_at) < new Date()
     const statusColor = !ad.active ? '#ff4d6a' : isExpired ? '#ffb300' : '#00e676'
     const statusText = !ad.active ? '\u0412\u044b\u043a\u043b' : isExpired ? '\u0418\u0441\u0442\u0451\u043a' : '\u0410\u043a\u0442\u0438\u0432\u0435\u043d'
+    const clicks = parseInt(ad.clicks||0)
+    const views = parseInt(ad.views||0)
+    const ctr = views > 0 ? (clicks / views * 100).toFixed(1) : '0'
+    const days = daysLeft(ad.expires_at)
 
     return (
       <div key={ad.id} style={{background:'#0e1c3a',border:`1px solid ${ad.active && !isExpired?'rgba(26,95,255,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
@@ -53,18 +73,41 @@ export default function AdsAdmin() {
           {isPartner && <span style={{fontSize:8,fontFamily:'Orbitron',fontWeight:700,color:'#a855f7',background:'rgba(168,85,247,0.1)',padding:'3px 8px',borderRadius:5}}>{'\u041f\u0430\u0440\u0442\u043d\u0451\u0440'}</span>}
         </div>
         <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:2}}>{ad.text}</div>
+
+        {/* Stats row */}
+        <div style={{display:'flex',gap:8,marginBottom:6,marginTop:6}}>
+          <div style={{background:'rgba(0,212,255,0.06)',border:'1px solid rgba(0,212,255,0.12)',borderRadius:8,padding:'5px 10px',flex:1,textAlign:'center'}}>
+            <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#00d4ff'}}>{views}</div>
+            <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>{'\u041f\u041e\u041a\u0410\u0417\u042b'}</div>
+          </div>
+          <div style={{background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.12)',borderRadius:8,padding:'5px 10px',flex:1,textAlign:'center'}}>
+            <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#00e676'}}>{clicks}</div>
+            <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>{'\u041a\u041b\u0418\u041a\u0418'}</div>
+          </div>
+          <div style={{background:'rgba(255,179,0,0.06)',border:'1px solid rgba(255,179,0,0.12)',borderRadius:8,padding:'5px 10px',flex:1,textAlign:'center'}}>
+            <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#ffb300'}}>{ctr}%</div>
+            <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>CTR</div>
+          </div>
+        </div>
+
+        {/* Meta info */}
         <div style={{display:'flex',gap:8,fontSize:9,color:'rgba(232,242,255,0.3)',marginBottom:6,flexWrap:'wrap'}}>
           <span>{'\uD83D\uDCC4 '+ad.pages}</span>
           {isPartner && ad.username && <span>{'\uD83D\uDC64 @'+ad.username}</span>}
-          {ad.expires_at && <span>{'\u23F0 '+new Date(ad.expires_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</span>}
+          {ad.expires_at && <span>{'\u23F0 '+fmtDate(ad.expires_at)}</span>}
+          {days !== null && days > 0 && <span style={{color:'#00e676'}}>{'\u2705 '+days+' \u0434\u043d.'}</span>}
+          {days !== null && days <= 0 && <span style={{color:'#ff4d6a'}}>{'\u274C \u0438\u0441\u0442\u0451\u043a'}</span>}
         </div>
+
+        {/* Expiry progress bar */}
         {ad.expires_at && (
           <div style={{height:3,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
             <div style={{height:'100%',borderRadius:2,background:isExpired?'#ff4d6a':'linear-gradient(90deg,#1a5fff,#00d4ff)',width:isExpired?'100%':(Math.max(0,Math.min(100,(new Date(ad.expires_at)-new Date())/(14*24*60*60*1000)*100))+'%'),transition:'width .5s'}}/>
           </div>
         )}
+
         <div style={{display:'flex',gap:6}}>
-          {!isPartner && <button style={S.btn({flex:1,background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={()=>{setEditing(ad.id);setForm({title:ad.title||'',text:ad.text||'',image_url:ad.image_url||'',link:ad.link||'',pages:ad.pages||''})}}>{'\u270F\uFE0F \u0420\u0435\u0434.'}</button>}
+          {!isPartner && <button style={S.btn({flex:1,background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={()=>{setEditing(ad.id);setForm({title:ad.title||'',text:ad.text||'',image_url:ad.image_url||'',link:ad.link||'',pages:ad.pages||'',expires_at:ad.expires_at?ad.expires_at.substring(0,10):''})}}>{'\u270F\uFE0F \u0420\u0435\u0434.'}</button>}
           <button style={S.btn({background:ad.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:ad.active?'#ffb300':'#00e676'})} onClick={async()=>{await api.put(`/api/ads/${ad.id}`,{...ad,active:!ad.active});load()}}>
             {ad.active?'\u23F8':'\u25B6\uFE0F'}
           </button>
@@ -89,12 +132,12 @@ export default function AdsAdmin() {
           <div style={S.statLbl}>{'\u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0445'}</div>
         </div>
         <div style={S.statCard}>
-          <div style={S.statVal('#a855f7')}>{partnerAds.length}</div>
-          <div style={S.statLbl}>{'\u041f\u0430\u0440\u0442\u043d\u0451\u0440\u0441\u043a\u0438\u0445'}</div>
+          <div style={S.statVal('#00d4ff')}>{totalViews}</div>
+          <div style={S.statLbl}>{'\u041f\u043e\u043a\u0430\u0437\u043e\u0432'}</div>
         </div>
         <div style={S.statCard}>
-          <div style={S.statVal('#ffb300')}>{manualAds.length}</div>
-          <div style={S.statLbl}>{'\u0420\u0443\u0447\u043d\u044b\u0445'}</div>
+          <div style={S.statVal('#ffb300')}>{totalClicks}</div>
+          <div style={S.statLbl}>{'\u041a\u043b\u0438\u043a\u043e\u0432'}</div>
         </div>
       </div>
 
@@ -135,6 +178,8 @@ export default function AdsAdmin() {
           )}
           <span style={S.label}>{'\u0421\u0441\u044b\u043b\u043a\u0430 (\u043e\u043f\u0446.)'}</span>
           <input style={{...S.input,opacity:form.linkToAdOrder?0.3:1}} value={form.link} onChange={e=>setForm(p=>({...p,link:e.target.value}))} placeholder="https://..." disabled={form.linkToAdOrder}/>
+          <span style={S.label}>{'\u0421\u0440\u043e\u043a \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f'}</span>
+          <input style={S.input} type="date" value={form.expires_at||''} onChange={e=>setForm(p=>({...p,expires_at:e.target.value}))} placeholder="DD.MM.YYYY"/>
           <span style={S.label}>{'\u0421\u0442\u0440\u0430\u043d\u0438\u0446\u044b'}</span>
           <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
             {PAGE_OPTIONS.map(p => {
@@ -153,7 +198,7 @@ export default function AdsAdmin() {
             <button style={S.btn({flex:1,background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',padding:'10px'})} onClick={save}>
               {editing ? '\uD83D\uDCBE \u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c' : '\u2795 \u0421\u043e\u0437\u0434\u0430\u0442\u044c'}
             </button>
-            {editing && <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>{setEditing(null);setForm({title:'',text:'',image_url:'',link:'',pages:'home,tasks,games,staking,miner,wallet'})}}>{'\u2715'}</button>}
+            {editing && <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>{setEditing(null);setForm({title:'',text:'',image_url:'',link:'',pages:'home,tasks,games,staking,miner,wallet',expires_at:''})}}>{'\u2715'}</button>}
           </div>
         </div>
       )}
