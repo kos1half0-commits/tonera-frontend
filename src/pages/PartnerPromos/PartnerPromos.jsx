@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/index'
+import AdBanner from '../../components/AdBanner'
 import './PartnerPromos.css'
 
 export default function PartnerPromos({ onBack }) {
@@ -74,6 +75,8 @@ export default function PartnerPromos({ onBack }) {
         </div>
       </div>
 
+      <AdBanner page="promos" />
+
       {/* Count badge */}
       {!loading && channels.length > 0 && (
         <div className="pp-count">
@@ -113,7 +116,7 @@ export default function PartnerPromos({ onBack }) {
                 )}
               </div>
               <div className="pp-reward-pill">
-                <div className="pp-reward-val">+{parseFloat(ch.reward).toFixed(4)}</div>
+                <div className="pp-reward-val">+{parseFloat(ch.reward).toFixed(5)}</div>
                 <div className="pp-reward-cur">TON</div>
               </div>
             </div>
