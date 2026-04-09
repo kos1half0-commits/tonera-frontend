@@ -2,7 +2,7 @@
 .ad-banner{
   background:#0e1c3a;border:1px solid rgba(26,95,255,0.2);border-radius:14px;
   overflow:hidden;margin-bottom:14px;cursor:pointer;position:relative;
-  height:200px;display:flex;flex-direction:column;
+  height:230px;display:flex;flex-direction:column;
   transition:all .3s ease;
 }
 .ad-banner:active{transform:scale(0.99);border-color:rgba(0,212,255,0.3);}
