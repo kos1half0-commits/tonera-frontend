@@ -1910,6 +1910,13 @@ export default function Admin() {
   const [uptime, setUptime] = useState('')
   const [dbBackup, setDbBackup] = useState(null)
   const linkTimer = useRef(null)
+  const [activityTxs, setActivityTxs] = useState([])
+  const [activityTotal, setActivityTotal] = useState(0)
+  const [activityLoading, setActivityLoading] = useState(false)
+  const [activityAutoRefresh, setActivityAutoRefresh] = useState(true)
+  const [activityFilter, setActivityFilter] = useState('all')
+  const activityTimer = useRef(null)
+  const activityLastTime = useRef(null)
 
   const showToast = (msg, err=false) => {
     setToast(msg); setToastErr(err)
@@ -2150,6 +2157,7 @@ export default function Admin() {
           {id:'adorders',icon:'📋',label:'ЗАЯВКИ РЕК'},
           {id:'miners',icon:'⛏',label:'МАЙНЕРЫ'},
           {id:'auctions',icon:'🏛',label:'АУКЦИОН'},
+          {id:'activity',icon:'⚡',label:'АКТИВНОСТЬ'},
           {id:'admins',icon:'👑',label:'АДМИНЫ'},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
         ].map(t => (
@@ -2415,19 +2423,35 @@ export default function Admin() {
               <div className="dash-sh-icon">👥</div>
               <div className="dash-sh-title">РЕФЕРАЛЫ</div>
             </div>
-            <div className="dash-grid-2">
+            <div className="dash-grid-3">
               <div className="dash-metric-card dmc-accent">
                 <div className="dmc-val">{stats.total_referrals||0}</div>
                 <div className="dmc-lbl">Всего рефералов</div>
               </div>
+              <div className="dash-metric-card dmc-green">
+                <div className="dmc-val">{parseInt(stats.users_with_referrer||0)}</div>
+                <div className="dmc-lbl">С реферером</div>
+              </div>
+              <div className="dash-metric-card" style={{borderColor:'rgba(255,77,106,0.1)',background:'rgba(255,77,106,0.03)'}}>
+                <div className="dmc-val" style={{color:'#ff4d6a'}}>{parseInt(stats.users_without_referrer||0)}</div>
+                <div className="dmc-lbl">Без реферера</div>
+              </div>
+            </div>
+            <div className="dash-grid-2">
               <div className="dash-metric-card dmc-gold">
                 <div className="dmc-val">{parseFloat(stats.ref_bonuses_paid||0).toFixed(4)}</div>
                 <div className="dmc-lbl">Бонусов выплачено</div>
               </div>
+              <div className="dash-metric-card">
+                <div className="dmc-val">{parseInt(stats.ref_active_referrers||0)}</div>
+                <div className="dmc-lbl">Активных рефереров</div>
+              </div>
             </div>
             {parseInt(stats.total_users) > 0 && (
               <div className="dash-donut-row">
-                <MiniDonut value={parseInt(stats.total_referrals||0)} max={parseInt(stats.total_users)} color="#a855f7" size={52} label="Реферальность" />
+                <MiniDonut value={parseInt(stats.users_with_referrer||0)} max={parseInt(stats.total_users)} color="#00e676" size={48} label="С реферером" />
+                <MiniDonut value={parseInt(stats.users_without_referrer||0)} max={parseInt(stats.total_users)} color="#ff4d6a" size={48} label="Без реферера" />
+                <MiniDonut value={parseInt(stats.total_referrals||0)} max={parseInt(stats.total_users)} color="#a855f7" size={48} label="Реферальность" />
               </div>
             )}
           </div>
@@ -2533,9 +2557,227 @@ export default function Admin() {
             </div>
           </div>
 
+          {/* ===== ПАРТНЁРЫ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">🤝</div>
+              <div className="dash-sh-title">ПАРТНЁРСТВО</div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{parseInt(stats.partners_total||0)}</div>
+                <div className="dmc-lbl">Всего заявок</div>
+              </div>
+              <div className="dash-metric-card dmc-green">
+                <div className="dmc-val">{parseInt(stats.partners_approved||0)}</div>
+                <div className="dmc-lbl">Одобрено</div>
+              </div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-mini-stat dms-amber">
+                <div className="dmst-val">{parseInt(stats.partners_pending||0)}</div>
+                <div className="dmst-lbl">Ожидают</div>
+              </div>
+              <div className="dash-mini-stat dms-red">
+                <div className="dmst-val">{parseInt(stats.partners_rejected||0)}</div>
+                <div className="dmst-lbl">Отклонено</div>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== ПРОМОКОДЫ ===== */}
+          <div className="dash-section">
+            <div className="dash-section-header">
+              <div className="dash-sh-icon">🎁</div>
+              <div className="dash-sh-title">ПРОМОКОДЫ</div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-metric-card dmc-accent">
+                <div className="dmc-val">{parseInt(stats.promo_total||0)}</div>
+                <div className="dmc-lbl">Всего</div>
+              </div>
+              <div className="dash-metric-card dmc-green">
+                <div className="dmc-val">{parseInt(stats.promo_active||0)}</div>
+                <div className="dmc-lbl">Активных</div>
+              </div>
+            </div>
+            <div className="dash-grid-2">
+              <div className="dash-mini-stat dms-blue">
+                <div className="dmst-val">{parseInt(stats.promo_total_uses||0)}</div>
+                <div className="dmst-lbl">Использований</div>
+              </div>
+              <div className="dash-mini-stat dms-gold">
+                <div className="dmst-val">{parseFloat(stats.promo_total_amount||0).toFixed(2)}</div>
+                <div className="dmst-lbl">Выплачено TON</div>
+              </div>
+            </div>
+          </div>
+
           <button className="dash-reload-btn" onClick={loadAll}>
             <span className="drb-icon">↻</span> Обновить данные
           </button>
+        </div>
+      )}
+
+      {/* ACTIVITY — Live Transactions */}
+      {tab === 'activity' && (
+        <div className="admin-section dash-stats">
+          <div className="dash-section" style={{paddingBottom:8}}>
+            <div className="dash-section-header" style={{marginBottom:8}}>
+              <div className="dash-sh-icon">⚡</div>
+              <div className="dash-sh-title">АКТИВНОСТЬ В РЕАЛЬНОМ ВРЕМЕНИ</div>
+              <div className="activity-live-badge" style={{marginLeft:'auto'}}>
+                {activityAutoRefresh && <span className="alb-dot" />}
+                <span>{activityAutoRefresh ? 'LIVE' : 'PAUSED'}</span>
+              </div>
+            </div>
+            <div className="activity-controls">
+              <button className={`act-toggle-btn ${activityAutoRefresh?'on':''}`} onClick={() => {
+                const next = !activityAutoRefresh
+                setActivityAutoRefresh(next)
+                if (next) {
+                  // Start polling
+                  const poll = async () => {
+                    try {
+                      const r = await api.get(`/api/admin/activity?limit=50${activityLastTime.current ? '&after='+activityLastTime.current : ''}`)
+                      const d = r.data
+                      if (d.transactions?.length) {
+                        setActivityTxs(prev => {
+                          const ids = new Set(prev.map(t => t.id))
+                          const news = d.transactions.filter(t => !ids.has(t.id))
+                          const merged = [...news, ...prev].slice(0, 200)
+                          return merged
+                        })
+                        activityLastTime.current = d.server_time
+                      }
+                      setActivityTotal(d.total||0)
+                    } catch {}
+                  }
+                  poll()
+                  activityTimer.current = setInterval(poll, 5000)
+                } else {
+                  clearInterval(activityTimer.current)
+                }
+              }}>
+                {activityAutoRefresh ? '⏸ Пауза' : '▶ Запустить'}
+              </button>
+              <select className="act-filter" value={activityFilter} onChange={e => setActivityFilter(e.target.value)}>
+                <option value="all">Все транзакции</option>
+                <option value="deposit">💎 Депозиты</option>
+                <option value="withdraw">💸 Выводы</option>
+                <option value="trading">📈 Трейдинг</option>
+                <option value="spin_result">🎡 Спин</option>
+                <option value="slots">🎰 Слоты</option>
+                <option value="fee">💰 Комиссии</option>
+                <option value="bonus">🎁 Бонусы</option>
+                <option value="task">✅ Задания</option>
+                <option value="ref_bonus">👥 Реф. бонусы</option>
+                <option value="admin_adjust">👑 Админ</option>
+              </select>
+              <button className="act-refresh-btn" onClick={async () => {
+                setActivityLoading(true)
+                try {
+                  const r = await api.get('/api/admin/activity?limit=100')
+                  setActivityTxs(r.data.transactions || [])
+                  setActivityTotal(r.data.total || 0)
+                  activityLastTime.current = r.data.server_time
+                } catch {}
+                setActivityLoading(false)
+              }}>↻</button>
+            </div>
+            <div className="activity-total">
+              Всего транзакций: <span>{activityTotal.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="activity-feed">
+            {activityTxs.length === 0 && !activityLoading && (
+              <div style={{textAlign:'center',padding:40,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron,sans-serif',fontSize:11}}>
+                {activityAutoRefresh ? 'Ожидание транзакций...' : 'Нажмите ↻ чтобы загрузить'}
+              </div>
+            )}
+            {activityLoading && (
+              <div style={{textAlign:'center',padding:30,color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:10}}>Загрузка...</div>
+            )}
+            {activityTxs
+              .filter(tx => activityFilter === 'all' || tx.type === activityFilter)
+              .map(tx => {
+              const amt = parseFloat(tx.amount)
+              const isPos = amt > 0
+              const typeMap = {
+                deposit: {icon: '💎', color: '#00e676', lbl: 'Депозит'},
+                withdraw: {icon: '💸', color: '#ff4d6a', lbl: 'Вывод'},
+                trading: {icon: '📈', color: '#1a5fff', lbl: 'Трейдинг'},
+                trading_profit: {icon: '📊', color: '#ffb300', lbl: 'Прибыль трейд'},
+                spin_result: {icon: '🎡', color: '#e040fb', lbl: 'Спин'},
+                spin_profit: {icon: '🎯', color: '#ffb300', lbl: 'Прибыль спин'},
+                slots: {icon: '🎰', color: '#a855f7', lbl: 'Слоты'},
+                fee: {icon: '💰', color: '#ffb300', lbl: 'Комиссия'},
+                bonus: {icon: '🎁', color: '#00e676', lbl: 'Бонус'},
+                task: {icon: '✅', color: '#00d4ff', lbl: 'Задание'},
+                ref_bonus: {icon: '👥', color: '#a855f7', lbl: 'Реф. бонус'},
+                admin_adjust: {icon: '👑', color: '#ffb300', lbl: 'Админ'},
+                staking: {icon: '📈', color: '#00d4ff', lbl: 'Стейкинг'},
+              }
+              const info = typeMap[tx.type] || {icon: '📋', color: '#6b7280', lbl: tx.type}
+              const ago = (() => {
+                const d = (Date.now() - new Date(tx.created_at).getTime()) / 1000
+                if (d < 60) return `${Math.floor(d)}с`
+                if (d < 3600) return `${Math.floor(d/60)}м`
+                if (d < 86400) return `${Math.floor(d/3600)}ч`
+                return `${Math.floor(d/86400)}д`
+              })()
+              return (
+                <div key={tx.id} className="act-tx-item" style={{'--act-color': info.color}}>
+                  <div className="act-tx-icon">{info.icon}</div>
+                  <div className="act-tx-body">
+                    <div className="act-tx-top">
+                      <span className="act-tx-type" style={{color: info.color}}>{info.lbl}</span>
+                      <span className="act-tx-time">{ago} назад</span>
+                    </div>
+                    <div className="act-tx-user">
+                      {tx.username ? `@${tx.username}` : tx.first_name || `ID:${tx.telegram_id}`}
+                    </div>
+                    {tx.label && <div className="act-tx-label">{tx.label}</div>}
+                  </div>
+                  <div className={`act-tx-amount ${isPos ? 'pos' : 'neg'}`}>
+                    {isPos ? '+' : ''}{amt.toFixed(4)}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Auto-start polling on mount */}
+          {(() => {
+            if (activityTxs.length === 0 && !activityTimer.current && activityAutoRefresh) {
+              setTimeout(async () => {
+                try {
+                  const r = await api.get('/api/admin/activity?limit=100')
+                  setActivityTxs(r.data.transactions || [])
+                  setActivityTotal(r.data.total || 0)
+                  activityLastTime.current = r.data.server_time
+                  if (activityAutoRefresh && !activityTimer.current) {
+                    activityTimer.current = setInterval(async () => {
+                      try {
+                        const r2 = await api.get(`/api/admin/activity?limit=50&after=${activityLastTime.current}`)
+                        if (r2.data.transactions?.length) {
+                          setActivityTxs(prev => {
+                            const ids = new Set(prev.map(t => t.id))
+                            const news = r2.data.transactions.filter(t => !ids.has(t.id))
+                            return [...news, ...prev].slice(0, 200)
+                          })
+                          activityLastTime.current = r2.data.server_time
+                        }
+                        setActivityTotal(r2.data.total || 0)
+                      } catch {}
+                    }, 5000)
+                  }
+                } catch {}
+              }, 100)
+            }
+            return null
+          })()}
         </div>
       )}
 
