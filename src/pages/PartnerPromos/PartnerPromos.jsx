@@ -75,7 +75,7 @@ export default function PartnerPromos({ onBack }) {
         </div>
       </div>
 
-      <AdBanner page="promos" />
+      <AdBanner page="home" />
 
       {/* Count badge */}
       {!loading && channels.length > 0 && (
