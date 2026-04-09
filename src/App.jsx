@@ -125,7 +125,7 @@ export default function App() {
         {showSupport && <Support onBack={() => setShowSupport(false)} />}
         {showPartnership && <Partnership onBack={() => setShowPartnership(false)} />}
         {!showSupport && !showPartnership && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} onMiner={() => { setTab('miner'); setShowSupport(false); setShowPartnership(false) }}
-            onAdOrder={() => setPage('adorder')} minerStatus={minerStatus} isAdmin={isAdmin} />}
+            onAdOrder={() => setPage('adorder')} onAuction={() => { setTab('referrals'); setShowAuction(true); setAuctionRef(null) }} minerStatus={minerStatus} isAdmin={isAdmin} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && !showAuction && <Referrals user={user} onAuction={(ref) => { setShowAuction(true); setAuctionRef(ref || null) }} />}

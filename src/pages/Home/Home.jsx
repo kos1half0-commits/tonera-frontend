@@ -5,7 +5,7 @@ import api from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Home.css'
 
-export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', onAdOrder, isAdmin=false }) {
+export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', onAdOrder, onAuction, isAdmin=false }) {
   const [news, setNews] = useState([])
   const [promoCode, setPromoCode] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
@@ -157,6 +157,10 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
         <div className="qa" onClick={() => onTab('staking')}>
           <div className="qa-icon si-cyan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
           <div className="qa-lbl">СТЕЙК</div>
+        </div>
+        <div className="qa" onClick={onAuction}>
+          <div className="qa-icon si-purple">🏛</div>
+          <div className="qa-lbl">АУКЦИОН</div>
         </div>
         <div className="qa" onClick={() => onTab('tasks')}>
           <div className="qa-icon si-blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/><path d="M8 12l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></div>
