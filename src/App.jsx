@@ -55,6 +55,7 @@ export default function App() {
   const [blockMsg, setBlockMsg] = useState(null)
   const [showSupport, setShowSupport] = useState(false)
   const [showPartnership, setShowPartnership] = useState(false)
+  const [showPromos, setShowPromos] = useState(false)
   const [showAuction, setShowAuction] = useState(false)
   const [auctionRef, setAuctionRef] = useState(null)
   const [partnershipStatus, setPartnershipStatus] = useState('1')
@@ -87,7 +88,6 @@ export default function App() {
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   if (page === 'adorder') return <AdOrder onBack={() => setPage(null)} />
-  if (page === 'promos') return <PartnerPromos onBack={() => setPage(null)} />
 
   if (blockMsg) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',padding:24,textAlign:'center',background:'#050a1a'}}>
@@ -127,8 +127,9 @@ export default function App() {
       <div className="app-content">
         {showSupport && <Support onBack={() => setShowSupport(false)} />}
         {showPartnership && <Partnership onBack={() => setShowPartnership(false)} />}
-        {!showSupport && !showPartnership && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} onMiner={() => { setTab('miner'); setShowSupport(false); setShowPartnership(false) }}
-            onAdOrder={() => setPage('adorder')} onAuction={() => { setTab('referrals'); setShowAuction(true); setAuctionRef(null) }} minerStatus={minerStatus} isAdmin={isAdmin} onPromos={() => setPage('promos')} />}
+        {showPromos && <PartnerPromos onBack={() => setShowPromos(false)} />}
+        {!showSupport && !showPartnership && !showPromos && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} onMiner={() => { setTab('miner'); setShowSupport(false); setShowPartnership(false); setShowPromos(false) }}
+            onAdOrder={() => setPage('adorder')} onAuction={() => { setTab('referrals'); setShowAuction(true); setAuctionRef(null) }} minerStatus={minerStatus} isAdmin={isAdmin} onPromos={() => setShowPromos(true)} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && !showAuction && <Referrals user={user} onAuction={(ref) => { setShowAuction(true); setAuctionRef(ref || null) }} />}
@@ -145,7 +146,7 @@ export default function App() {
       <WelcomeBonus onClaim={() => setTab('staking')} />
       <nav className="bottom-nav">
         {visibleTabs.map(t => (
-          <button key={t.id} className={`nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setGameScreen(null); setShowSupport(false); setShowPartnership(false); setShowAuction(false) }}>
+          <button key={t.id} className={`nav-item ${tab === t.id ? 'active' : ''}`} onClick={() => { setTab(t.id); setGameScreen(null); setShowSupport(false); setShowPartnership(false); setShowAuction(false); setShowPromos(false) }}>
             <span className="nav-icon">{t.icon}</span>
             <span className="nav-label">{t.label}</span>
           </button>
