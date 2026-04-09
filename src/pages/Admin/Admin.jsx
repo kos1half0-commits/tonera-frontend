@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import api from '../../api/index'
 import './Admin.css'
+import PromoAdmin from './PromoAdmin'
 
 const SETTING_GROUPS = [
   {
@@ -1246,107 +1247,6 @@ function AdminsPanel() {
   )
 }
 
-function PromoAdmin() {
-  const [promos, setPromos] = useState([])
-  const [code, setCode] = useState('')
-  const [amount, setAmount] = useState('')
-  const [maxUses, setMaxUses] = useState('1')
-  const [saving, setSaving] = useState(false)
-  const [toast, setPromoToast] = useState('')
-
-  const load = () => api.get('/api/promo/all').then(r => setPromos(r.data||[])).catch(()=>{})
-  useEffect(() => { load() }, [])
-  const showToast = (m) => { setPromoToast(m); setTimeout(() => setPromoToast(''), 3000) }
-
-  const create = async () => {
-    if (!code.trim() || !amount) return
-    setSaving(true)
-    try {
-      await api.post('/api/promo/create', { code, amount: parseFloat(amount), max_uses: parseInt(maxUses)||1 })
-      setCode(''); setAmount(''); setMaxUses('1')
-      await load(); showToast('✅ Промокод создан')
-    } catch (e) { showToast('❌ ' + (e?.response?.data?.error || 'Ошибка')) }
-    setSaving(false)
-  }
-
-  const S = {
-    input: {background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'8px 12px',color:'#e8f2ff',fontFamily:'DM Sans,sans-serif',fontSize:12,outline:'none',width:'100%'},
-    btn: (c={}) => ({padding:'7px 12px',border:'none',borderRadius:8,fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',...c}),
-    label: {fontFamily:'Orbitron,sans-serif',fontSize:8,color:'rgba(232,242,255,0.35)',letterSpacing:'.08em',display:'block',marginBottom:3,marginTop:8},
-  }
-
-  return (
-    <div>
-      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
-
-      {/* СОЗДАТЬ */}
-      <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:12}}>
-        <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>СОЗДАТЬ ПРОМОКОД</div>
-        <span style={S.label}>КОД</span>
-        <div style={{display:'flex',gap:6}}>
-          <input style={{...S.input,flex:1}} value={code} onChange={e=>setCode(e.target.value.toUpperCase())} placeholder="TONERA2024"/>
-          <button style={S.btn({background:'rgba(0,212,255,0.1)',color:'#00d4ff',border:'1px solid rgba(0,212,255,0.2)',flexShrink:0})}
-            onClick={()=>{
-              const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-              const gen = Array.from({length:8},()=>chars[Math.floor(Math.random()*chars.length)]).join('')
-              setCode(gen)
-            }}>🎲 ГЕНЕРИРОВАТЬ</button>
-        </div>
-        <div style={{display:'flex',gap:8}}>
-          <div style={{flex:1}}>
-            <span style={S.label}>СУММА (TON)</span>
-            <input style={S.input} type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0.5"/>
-          </div>
-          <div style={{flex:1}}>
-            <span style={S.label}>МАХ. ИСПОЛЬЗОВАНИЙ</span>
-            <input style={S.input} type="number" value={maxUses} onChange={e=>setMaxUses(e.target.value)} placeholder="1"/>
-          </div>
-        </div>
-        <button style={{...S.btn({background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',width:'100%',marginTop:10,padding:'10px'}),fontFamily:'Orbitron,sans-serif'}}
-          onClick={create} disabled={saving}>
-          {saving ? '...' : '+ СОЗДАТЬ'}
-        </button>
-      </div>
-
-      {/* СПИСОК */}
-      {promos.length === 0 && <div style={{textAlign:'center',color:'rgba(232,242,255,0.3)',padding:20,fontFamily:'DM Sans'}}>Нет промокодов</div>}
-      {promos.map(p => (
-        <div key={p.id} style={{background:'#0e1c3a',border:`1px solid ${p.active?'rgba(26,95,255,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
-          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:13,fontWeight:900,color:p.active?'#00d4ff':'rgba(232,242,255,0.3)',flex:1}}>{p.code}</span>
-            <button style={S.btn({background:p.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:p.active?'#ffb300':'#00e676'})}
-              onClick={async()=>{ await api.put(`/api/promo/${p.id}/toggle`); load() }}>
-              {p.active?'⏸':'▶️'}
-            </button>
-            <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})}
-              onClick={async()=>{ await api.delete(`/api/promo/${p.id}`); load() }}>✕</button>
-          </div>
-          <div style={{display:'flex',gap:12}}>
-            <div>
-              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#ffb300',fontWeight:700}}>{parseFloat(p.amount).toFixed(5)} TON</div>
-              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>за 1 использование</div>
-            </div>
-            <div>
-              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00e676',fontWeight:700}}>{(parseFloat(p.amount)*p.uses).toFixed(4)} TON</div>
-              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>потрачено ({p.uses} из {p.max_uses})</div>
-            </div>
-            <div>
-              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#00d4ff',fontWeight:700}}>{(parseFloat(p.amount)*(p.max_uses-p.uses)).toFixed(4)} TON</div>
-              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>осталось</div>
-            </div>
-            <div>
-              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'rgba(232,242,255,0.5)',fontWeight:700}}>{(parseFloat(p.amount)*p.max_uses).toFixed(4)} TON</div>
-              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)'}}>бюджет</div>
-            </div>
-          </div>
-          <div style={{marginTop:6,height:4,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden'}}>
-            <div style={{height:'100%',width:`${Math.min(100,p.uses/p.max_uses*100)}%`,background:'linear-gradient(90deg,#1a5fff,#00d4ff)',borderRadius:2}}/>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 function AdminTaskItem({ task: initialTask, onDelete, onRefresh }) {
   const [task, setTask] = useState(initialTask)
