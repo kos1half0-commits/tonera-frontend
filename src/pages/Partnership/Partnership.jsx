@@ -20,6 +20,8 @@ export default function Partnership({ onBack }) {
   const [editDesc, setEditDesc]       = useState(false)
   const [newDesc, setNewDesc]         = useState('')
   const [newTitle, setNewTitle]       = useState('')
+  const [confirmCancel, setConfirmCancel] = useState(false)
+  const [cancelling, setCancelling]   = useState(false)
 
   useEffect(() => {
     api.get('/api/partnership/my').then(r => {
@@ -256,6 +258,39 @@ export default function Partnership({ onBack }) {
               )}
             </div>
           )}
+
+          {/* Cancel partnership button */}
+          {!confirmCancel ? (
+            <button style={{width:'100%',marginTop:16,padding:'12px',border:'1px solid rgba(255,77,106,0.2)',borderRadius:10,background:'rgba(255,77,106,0.06)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,cursor:'pointer',letterSpacing:'.05em',transition:'all .2s'}}
+              onClick={()=>setConfirmCancel(true)}>
+              {'\u{1F6AB} \u041E\u0442\u043A\u0430\u0437\u0430\u0442\u044C\u0441\u044F \u043E\u0442 \u0441\u043E\u0442\u0440\u0443\u0434\u043D\u0438\u0447\u0435\u0441\u0442\u0432\u0430'}
+            </button>
+          ) : (
+            <div style={{marginTop:16,background:'rgba(255,77,106,0.08)',border:'1px solid rgba(255,77,106,0.2)',borderRadius:12,padding:14}}>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,color:'#ff4d6a',fontWeight:700,marginBottom:8,textAlign:'center'}}>{'\u0412\u044B \u0443\u0432\u0435\u0440\u0435\u043D\u044B?'}</div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:12,textAlign:'center',lineHeight:1.4}}>
+                {'\u0417\u0430\u0434\u0430\u043D\u0438\u0435 \u0431\u0443\u0434\u0435\u0442 \u0434\u0435\u0430\u043A\u0442\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u043D\u043E, \u043F\u0440\u043E\u043C\u043E\u043A\u043E\u0434\u044B \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u044B. \u041F\u043E\u0432\u0442\u043E\u0440\u043D\u0430\u044F \u0437\u0430\u044F\u0432\u043A\u0430 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u0430 \u0442\u043E\u043B\u044C\u043A\u043E \u0447\u0435\u0440\u0435\u0437 30 \u0434\u043D\u0435\u0439.'}
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button style={{flex:1,padding:'10px',border:'none',borderRadius:8,background:'rgba(26,95,255,0.1)',color:'rgba(232,242,255,0.5)',fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,cursor:'pointer'}}
+                  onClick={()=>setConfirmCancel(false)}>{'\u041E\u0442\u043C\u0435\u043D\u0430'}</button>
+                <button style={{flex:1,padding:'10px',border:'none',borderRadius:8,background:'linear-gradient(135deg,#ff4d6a,#cc0033)',color:'#fff',fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,cursor:'pointer'}}
+                  disabled={cancelling}
+                  onClick={async()=>{
+                    setCancelling(true)
+                    try {
+                      await api.post('/api/partnership/cancel')
+                      showToast('\u041F\u0430\u0440\u0442\u043D\u0451\u0440\u0441\u0442\u0432\u043E \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u043E')
+                      setConfirmCancel(false)
+                      const r = await api.get('/api/partnership/my')
+                      setInfo(r.data)
+                      setTask(null)
+                    } catch(e) { showToast(e?.response?.data?.error || '\u041E\u0448\u0438\u0431\u043A\u0430', true) }
+                    setCancelling(false)
+                  }}>{cancelling ? '\u23F3...' : '\u0414\u0430, \u043E\u0442\u043A\u0430\u0437\u0430\u0442\u044C\u0441\u044F'}</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -266,6 +301,19 @@ export default function Partnership({ onBack }) {
           <div className="ps-title">ЗАЯВКА НА РАССМОТРЕНИИ</div>
           <div className="ps-desc">Мы проверяем вашу заявку. После одобрения ваш канал появится в заданиях TonEra.</div>
           <div className="ps-channel">{p.channel_url}</div>
+          <button style={{width:'100%',marginTop:14,padding:'10px',border:'1px solid rgba(255,77,106,0.2)',borderRadius:8,background:'rgba(255,77,106,0.06)',color:'#ff4d6a',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer'}}
+            disabled={cancelling}
+            onClick={async()=>{
+              if(!window.confirm('\u041E\u0442\u043E\u0437\u0432\u0430\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443?')) return
+              setCancelling(true)
+              try {
+                await api.post('/api/partnership/cancel')
+                showToast('\u0417\u0430\u044F\u0432\u043A\u0430 \u043E\u0442\u043E\u0437\u0432\u0430\u043D\u0430')
+                const r = await api.get('/api/partnership/my')
+                setInfo(r.data); setTask(null)
+              } catch(e) { showToast(e?.response?.data?.error || '\u041E\u0448\u0438\u0431\u043A\u0430', true) }
+              setCancelling(false)
+            }}>{cancelling ? '\u23F3...' : '\u274C \u041E\u0442\u043E\u0437\u0432\u0430\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443'}</button>
         </div>
       )}
 
@@ -281,8 +329,40 @@ export default function Partnership({ onBack }) {
         </div>
       )}
 
+
+      {/* ======== CANCELLED (cooldown) ======== */}
+      {p?.status === 'cancelled' && info?.cooldown_until && (
+        <div className="p-status rejected">
+          <div className="ps-icon">{'\u23F3'}</div>
+          <div className="ps-title">{'\u0421\u043E\u0442\u0440\u0443\u0434\u043D\u0438\u0447\u0435\u0441\u0442\u0432\u043E \u043E\u0442\u043C\u0435\u043D\u0435\u043D\u043E'}</div>
+          <div className="ps-desc">
+            {'\u0412\u044B \u043E\u0442\u043A\u0430\u0437\u0430\u043B\u0438\u0441\u044C \u043E\u0442 \u0441\u043E\u0442\u0440\u0443\u0434\u043D\u0438\u0447\u0435\u0441\u0442\u0432\u0430. \u041F\u043E\u0432\u0442\u043E\u0440\u043D\u0430\u044F \u0437\u0430\u044F\u0432\u043A\u0430 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u0430 \u043F\u043E\u0441\u043B\u0435:'}
+          </div>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#ffb300',textAlign:'center',margin:'12px 0'}}>
+            {new Date(info.cooldown_until).toLocaleDateString('ru', {day:'numeric',month:'long',year:'numeric'})}
+          </div>
+          <div style={{height:6,background:'rgba(26,95,255,0.1)',borderRadius:3,overflow:'hidden',marginBottom:10}}>
+            <div style={{height:'100%',borderRadius:3,background:'linear-gradient(90deg,#ffb300,#ff4d6a)',width:Math.max(0, Math.min(100, (1 - (new Date(info.cooldown_until) - new Date()) / (30*24*60*60*1000)) * 100))+'%',transition:'width 0.5s'}}/>
+          </div>
+          <div style={{fontSize:10,color:'rgba(232,242,255,0.3)',textAlign:'center'}}>
+            {'\u041E\u0441\u0442\u0430\u043B\u043E\u0441\u044C: ' + Math.max(0, Math.ceil((new Date(info.cooldown_until) - new Date()) / (24*60*60*1000))) + ' \u0434\u043D.'}
+          </div>
+        </div>
+      )}
+
+      {/* ======== CANCELLED (cooldown expired, can re-apply) ======== */}
+      {p?.status === 'cancelled' && !info?.cooldown_until && (
+        <div className="p-status pending">
+          <div className="ps-icon">{'\u2705'}</div>
+          <div className="ps-title">{'\u041C\u043E\u0436\u043D\u043E \u043F\u043E\u0434\u0430\u0442\u044C \u0437\u0430\u044F\u0432\u043A\u0443'}</div>
+          <div className="ps-desc">{'\u0421\u0440\u043E\u043A \u043E\u0436\u0438\u0434\u0430\u043D\u0438\u044F \u0438\u0441\u0442\u0451\u043A. \u0412\u044B \u043C\u043E\u0436\u0435\u0442\u0435 \u043F\u043E\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u0443\u044E \u0437\u0430\u044F\u0432\u043A\u0443 \u043D\u0430 \u0441\u043E\u0442\u0440\u0443\u0434\u043D\u0438\u0447\u0435\u0441\u0442\u0432\u043E.'}</div>
+          <button style={S.btn('rgba(0,230,118,0.15)','#00e676')} onClick={() => { setWizardStep(1); setChannelInfo(null); setBotChecked(false); setPostChecked(false) }}>
+            {'\uD83E\uDD1D \u041F\u043E\u0434\u0430\u0442\u044C \u043D\u043E\u0432\u0443\u044E \u0437\u0430\u044F\u0432\u043A\u0443'}
+          </button>
+        </div>
+      )}
       {/* ======== WIZARD ======== */}
-      {!p && (
+      {(!p || (p?.status === 'cancelled' && !info?.cooldown_until)) && (
         <>
           {wizardStep === 0 && (
             <>
