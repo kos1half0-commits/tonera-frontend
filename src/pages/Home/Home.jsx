@@ -1,4 +1,5 @@
 import AdBanner from '../../components/AdBanner'
+import AdsgramAd from '../../components/AdsgramAd'
 import { useState, useEffect } from 'react'
 import { getUserStakes } from '../../api/index'
 import api from '../../api/index'
@@ -230,6 +231,7 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
       </div>
 
       <AdBanner page="home" />
+      <AdsgramAd />
 
       {/* ===== QUICK ACTIONS ===== */}
       <div className="qa-title">{'\u0411\u042b\u0421\u0422\u0420\u042b\u0415 \u0414\u0415\u0419\u0421\u0422\u0412\u0418\u042f'}</div>

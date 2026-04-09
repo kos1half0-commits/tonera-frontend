@@ -54,6 +54,9 @@ const SETTING_GROUPS = [
       { key: 'ad_price_week',   label: 'Цена рекламы 1 неделя (TON)' },
       { key: 'ad_price_2weeks', label: 'Цена рекламы 2 недели (TON)' },
       { key: 'ad_price_month',  label: 'Цена рекламы 1 месяц (TON)' },
+      { key: 'adsgram_block_id', label: '🎬 Adsgram: Block ID' },
+      { key: 'adsgram_reward',   label: '🎬 Adsgram: Награда за просмотр (TON)' },
+      { key: 'adsgram_daily_limit', label: '🎬 Adsgram: Лимит просмотров в день' },
     ]
   },
   {

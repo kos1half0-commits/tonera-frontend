@@ -1,0 +1,52 @@
+/* ====== ADSGRAM AD ====== */
+.adsgram-wrap{margin-bottom:14px;}
+
+.adsgram-reward-toast{
+  padding:10px 14px;border-radius:12px;margin-bottom:10px;
+  background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.25);
+  font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;
+  color:#00e676;text-align:center;animation:adsgramFade .3s ease;
+}
+.adsgram-error-toast{
+  padding:10px 14px;border-radius:12px;margin-bottom:10px;
+  background:rgba(255,77,106,0.1);border:1px solid rgba(255,77,106,0.25);
+  font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;
+  color:#ff4d6a;text-align:center;animation:adsgramFade .3s ease;
+}
+
+.adsgram-btn{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#0e1c3a 0%,#131f42 100%);
+  border:1px solid rgba(0,212,255,0.15);
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:all .3s;
+}
+.adsgram-btn:active{transform:scale(0.98);border-color:rgba(0,212,255,0.3);}
+.adsgram-btn:disabled{opacity:.5;cursor:not-allowed;}
+.adsgram-btn.loading{border-color:rgba(255,179,0,0.3);}
+
+.adsgram-btn-glow{
+  position:absolute;top:-20px;right:-20px;width:80px;height:80px;
+  background:radial-gradient(circle,rgba(0,212,255,0.06) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+
+.adsgram-btn-icon{font-size:24px;flex-shrink:0;}
+
+.adsgram-btn-text{flex:1;text-align:left;}
+.adsgram-btn-title{
+  display:block;font-family:'Orbitron',sans-serif;font-size:11px;
+  font-weight:700;color:#e8f2ff;letter-spacing:.04em;
+}
+.adsgram-btn-sub{
+  display:block;font-family:'DM Sans',sans-serif;font-size:9px;
+  color:rgba(232,242,255,0.3);margin-top:2px;
+}
+
+.adsgram-btn-arrow{
+  font-size:16px;color:#00d4ff;flex-shrink:0;
+  animation:adsgramPulse 2s ease-in-out infinite;
+}
+@keyframes adsgramPulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes adsgramFade{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
