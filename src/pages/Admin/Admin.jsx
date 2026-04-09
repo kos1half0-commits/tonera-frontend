@@ -70,8 +70,12 @@ const SETTING_GROUPS = [
     settings: [
       { key: 'partnership_enabled',     label: 'Статус (0=откл, 1=вкл, 2=только админ, 3=тест)' },
       { key: 'partnership_min_subs',     label: 'Мин. подписчиков канала' },
-      { key: 'partnership_task_execs',   label: 'Макс. выполнений задания (авто)' },
+      { key: 'partnership_task_execs',   label: 'Макс. выполнений (по умолч.)' },
       { key: 'partnership_check_hours',  label: 'Часы проверки через запятую (напр. 9,21)' },
+      { key: 'partnership_lvl_bronze_execs',  label: '🥉 Bronze: макс. выполнений' },
+      { key: 'partnership_lvl_silver_execs',  label: '🥈 Silver (5K+): макс. выполнений' },
+      { key: 'partnership_lvl_gold_execs',    label: '🥇 Gold (20K+): макс. выполнений' },
+      { key: 'partnership_lvl_diamond_execs', label: '💎 Diamond (50K+): макс. выполнений' },
     ]
   },
   {
