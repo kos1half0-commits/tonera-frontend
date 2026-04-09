@@ -1,6 +1,6 @@
 import AdBanner from '../../components/AdBanner'
 import { useState, useEffect } from 'react'
-import { getUserStakes, getTasks } from '../../api/index'
+import { getUserStakes } from '../../api/index'
 import api from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Home.css'
@@ -59,9 +59,12 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
       return () => clearInterval(t)
     }).catch(() => {})
 
-    getTasks().then(r => {
+    api.get('/api/tasks').then(r => {
       const done = (r.data || []).filter(t => t.completed).length
-      setTasksDone(done)
+      // Also check user_tasks count for tasks that may have been deactivated
+      api.get('/api/tasks/my-completed-count').then(r2 => {
+        setTasksDone(r2.data?.count ?? done)
+      }).catch(() => setTasksDone(done))
     }).catch(() => setTasksDone(0))
 
     getUserStakes().then(r => {
