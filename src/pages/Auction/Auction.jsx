@@ -174,8 +174,9 @@ function AuctionTimer({ endsAt }) {
 
 function AuctionCard({ auction, userId, onBid, onCancel, onViewProfile, showSeller = true }) {
   const isSeller = auction.seller_id === userId
-  const statusClass = auction.status === 'active' ? 'active' : auction.status === 'completed' ? 'completed' : 'cancelled'
-  const statusLabel = auction.status === 'active' ? 'АКТИВЕН' : auction.status === 'completed' ? 'ПРОДАН' : 'ОТМЕНЁН'
+  const isExpired = auction.status === 'active' && new Date(auction.ends_at) <= new Date()
+  const statusClass = auction.status === 'active' ? (isExpired ? 'cancelled' : 'active') : auction.status === 'completed' ? 'completed' : 'cancelled'
+  const statusLabel = auction.status === 'active' ? (isExpired ? 'ЗАВЕРШАЕТСЯ...' : 'АКТИВЕН') : auction.status === 'completed' ? 'ПРОДАН' : 'ОТМЕНЁН'
   const refName = auction.ref_username ? `@${auction.ref_username}` : auction.ref_name || 'Пользователь'
   const sellerName = auction.seller_username ? `@${auction.seller_username}` : auction.seller_name || 'Пользователь'
 
@@ -208,17 +209,17 @@ function AuctionCard({ auction, userId, onBid, onCancel, onViewProfile, showSell
 
       {auction.status === 'active' && <AuctionTimer endsAt={auction.ends_at} />}
 
-      {/* Action buttons */}
+      {/* Action buttons — hide when expired */}
       <div style={{display:'flex',gap:6}}>
         <button className="ac-bid-btn" style={{flex:0,background:'rgba(0,212,255,0.1)',color:'#00d4ff',boxShadow:'none',fontSize:9,padding:'10px 14px'}} onClick={() => onViewProfile(auction.referred_user_id)}>
           👤 ПРОФИЛЬ
         </button>
-        {auction.status === 'active' && !isSeller && (
+        {auction.status === 'active' && !isSeller && !isExpired && (
           <button className="ac-bid-btn" style={{flex:1}} onClick={() => onBid(auction)}>
             💰 СДЕЛАТЬ СТАВКУ
           </button>
         )}
-        {auction.status === 'active' && isSeller && parseInt(auction.bid_count || 0) === 0 && (
+        {auction.status === 'active' && isSeller && parseInt(auction.bid_count || 0) === 0 && !isExpired && (
           <button className="ac-bid-btn cancel" style={{flex:1}} onClick={() => onCancel(auction.id)}>
             ✕ ОТМЕНИТЬ
           </button>
