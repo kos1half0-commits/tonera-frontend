@@ -255,6 +255,8 @@ export default function Auction({ onBack, user, initialRef }) {
 
   const userId = user?.id
 
+  const onAuctionIds = (myData.selling || []).filter(a => a.status === 'active').map(a => a.referral_id)
+
   const showToast = (text, error = false) => {
     setToast({ text, error })
     setTimeout(() => setToast({ text: '', error: false }), 3000)
@@ -477,24 +479,32 @@ export default function Auction({ onBack, user, initialRef }) {
                   >✎ ИЗМЕНИТЬ</button>
                 </div>
               ) : (
-                /* Scrollable list sorted: eligible first */
+                /* Scrollable list sorted: eligible first, on-auction last */
                 <div style={{maxHeight:240,overflowY:'auto'}}>
-                  {[...myRefs].sort((a, b) => (b.auction_eligible ? 1 : 0) - (a.auction_eligible ? 1 : 0)).map((r, i) => {
+                  {[...myRefs].sort((a, b) => {
+                    const aOnAuction = onAuctionIds.includes(a.referral_id || a.id)
+                    const bOnAuction = onAuctionIds.includes(b.referral_id || b.id)
+                    if (aOnAuction !== bOnAuction) return aOnAuction ? 1 : -1
+                    return (b.auction_eligible ? 1 : 0) - (a.auction_eligible ? 1 : 0)
+                  }).map((r, i) => {
                     const name = r.username ? `@${r.username}` : r.first_name || 'Пользователь'
-                    const eligible = r.auction_eligible === true
+                    const isOnAuction = onAuctionIds.includes(r.referral_id || r.id)
+                    const eligible = r.auction_eligible === true && !isOnAuction
                     return (
                       <div
                         key={i}
                         className={`ac-ref-item ${!eligible ? 'inactive' : ''}`}
                         onClick={() => eligible && setSelRef(r)}
-                        style={!eligible ? {opacity:0.35,cursor:'not-allowed'} : {}}
+                        style={!eligible ? {opacity: isOnAuction ? 0.5 : 0.35, cursor:'not-allowed'} : {}}
                       >
-                        <div className="ac-ref-avatar" style={eligible ? {} : {background:'rgba(255,77,106,0.08)',borderColor:'rgba(255,77,106,0.2)',color:'#ff4d6a'}}>{name[0].toUpperCase()}</div>
+                        <div className="ac-ref-avatar" style={eligible ? {} : isOnAuction ? {background:'rgba(255,179,0,0.08)',borderColor:'rgba(255,179,0,0.2)',color:'#ffb300'} : {background:'rgba(255,77,106,0.08)',borderColor:'rgba(255,77,106,0.2)',color:'#ff4d6a'}}>{name[0].toUpperCase()}</div>
                         <div style={{flex:1,minWidth:0}}>
                           <div className="ac-ref-name">{name}</div>
-                          {eligible
-                            ? <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#00e676',marginTop:1}}>✅ {r.tasks_completed} заданий · активен</div>
-                            : <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#ff4d6a',marginTop:1}}>🚫 {r.auction_reason}</div>
+                          {isOnAuction
+                            ? <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#ffb300',marginTop:1}}>🏛 Уже на аукционе</div>
+                            : eligible
+                              ? <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#00e676',marginTop:1}}>✅ {r.tasks_completed} заданий · активен</div>
+                              : <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#ff4d6a',marginTop:1}}>🚫 {r.auction_reason}</div>
                           }
                         </div>
                       </div>

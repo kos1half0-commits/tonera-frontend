@@ -120,11 +120,13 @@ export default function Referrals({ user, onAuction }) {
                   </div>
                   <div className="ref-meta">
                     <span className="ref-tasks">✅ {r.tasks_completed ?? 0} заданий</span>
-                    {r.auction_eligible
-                      ? <span className="ref-eligible">· 🏛 можно продать</span>
-                      : r.auction_reason
-                        ? <span className="ref-ineligible">· 🚫 {r.auction_reason}</span>
-                        : null
+                    {isOnAuction
+                      ? <span className="ref-on-auction-tag">· 🏛 на аукционе</span>
+                      : r.auction_eligible
+                        ? <span className="ref-eligible">· 🏛 можно продать</span>
+                        : r.auction_reason
+                          ? <span className="ref-ineligible">· 🚫 {r.auction_reason}</span>
+                          : null
                     }
                   </div>
                 </div>
