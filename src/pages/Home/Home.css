@@ -132,6 +132,12 @@
 .promo-btn:disabled{opacity:.3;cursor:not-allowed;}
 .promo-msg{margin-top:6px;font-family:'DM Sans',sans-serif;font-size:11px;color:#00e676;padding:6px 10px;background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.15);border-radius:8px;}
 .promo-msg.err{color:#ff4d6a;background:rgba(255,77,106,0.06);border-color:rgba(255,77,106,0.15);}
+.promo-more-btn{
+  width:100%;margin-top:8px;padding:10px;border:1px solid rgba(168,85,247,0.2);border-radius:10px;
+  background:rgba(168,85,247,0.06);color:#a855f7;font-family:'Orbitron',sans-serif;
+  font-size:9px;font-weight:700;cursor:pointer;letter-spacing:.06em;transition:all .2s;
+}
+.promo-more-btn:active{background:rgba(168,85,247,0.12);transform:scale(0.98);}
 
 /* QUICK ACTIONS REDESIGNED */
 .qa-title{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:rgba(232,242,255,0.3);letter-spacing:.12em;margin-bottom:10px;}

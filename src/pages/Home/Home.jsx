@@ -5,7 +5,7 @@ import api from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Home.css'
 
-export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', onAdOrder, onAuction, isAdmin=false }) {
+export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', onAdOrder, onAuction, isAdmin=false, onPromos }) {
   const [news, setNews] = useState([])
   const [promoCode, setPromoCode] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
@@ -220,10 +220,13 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
             onChange={e=>setPromoCode(e.target.value.toUpperCase())}
             onKeyDown={e=>e.key==='Enter'&&activatePromo()}/>
           <button className="promo-btn" onClick={activatePromo} disabled={promoLoading || !promoCode.trim()}>
-            {promoLoading ? '...' : '🎁'}
+            {promoLoading ? '...' : '\uD83C\uDF81'}
           </button>
         </div>
         {promoMsg && <div className={`promo-msg ${promoErr?'err':''}`}>{promoMsg}</div>}
+        <button className="promo-more-btn" onClick={onPromos}>
+          {'\uD83C\uDF81 \u0415\u0449\u0451 \u043f\u0440\u043e\u043c\u043e\u043a\u043e\u0434\u044b'}
+        </button>
       </div>
 
       <AdBanner page="home" />
