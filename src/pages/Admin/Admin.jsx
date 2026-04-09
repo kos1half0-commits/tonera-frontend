@@ -559,6 +559,27 @@ function MinersAdmin() {
             </button>
           </div>
 
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+            <button
+              onClick={async()=>{
+                try {
+                  const r = await api.post('/api/miner/admin/free-notify-toggle')
+                  setFreeStats(prev=>({...prev, notifyAdmin: r.data.notifyAdmin}))
+                  showToast(r.data.notifyAdmin ? '\u2705 \u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F \u0432\u043A\u043B' : '\uD83D\uDD07 \u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F \u0432\u044B\u043A\u043B')
+                } catch { showToast('\u041E\u0448\u0438\u0431\u043A\u0430') }
+              }}
+              style={{
+                padding:'7px 14px',border:'none',borderRadius:8,
+                fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',
+                background: freeStats.notifyAdmin ? 'rgba(0,230,118,0.15)' : 'rgba(255,77,106,0.1)',
+                color: freeStats.notifyAdmin ? '#00e676' : '#ff4d6a',
+                transition:'all .2s'
+              }}
+            >
+              {freeStats.notifyAdmin ? '\uD83D\uDD14 \u0423\u0432\u0435\u0434. \u0412\u041A\u041B' : '\uD83D\uDD07 \u0423\u0432\u0435\u0434. \u0412\u042B\u041A\u041B'}
+            </button>
+            <span style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.3)'}}>{'\u0423\u0432\u0435\u0434\u043E\u043C\u043B\u0435\u043D\u0438\u044F \u0430\u0434\u043C\u0438\u043D\u0443 \u043E \u0431\u0435\u0441\u043F\u043B. \u0430\u043A\u0442\u0438\u0432\u0430\u0446\u0438\u044F\u0445'}</span>
+          </div>
           {/* FREE PLAN STATS */}
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6,marginBottom:10}}>
             <div style={{background:'rgba(26,95,255,0.04)',borderRadius:8,padding:'6px 8px',textAlign:'center'}}>
