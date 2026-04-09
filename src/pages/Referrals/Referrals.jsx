@@ -118,10 +118,19 @@ export default function Referrals({ user, onAuction }) {
                       <span className="ref-last-seen"> · был {new Date(r.last_active).toLocaleDateString('ru')}</span>
                     )}
                   </div>
+                  <div className="ref-meta">
+                    <span className="ref-tasks">✅ {r.tasks_completed ?? 0} заданий</span>
+                    {r.auction_eligible
+                      ? <span className="ref-eligible">· 🏛 можно продать</span>
+                      : r.auction_reason
+                        ? <span className="ref-ineligible">· 🚫 {r.auction_reason}</span>
+                        : null
+                    }
+                  </div>
                 </div>
                 <div className="ref-right">
                   <div className="ref-bonus">+{parseFloat(r.earned || 0).toFixed(4)} TON</div>
-                  {auctionEnabled && r.is_active !== false && !isOnAuction && (
+                  {auctionEnabled && r.auction_eligible && !isOnAuction && (
                     <button className="ref-sell-btn" onClick={() => onAuction && onAuction(r)}>
                       🏛 Продать
                     </button>

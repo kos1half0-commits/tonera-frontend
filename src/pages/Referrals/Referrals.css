@@ -49,6 +49,10 @@
 .ref-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:600;color:#e8f2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ref-date{font-family:'DM Sans',sans-serif;font-size:11px;color:rgba(232,242,255,0.3);margin-top:2px;}
 .ref-last-seen{color:rgba(232,242,255,0.2);}
+.ref-meta{display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap;}
+.ref-tasks{font-family:'DM Sans',sans-serif;font-size:9px;color:rgba(232,242,255,0.35);}
+.ref-eligible{font-family:'DM Sans',sans-serif;font-size:9px;color:#a855f7;}
+.ref-ineligible{font-family:'DM Sans',sans-serif;font-size:9px;color:rgba(255,77,106,0.5);}
 
 .ref-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
 .ref-bonus{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:#00e676;}

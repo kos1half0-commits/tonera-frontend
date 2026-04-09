@@ -462,29 +462,46 @@ export default function Auction({ onBack, user, initialRef }) {
                   ⚠️ Нет подходящих рефералов. Требования: активность за {info?.min_activity_days || 7}д и мин. {info?.min_tasks || 50} заданий.
                 </div>
               ) : null}
-              {myRefs.map((r, i) => {
-                const name = r.username ? `@${r.username}` : r.first_name || 'Пользователь'
-                const isSelected = selRef && (selRef.referral_id || selRef.id) === (r.referral_id || r.id)
-                const eligible = r.auction_eligible === true
-                return (
-                  <div
-                    key={i}
-                    className={`ac-ref-item ${isSelected ? 'selected' : ''} ${!eligible ? 'inactive' : ''}`}
-                    onClick={() => eligible && setSelRef(r)}
-                    style={!eligible ? {opacity:0.35,cursor:'not-allowed'} : {}}
-                  >
-                    <div className="ac-ref-avatar" style={eligible ? {} : {background:'rgba(255,77,106,0.08)',borderColor:'rgba(255,77,106,0.2)',color:'#ff4d6a'}}>{name[0].toUpperCase()}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div className="ac-ref-name">{name}</div>
-                      {eligible
-                        ? <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#00e676',marginTop:1}}>✅ {r.tasks_completed} заданий · активен</div>
-                        : <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#ff4d6a',marginTop:1}}>🚫 {r.auction_reason}</div>
-                      }
-                    </div>
-                    {isSelected && <span style={{color:'#00e676',fontSize:16}}>✓</span>}
+
+              {/* When referral is selected — show compact card with change button */}
+              {selRef ? (
+                <div className="ac-ref-item selected" style={{marginBottom:0}}>
+                  <div className="ac-ref-avatar">{(selRef.username || selRef.first_name || '?')[0].toUpperCase()}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div className="ac-ref-name">{selRef.username ? `@${selRef.username}` : selRef.first_name || 'Пользователь'}</div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#00e676',marginTop:1}}>✅ {selRef.tasks_completed} заданий · активен</div>
                   </div>
-                )
-              })}
+                  <button
+                    style={{padding:'5px 10px',border:'1px solid rgba(0,212,255,0.25)',borderRadius:8,background:'rgba(0,212,255,0.06)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}
+                    onClick={() => setSelRef(null)}
+                  >✎ ИЗМЕНИТЬ</button>
+                </div>
+              ) : (
+                /* Scrollable list sorted: eligible first */
+                <div style={{maxHeight:240,overflowY:'auto'}}>
+                  {[...myRefs].sort((a, b) => (b.auction_eligible ? 1 : 0) - (a.auction_eligible ? 1 : 0)).map((r, i) => {
+                    const name = r.username ? `@${r.username}` : r.first_name || 'Пользователь'
+                    const eligible = r.auction_eligible === true
+                    return (
+                      <div
+                        key={i}
+                        className={`ac-ref-item ${!eligible ? 'inactive' : ''}`}
+                        onClick={() => eligible && setSelRef(r)}
+                        style={!eligible ? {opacity:0.35,cursor:'not-allowed'} : {}}
+                      >
+                        <div className="ac-ref-avatar" style={eligible ? {} : {background:'rgba(255,77,106,0.08)',borderColor:'rgba(255,77,106,0.2)',color:'#ff4d6a'}}>{name[0].toUpperCase()}</div>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div className="ac-ref-name">{name}</div>
+                          {eligible
+                            ? <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#00e676',marginTop:1}}>✅ {r.tasks_completed} заданий · активен</div>
+                            : <div style={{fontFamily:'DM Sans,sans-serif',fontSize:9,color:'#ff4d6a',marginTop:1}}>🚫 {r.auction_reason}</div>
+                          }
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="ac-field">
