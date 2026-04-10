@@ -57,6 +57,9 @@ const SETTING_GROUPS = [
       { key: 'adsgram_block_id', label: '🎬 Adsgram: Block ID' },
       { key: 'adsgram_reward',   label: '🎬 Adsgram: Награда за просмотр (TON)' },
       { key: 'adsgram_daily_limit', label: '🎬 Adsgram: Лимит просмотров в день' },
+      { key: 'monetag_zone_id',    label: '📺 Monetag: Zone ID' },
+      { key: 'monetag_reward',     label: '📺 Monetag: Награда за просмотр (TON)' },
+      { key: 'monetag_daily_limit', label: '📺 Monetag: Лимит просмотров в день' },
     ]
   },
   {

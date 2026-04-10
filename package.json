@@ -9,11 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tonconnect/ui-react": "^2.0.0",
+    "axios": "^1.6.7",
+    "monetag-tg-sdk": "^1.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "axios": "^1.6.7",
-    "zustand": "^4.5.0",
-    "@tonconnect/ui-react": "^2.0.0"
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",

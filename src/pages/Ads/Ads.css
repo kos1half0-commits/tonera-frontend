@@ -1,4 +1,4 @@
-/* ====== ADS PAGE — Watch & Earn ====== */
+/* ====== ADS PAGE — Watch & Earn (Dual Network) ====== */
 .ads-page{padding:14px 14px 24px;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .ads-page::-webkit-scrollbar{display:none;}
 
@@ -65,6 +65,63 @@
   color:rgba(232,242,255,0.3);margin-top:4px;
 }
 
+/* ===== NETWORK TABS ===== */
+.ads-net-tabs{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;
+}
+.ads-net-tab{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 14px;border:1px solid rgba(26,95,255,0.12);border-radius:14px;
+  background:#0e1c3a;cursor:pointer;transition:all .3s ease;
+  position:relative;overflow:hidden;
+}
+.ads-net-tab::before{
+  content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;
+  pointer-events:none;border-radius:14px;
+}
+.ads-net-tab:active{transform:scale(0.97);}
+.ads-net-tab.active.adsgram{
+  border-color:rgba(255,179,0,0.35);
+  background:linear-gradient(135deg,rgba(255,179,0,0.06),rgba(255,179,0,0.02));
+}
+.ads-net-tab.active.adsgram::before{
+  opacity:1;
+  background:radial-gradient(circle at 80% 20%,rgba(255,179,0,0.08),transparent 60%);
+}
+.ads-net-tab.active.monetag{
+  border-color:rgba(168,85,247,0.4);
+  background:linear-gradient(135deg,rgba(168,85,247,0.06),rgba(168,85,247,0.02));
+}
+.ads-net-tab.active.monetag::before{
+  opacity:1;
+  background:radial-gradient(circle at 80% 20%,rgba(168,85,247,0.08),transparent 60%);
+}
+.ads-net-tab-icon{
+  font-size:20px;flex-shrink:0;
+}
+.ads-net-tab-name{
+  font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;
+  color:rgba(232,242,255,0.4);letter-spacing:.04em;flex:1;
+  transition:color .3s;
+}
+.ads-net-tab.active.adsgram .ads-net-tab-name{color:#ffb300;}
+.ads-net-tab.active.monetag .ads-net-tab-name{color:#a855f7;}
+.ads-net-tab-badge{
+  font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;
+  color:rgba(232,242,255,0.3);min-width:22px;text-align:center;
+  padding:3px 6px;border-radius:6px;
+  background:rgba(26,95,255,0.08);transition:all .3s;
+}
+.ads-net-tab.active.adsgram .ads-net-tab-badge{
+  color:#ffb300;background:rgba(255,179,0,0.12);
+}
+.ads-net-tab.active.monetag .ads-net-tab-badge{
+  color:#a855f7;background:rgba(168,85,247,0.12);
+}
+
+/* NETWORK CONTENT */
+.ads-network-content{animation:adsFadeIn .3s ease;}
+
 /* REWARD INFO */
 .ads-reward-info{
   display:flex;align-items:center;gap:12px;
@@ -72,11 +129,18 @@
   border:1px solid rgba(0,230,118,0.12);border-radius:14px;
   padding:12px 14px;margin-bottom:14px;
 }
+.ads-reward-info.monetag{
+  background:linear-gradient(90deg,rgba(168,85,247,0.04),rgba(236,72,153,0.04));
+  border-color:rgba(168,85,247,0.15);
+}
 .ads-reward-icon{
   width:40px;height:40px;border-radius:12px;
   background:rgba(0,230,118,0.1);
   display:flex;align-items:center;justify-content:center;
   font-size:20px;flex-shrink:0;
+}
+.ads-reward-icon.monetag-icon{
+  background:rgba(168,85,247,0.1);
 }
 .ads-reward-text{flex:1;}
 .ads-reward-label{
@@ -86,6 +150,9 @@
 .ads-reward-val{
   font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;
   color:#00e676;
+}
+.ads-reward-val.monetag-val{
+  color:#a855f7;
 }
 .ads-reward-val span{color:rgba(232,242,255,0.4);font-size:10px;margin-left:4px;}
 
@@ -105,12 +172,16 @@
   font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;
   color:#00d4ff;
 }
+.ads-limit-count.monetag-count{color:#a855f7;}
 .ads-limit-bar{
   height:6px;background:rgba(26,95,255,0.1);border-radius:3px;overflow:hidden;
 }
 .ads-limit-fill{
   height:100%;border-radius:3px;transition:width .5s ease;
   background:linear-gradient(90deg,#00d4ff,#1a5fff);
+}
+.ads-limit-fill.monetag-fill{
+  background:linear-gradient(90deg,#a855f7,#ec4899);
 }
 .ads-limit-fill.full{background:linear-gradient(90deg,#ff4d6a,#ff8a65);}
 
@@ -127,16 +198,27 @@
 .ads-watch-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
 .ads-watch-btn.loading{border-color:rgba(0,212,255,0.3);}
 
+.ads-watch-btn.monetag-btn{
+  border-color:rgba(168,85,247,0.25);
+}
+.ads-watch-btn.monetag-btn:active{border-color:rgba(168,85,247,0.5);}
+
 .ads-watch-glow{
   position:absolute;top:-30px;right:-30px;width:120px;height:120px;
   background:radial-gradient(circle,rgba(255,179,0,0.06) 0%,transparent 70%);
   border-radius:50%;pointer-events:none;
+}
+.ads-watch-glow.monetag-glow{
+  background:radial-gradient(circle,rgba(168,85,247,0.06) 0%,transparent 70%);
 }
 .ads-watch-icon{
   width:48px;height:48px;border-radius:14px;
   background:linear-gradient(135deg,rgba(255,179,0,0.15),rgba(255,179,0,0.05));
   display:flex;align-items:center;justify-content:center;
   font-size:24px;flex-shrink:0;
+}
+.monetag-btn .ads-watch-icon{
+  background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(168,85,247,0.05));
 }
 .ads-watch-text{flex:1;text-align:left;}
 .ads-watch-title{
@@ -151,6 +233,7 @@
   font-size:20px;color:#ffb300;flex-shrink:0;
   animation:adsWatchPulse 2s ease-in-out infinite;
 }
+.monetag-btn .ads-watch-arrow{color:#a855f7;}
 @keyframes adsWatchPulse{0%,100%{opacity:.4;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
 
 /* EARNINGS CARD */
@@ -158,6 +241,14 @@
   background:linear-gradient(135deg,rgba(0,230,118,0.04),rgba(0,212,255,0.03));
   border:1px solid rgba(0,230,118,0.15);border-radius:16px;
   padding:16px;margin-bottom:14px;
+}
+.ads-earnings.monetag-earnings{
+  background:linear-gradient(135deg,rgba(168,85,247,0.04),rgba(236,72,153,0.03));
+  border-color:rgba(168,85,247,0.15);
+}
+.ads-earnings.total-earnings{
+  background:linear-gradient(135deg,rgba(0,212,255,0.04),rgba(26,95,255,0.06));
+  border-color:rgba(0,212,255,0.2);
 }
 .ads-earnings-title{
   font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
@@ -168,6 +259,10 @@
   background:linear-gradient(135deg,#00e676,#00d4ff);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
   margin-bottom:4px;
+}
+.ads-earnings-val.monetag-earnings-gradient{
+  background:linear-gradient(135deg,#a855f7,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
 .ads-earnings-sub{
   font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(232,242,255,0.35);
