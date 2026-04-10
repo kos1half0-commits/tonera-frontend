@@ -5,7 +5,7 @@ import './Ads.css'
 
 let monetagHandler = null
 
-export default function Ads({ onBack }) {
+export default function Ads() {
   const [activeTab, setActiveTab] = useState('')
 
   // Enabled flags
@@ -406,7 +406,6 @@ export default function Ads({ onBack }) {
 
   return (
     <div className="ads-page fade-up">
-      <button className="ads-back" onClick={onBack}>← НАЗАД</button>
 
       {cur.rewarded && <div className="ads-toast success">✅ Награда +{cur.reward.toFixed(4)} TON получена!</div>}
       {cur.error && <div className="ads-toast error">{cur.error}</div>}

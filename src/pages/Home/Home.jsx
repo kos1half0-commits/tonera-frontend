@@ -283,7 +283,7 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
           <div className="qa-lbl">{'\u041c\u0410\u0419\u041d\u0418\u041d\u0413'}</div>
         </div>
         )}
-        <div className="qa" onClick={onAds}>
+        <div className="qa" onClick={() => onTab('ads')}>
           <div className="qa-icon si-gold">🎬</div>
           <div className="qa-lbl">{'\u0420\u0415\u041a\u041b\u0410\u041c\u0410'}</div>
         </div>
