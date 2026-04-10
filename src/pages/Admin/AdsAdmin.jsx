@@ -273,6 +273,52 @@ export default function AdsAdmin() {
                 </div>
               ))}
             </>)}
+
+            {/* Startup Ad Stats */}
+            {netStats.startupStats && (
+              <div style={{marginTop:16}}>
+                <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>🚀 СТАРТОВЫЕ ПОКАЗЫ (при входе)</div>
+                <div style={{background:'#0e1c3a',border:'1px solid rgba(168,85,247,0.2)',borderRadius:12,padding:'14px'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6,marginBottom:10}}>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#a855f7'}}>{netStats.startupStats.today}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>СЕГОДНЯ</div>
+                    </div>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'rgba(232,242,255,0.6)'}}>{netStats.startupStats.yesterday}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>ВЧЕРА</div>
+                    </div>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#00d4ff'}}>{netStats.startupStats.week}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>НЕДЕЛЯ</div>
+                    </div>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#e8f2ff'}}>{netStats.startupStats.total}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>ВСЕГО</div>
+                    </div>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:9,fontFamily:'DM Sans,sans-serif',color:'rgba(232,242,255,0.35)',marginBottom:8}}>
+                    <span>👥 {netStats.startupStats.users} юзеров</span>
+                  </div>
+                  {netStats.startupStats.byNetwork?.length > 0 && (
+                    <div>
+                      <div style={{fontSize:8,color:'rgba(232,242,255,0.25)',fontFamily:'Orbitron',marginBottom:6}}>СЕГОДНЯ ПО СЕТЯМ:</div>
+                      <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                        {netStats.startupStats.byNetwork.map(n => {
+                          const colors = { adsgram:'#ffb300', monetag:'#a855f7', onclicka:'#3b82f6', richads:'#10b981', tads:'#f59e0b' }
+                          return (
+                            <div key={n.network} style={{background:'rgba(168,85,247,0.08)',border:'1px solid rgba(168,85,247,0.15)',borderRadius:6,padding:'4px 10px',display:'flex',alignItems:'center',gap:4}}>
+                              <span style={{fontFamily:'Orbitron',fontSize:9,fontWeight:700,color:colors[n.network]||'#a855f7'}}>{n.network}</span>
+                              <span style={{fontFamily:'Orbitron',fontSize:11,fontWeight:900,color:'#e8f2ff'}}>{parseInt(n.count)}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </>)}
         </div>
       )}

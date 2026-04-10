@@ -87,39 +87,58 @@ export default function App() {
   useEffect(() => { api.get('/api/partnership/status').then(r => setPartnershipStatus(String(r.data?.value ?? '1'))).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/settings/miner_enabled').then(r => setMinerStatus(String(r.data?.value ?? '0'))).catch(()=>{ setMinerStatus('1') }) }, [])
 
-  // === Daily random Adsgram interstitial (1 раз в день) ===
+  // === Startup Ad — random network (1 раз в день) ===
   const dailyAdShown = useRef(false)
   useEffect(() => {
-    if (dailyAdShown.current) return
+    if (dailyAdShown.current || !user?.id) return
     const today = new Date().toISOString().slice(0, 10)
-    const lastShown = localStorage.getItem('tonera_daily_ad_date')
-    if (lastShown === today) return // Already shown today
+    const lastShown = localStorage.getItem('tonera_startup_ad_date')
+    if (lastShown === today) return
 
-    // Fetch block ID
     api.get('/api/ads/adsgram-info').then(r => {
-      const blockId = r.data?.blockId
-      const enabled = r.data?.adsgramEnabled !== false
-      if (!blockId || !enabled) return
+      const d = r.data
+      // Collect enabled networks
+      const networks = []
+      if (d.adsgramEnabled && d.blockId) networks.push({ key: 'adsgram', blockId: d.blockId })
+      if (d.monetagEnabled && d.monetagZoneId) networks.push({ key: 'monetag', zoneId: d.monetagZoneId })
+      if (d.onclickaEnabled && d.onclickaSpotId) networks.push({ key: 'onclicka', spotId: d.onclickaSpotId })
+      if (d.richadsEnabled && d.richadsWidgetId) networks.push({ key: 'richads', widgetId: d.richadsWidgetId })
+      if (networks.length === 0) return
 
-      // Random delay 10-60 seconds
-      const delay = Math.floor(Math.random() * 50000) + 10000
-      const timer = setTimeout(() => {
+      // Pick random network
+      const net = networks[Math.floor(Math.random() * networks.length)]
+
+      // Random delay 5-30 seconds
+      const delay = Math.floor(Math.random() * 25000) + 5000
+      const timer = setTimeout(async () => {
         if (dailyAdShown.current) return
+        dailyAdShown.current = true
+        localStorage.setItem('tonera_startup_ad_date', today)
+
         try {
-          if (!window.Adsgram) return
-          const controller = window.Adsgram.init({ blockId, debug: false })
-          controller.show().then(() => {
-            dailyAdShown.current = true
-            localStorage.setItem('tonera_daily_ad_date', today)
-            console.log('Daily Adsgram shown')
-          }).catch(() => {
-            // No ads available or dismissed — still mark as attempted
-            dailyAdShown.current = true
-            localStorage.setItem('tonera_daily_ad_date', today)
-          })
-        } catch (e) {
-          console.warn('Daily ad error:', e)
-        }
+          if (net.key === 'adsgram' && window.Adsgram) {
+            const ctrl = window.Adsgram.init({ blockId: net.blockId, debug: false })
+            await ctrl.show().catch(() => {})
+          } else if (net.key === 'monetag') {
+            if (window.show_9498913) window.show_9498913()
+          } else if (net.key === 'onclicka' && window.initCdTma) {
+            try { const fn = await window.initCdTma({ id: net.spotId }); await fn() } catch {}
+          } else if (net.key === 'richads') {
+            const parts = net.widgetId.split('-')
+            if (!document.querySelector('script[data-richads-startup]')) {
+              const s = document.createElement('script')
+              s.src = 'https://richinfo.co/richpartners/telegram/js/tg-ob.js'
+              s.setAttribute('data-richads-startup', '1')
+              document.head.appendChild(s)
+              await new Promise(r => { s.onload = r; s.onerror = r; setTimeout(r, 5000) })
+              const init = document.createElement('script')
+              init.textContent = `try { var c = new TelegramAdsController(); c.initialize({ pubId:"${parts[0]}", appId:"${parts[1]||''}" }); if(c.showAd) c.showAd({}); } catch(e){}`
+              document.head.appendChild(init)
+            }
+          }
+          // Record startup view
+          api.post('/api/ads/startup-view', { network: net.key }).catch(() => {})
+        } catch (e) { console.warn('Startup ad:', e) }
       }, delay)
       return () => clearTimeout(timer)
     }).catch(() => {})
