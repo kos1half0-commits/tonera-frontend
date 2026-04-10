@@ -19,15 +19,33 @@ export default function AdsgramAd({ onReward }) {
       .catch(() => {})
   }, [])
 
-  // Init Adsgram controller when blockId loads
+  // Init Adsgram controller when blockId loads (SDK may load async)
   useEffect(() => {
-    if (!blockId || !window.Adsgram) return
-    try {
-      const controller = window.Adsgram.init({ blockId, debug: false })
-      setAdController(controller)
-    } catch (e) {
-      console.warn('Adsgram init error:', e)
+    if (!blockId) return
+
+    const tryInit = () => {
+      if (!window.Adsgram) return false
+      try {
+        const controller = window.Adsgram.init({ blockId, debug: false })
+        setAdController(controller)
+        return true
+      } catch (e) {
+        console.warn('Adsgram init error:', e)
+        return true
+      }
     }
+
+    // Try immediately
+    if (tryInit()) return
+
+    // SDK may still be loading — poll for it (max ~10s)
+    let attempts = 0
+    const interval = setInterval(() => {
+      attempts++
+      if (tryInit() || attempts >= 20) clearInterval(interval)
+    }, 500)
+
+    return () => clearInterval(interval)
   }, [blockId])
 
   const showAd = useCallback(async () => {
