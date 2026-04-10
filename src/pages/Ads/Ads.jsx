@@ -190,7 +190,7 @@ export default function Ads() {
   // Init RichAds — TelegramAdsController SDK
   useEffect(() => {
     if (!richadsWidgetId) return
-    const parts = richadsWidgetId.split(':')
+    const parts = richadsWidgetId.split('-')
     const pubId = parts[0]; const appId = parts[1] || ''
     if (!pubId) return
     ;(async () => {
