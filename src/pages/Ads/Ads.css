@@ -1,0 +1,235 @@
+/* ====== ADS PAGE — Watch & Earn ====== */
+.ads-page{padding:14px 14px 24px;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.ads-page::-webkit-scrollbar{display:none;}
+
+/* HERO */
+.ads-hero{
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#0a1a3a 0%,#0e1a44 40%,#141e52 100%);
+  border:1px solid rgba(0,212,255,0.15);border-radius:20px;
+  padding:24px 18px 20px;margin-bottom:14px;text-align:center;
+}
+.ads-hero::before{
+  content:'';position:absolute;top:-50%;right:-30%;width:220px;height:220px;
+  background:radial-gradient(circle,rgba(255,179,0,0.08) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.ads-hero::after{
+  content:'';position:absolute;bottom:-40%;left:-20%;width:180px;height:180px;
+  background:radial-gradient(circle,rgba(0,212,255,0.06) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.ads-hero-icon{
+  width:64px;height:64px;margin:0 auto 12px;
+  background:linear-gradient(135deg,rgba(255,179,0,0.12),rgba(0,212,255,0.08));
+  border:1px solid rgba(255,179,0,0.2);border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;position:relative;z-index:1;
+  animation:adsHeroPulse 3s ease-in-out infinite;
+}
+@keyframes adsHeroPulse{
+  0%,100%{box-shadow:0 0 20px rgba(255,179,0,0.05)}
+  50%{box-shadow:0 0 30px rgba(255,179,0,0.15)}
+}
+.ads-hero-title{
+  font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;
+  color:#e8f2ff;letter-spacing:.04em;margin-bottom:4px;position:relative;z-index:1;
+}
+.ads-hero-sub{
+  font-family:'DM Sans',sans-serif;font-size:12px;
+  color:rgba(232,242,255,0.4);line-height:1.5;position:relative;z-index:1;
+}
+
+/* STATS ROW */
+.ads-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+.ads-stat{
+  background:#0e1c3a;border:1px solid rgba(26,95,255,0.12);border-radius:14px;
+  padding:12px 8px;text-align:center;position:relative;overflow:hidden;
+}
+.ads-stat::after{
+  content:'';position:absolute;top:-10px;right:-10px;width:40px;height:40px;
+  border-radius:50%;opacity:0.04;pointer-events:none;
+}
+.ads-stat.cyan::after{background:#00d4ff;}
+.ads-stat.green::after{background:#00e676;}
+.ads-stat.gold::after{background:#ffb300;}
+.ads-stat-val{
+  font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;
+  line-height:1.1;
+}
+.ads-stat-val.cyan{color:#00d4ff;}
+.ads-stat-val.green{color:#00e676;}
+.ads-stat-val.gold{color:#ffb300;}
+.ads-stat-lbl{
+  font-family:'DM Sans',sans-serif;font-size:9px;
+  color:rgba(232,242,255,0.3);margin-top:4px;
+}
+
+/* REWARD INFO */
+.ads-reward-info{
+  display:flex;align-items:center;gap:12px;
+  background:linear-gradient(90deg,rgba(0,230,118,0.04),rgba(0,212,255,0.04));
+  border:1px solid rgba(0,230,118,0.12);border-radius:14px;
+  padding:12px 14px;margin-bottom:14px;
+}
+.ads-reward-icon{
+  width:40px;height:40px;border-radius:12px;
+  background:rgba(0,230,118,0.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.ads-reward-text{flex:1;}
+.ads-reward-label{
+  font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;
+  color:rgba(232,242,255,0.3);letter-spacing:.1em;margin-bottom:2px;
+}
+.ads-reward-val{
+  font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;
+  color:#00e676;
+}
+.ads-reward-val span{color:rgba(232,242,255,0.4);font-size:10px;margin-left:4px;}
+
+/* LIMIT BAR */
+.ads-limit{
+  background:#0e1c3a;border:1px solid rgba(26,95,255,0.12);border-radius:14px;
+  padding:14px;margin-bottom:14px;
+}
+.ads-limit-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;
+}
+.ads-limit-label{
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  color:rgba(232,242,255,0.3);letter-spacing:.08em;
+}
+.ads-limit-count{
+  font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;
+  color:#00d4ff;
+}
+.ads-limit-bar{
+  height:6px;background:rgba(26,95,255,0.1);border-radius:3px;overflow:hidden;
+}
+.ads-limit-fill{
+  height:100%;border-radius:3px;transition:width .5s ease;
+  background:linear-gradient(90deg,#00d4ff,#1a5fff);
+}
+.ads-limit-fill.full{background:linear-gradient(90deg,#ff4d6a,#ff8a65);}
+
+/* WATCH BUTTON */
+.ads-watch-btn{
+  width:100%;display:flex;align-items:center;gap:14px;
+  padding:18px 20px;border:none;border-radius:16px;
+  background:linear-gradient(135deg,#0e1c3a 0%,#162452 100%);
+  border:1px solid rgba(255,179,0,0.2);
+  cursor:pointer;position:relative;overflow:hidden;
+  transition:all .3s;margin-bottom:14px;
+}
+.ads-watch-btn:active{transform:scale(0.98);border-color:rgba(255,179,0,0.4);}
+.ads-watch-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.ads-watch-btn.loading{border-color:rgba(0,212,255,0.3);}
+
+.ads-watch-glow{
+  position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+  background:radial-gradient(circle,rgba(255,179,0,0.06) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.ads-watch-icon{
+  width:48px;height:48px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(255,179,0,0.15),rgba(255,179,0,0.05));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;
+}
+.ads-watch-text{flex:1;text-align:left;}
+.ads-watch-title{
+  display:block;font-family:'Orbitron',sans-serif;font-size:13px;
+  font-weight:700;color:#e8f2ff;letter-spacing:.04em;
+}
+.ads-watch-sub{
+  display:block;font-family:'DM Sans',sans-serif;font-size:10px;
+  color:rgba(232,242,255,0.3);margin-top:3px;
+}
+.ads-watch-arrow{
+  font-size:20px;color:#ffb300;flex-shrink:0;
+  animation:adsWatchPulse 2s ease-in-out infinite;
+}
+@keyframes adsWatchPulse{0%,100%{opacity:.4;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
+
+/* EARNINGS CARD */
+.ads-earnings{
+  background:linear-gradient(135deg,rgba(0,230,118,0.04),rgba(0,212,255,0.03));
+  border:1px solid rgba(0,230,118,0.15);border-radius:16px;
+  padding:16px;margin-bottom:14px;
+}
+.ads-earnings-title{
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  color:rgba(232,242,255,0.3);letter-spacing:.1em;margin-bottom:10px;
+}
+.ads-earnings-val{
+  font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;
+  background:linear-gradient(135deg,#00e676,#00d4ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:4px;
+}
+.ads-earnings-sub{
+  font-family:'DM Sans',sans-serif;font-size:10px;color:rgba(232,242,255,0.35);
+}
+
+/* TOAST */
+.ads-toast{
+  padding:12px 16px;border-radius:12px;margin-bottom:12px;
+  font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;
+  text-align:center;animation:adsFadeIn .3s ease;
+}
+.ads-toast.success{
+  background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.25);color:#00e676;
+}
+.ads-toast.error{
+  background:rgba(255,77,106,0.1);border:1px solid rgba(255,77,106,0.25);color:#ff4d6a;
+}
+@keyframes adsFadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* HOW IT WORKS */
+.ads-howto{
+  background:#0e1c3a;border:1px solid rgba(26,95,255,0.12);border-radius:16px;
+  padding:16px;margin-bottom:14px;
+}
+.ads-howto-title{
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  color:rgba(232,242,255,0.3);letter-spacing:.1em;margin-bottom:12px;
+}
+.ads-howto-step{
+  display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;
+}
+.ads-howto-step:last-child{margin-bottom:0;}
+.ads-howto-num{
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(26,95,255,0.1);
+  font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;
+  color:#1a5fff;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.ads-howto-text{flex:1;}
+.ads-howto-text-title{
+  font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;
+  color:#e8f2ff;margin-bottom:2px;
+}
+.ads-howto-text-sub{
+  font-family:'DM Sans',sans-serif;font-size:10px;
+  color:rgba(232,242,255,0.35);line-height:1.4;
+}
+
+/* BACK BUTTON */
+.ads-back{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px;border:1px solid rgba(26,95,255,0.15);border-radius:10px;
+  background:rgba(26,95,255,0.06);color:rgba(232,242,255,0.5);
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  cursor:pointer;margin-bottom:14px;transition:all .2s;letter-spacing:.04em;
+}
+.ads-back:active{background:rgba(26,95,255,0.12);transform:scale(0.98);}
+
+/* BANNER SECTION */
+.ads-banners{margin-bottom:14px;}
+.ads-banners-title{
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  color:rgba(232,242,255,0.3);letter-spacing:.1em;margin-bottom:10px;
+}

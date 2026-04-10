@@ -14,6 +14,7 @@ import Support from './pages/Support/Support'
 import Slots from './pages/Slots/Slots'
 import Miner from './pages/Miner/Miner'
 import AdOrder from './pages/AdOrder/AdOrder'
+import Ads from './pages/Ads/Ads'
 import Partnership from './pages/Partnership/Partnership'
 import PartnerPromos from './pages/PartnerPromos/PartnerPromos'
 import Trading from './pages/Trading/Trading'
@@ -88,6 +89,7 @@ export default function App() {
   const balance = parseFloat(user?.balance_ton ?? 0)
 
   if (page === 'adorder') return <AdOrder onBack={() => setPage(null)} />
+  if (page === 'ads') return <Ads onBack={() => setPage(null)} />
 
   if (blockMsg) return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',padding:24,textAlign:'center',background:'#050a1a'}}>
@@ -129,7 +131,7 @@ export default function App() {
         {showPartnership && <Partnership onBack={() => setShowPartnership(false)} />}
         {showPromos && <PartnerPromos onBack={() => setShowPromos(false)} />}
         {!showSupport && !showPartnership && !showPromos && tab === 'home' && <Home user={user} onTab={setTab} onCreate={goCreate} onMyTasks={goMyTasks} onSupport={() => setShowSupport(true)} onPartnership={() => setShowPartnership(true)} partnershipStatus={partnershipStatus} onMiner={() => { setTab('miner'); setShowSupport(false); setShowPartnership(false); setShowPromos(false) }}
-            onAdOrder={() => setPage('adorder')} onAuction={() => { setTab('referrals'); setShowAuction(true); setAuctionRef(null) }} minerStatus={minerStatus} isAdmin={isAdmin} onPromos={() => setShowPromos(true)} />}
+            onAdOrder={() => setPage('adorder')} onAds={() => setPage('ads')} onAuction={() => { setTab('referrals'); setShowAuction(true); setAuctionRef(null) }} minerStatus={minerStatus} isAdmin={isAdmin} onPromos={() => setShowPromos(true)} />}
         {tab === 'staking'   && <Staking   user={user} />}
         {tab === 'tasks'     && <Tasks initialView={tasksView} onViewChange={setTasksView} />}
         {tab === 'referrals' && !showAuction && <Referrals user={user} onAuction={(ref) => { setShowAuction(true); setAuctionRef(ref || null) }} />}

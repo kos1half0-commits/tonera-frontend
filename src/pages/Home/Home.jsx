@@ -1,12 +1,12 @@
 import AdBanner from '../../components/AdBanner'
-import AdsgramAd from '../../components/AdsgramAd'
+
 import { useState, useEffect } from 'react'
 import { getUserStakes } from '../../api/index'
 import api from '../../api/index'
 import { useUserStore } from '../../store/userStore'
 import './Home.css'
 
-export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', onAdOrder, onAuction, isAdmin=false, onPromos }) {
+export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPartnership, partnershipStatus='1', onMiner, minerStatus='0', onAdOrder, onAds, onAuction, isAdmin=false, onPromos }) {
   const [news, setNews] = useState([])
   const [promoCode, setPromoCode] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
@@ -231,7 +231,6 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
       </div>
 
       <AdBanner page="home" />
-      <AdsgramAd />
 
       {/* ===== QUICK ACTIONS ===== */}
       <div className="qa-title">{'\u0411\u042b\u0421\u0422\u0420\u042b\u0415 \u0414\u0415\u0419\u0421\u0422\u0412\u0418\u042f'}</div>
@@ -284,9 +283,13 @@ export default function Home({ user, onTab, onCreate, onMyTasks, onSupport, onPa
           <div className="qa-lbl">{'\u041c\u0410\u0419\u041d\u0418\u041d\u0413'}</div>
         </div>
         )}
-        <div className="qa" onClick={onAdOrder}>
-          <div className="qa-icon si-gold">📣</div>
+        <div className="qa" onClick={onAds}>
+          <div className="qa-icon si-gold">🎬</div>
           <div className="qa-lbl">{'\u0420\u0415\u041a\u041b\u0410\u041c\u0410'}</div>
+        </div>
+        <div className="qa" onClick={onAdOrder}>
+          <div className="qa-icon si-warn">📣</div>
+          <div className="qa-lbl">{'\u0417\u0410\u041a\u0410\u0417\u0410\u0422\u042c'}</div>
         </div>
       </div>
     </div>
