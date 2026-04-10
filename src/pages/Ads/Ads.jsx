@@ -9,7 +9,8 @@ export default function Ads({ onBack }) {
   const [loading, setLoading] = useState(false)
   const [rewarded, setRewarded] = useState(false)
   const [error, setError] = useState('')
-  const [reward, setReward] = useState(0.001)
+  const [reward, setReward] = useState(0)
+  const [infoLoaded, setInfoLoaded] = useState(false)
   const [dailyLimit, setDailyLimit] = useState(10)
   const [todayCount, setTodayCount] = useState(0)
   const [totalEarned, setTotalEarned] = useState(0)
@@ -18,16 +19,18 @@ export default function Ads({ onBack }) {
   useEffect(() => {
     api.get('/api/ads/adsgram-info').then(r => {
       const d = r.data || {}
-      setReward(parseFloat(d.reward) || 0.001)
-      setDailyLimit(parseInt(d.dailyLimit) || 10)
+      if (d.reward != null) setReward(parseFloat(d.reward))
+      if (d.dailyLimit != null) setDailyLimit(parseInt(d.dailyLimit))
       setTodayCount(parseInt(d.todayCount) || 0)
       setTotalEarned(parseFloat(d.totalEarned) || 0)
       if (d.blockId) setBlockId(d.blockId)
+      setInfoLoaded(true)
     }).catch(() => {
       // Fallback: load block ID separately
       api.get('/api/settings/adsgram_block_id').then(r => {
         if (r.data?.value) setBlockId(r.data.value)
       }).catch(() => {})
+      setInfoLoaded(true)
     })
   }, [])
 
