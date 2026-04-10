@@ -200,22 +200,19 @@ export default function Ads() {
           s.src = 'https://richinfo.co/richpartners/telegram/js/tg-ob.js'
           s.async = true; s.setAttribute('data-richads', '1')
           document.head.appendChild(s)
-          await new Promise((r, j) => { s.onload = r; s.onerror = j; setTimeout(r, 5000) })
+          await new Promise((r) => { s.onload = r; s.onerror = r; setTimeout(r, 5000) })
         }
-        let a = 0
-        const i = setInterval(() => {
-          a++
-          if (window.TelegramAdsController) {
-            clearInterval(i)
-            try {
-              window._richAdsCtrl = new window.TelegramAdsController()
+        // Try to init immediately
+        setTimeout(() => {
+          try {
+            if (typeof TelegramAdsController !== 'undefined') {
+              window._richAdsCtrl = new TelegramAdsController()
               window._richAdsCtrl.initialize({ pubId, appId })
-              setRichadsReady(true)
-            } catch (e) { console.warn('RichAds init err:', e) }
-          }
-          if (a >= 20) clearInterval(i)
-        }, 500)
-      } catch (e) { console.warn('RichAds init:', e) }
+            }
+          } catch (e) { console.warn('RichAds init:', e) }
+        }, 1000)
+        setRichadsReady(true)
+      } catch (e) { console.warn('RichAds init:', e); setRichadsReady(true) }
     })()
   }, [richadsWidgetId])
 
