@@ -60,6 +60,9 @@ const SETTING_GROUPS = [
       { key: 'monetag_zone_id',    label: '📺 Monetag: Zone ID' },
       { key: 'monetag_reward',     label: '📺 Monetag: Награда за просмотр (TON)' },
       { key: 'monetag_daily_limit', label: '📺 Monetag: Лимит просмотров в день' },
+      { key: 'onclicka_spot_id',    label: '🔵 OnClickA: Spot ID' },
+      { key: 'onclicka_reward',     label: '🔵 OnClickA: Награда за просмотр (TON)' },
+      { key: 'onclicka_daily_limit', label: '🔵 OnClickA: Лимит просмотров в день' },
     ]
   },
   {

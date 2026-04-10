@@ -67,7 +67,7 @@
 
 /* ===== NETWORK TABS ===== */
 .ads-net-tabs{
-  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;
 }
 .ads-net-tab{
   display:flex;align-items:center;gap:8px;
@@ -118,6 +118,18 @@
 .ads-net-tab.active.monetag .ads-net-tab-badge{
   color:#a855f7;background:rgba(168,85,247,0.12);
 }
+.ads-net-tab.active.onclicka{
+  border-color:rgba(59,130,246,0.4);
+  background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(59,130,246,0.02));
+}
+.ads-net-tab.active.onclicka::before{
+  opacity:1;
+  background:radial-gradient(circle at 80% 20%,rgba(59,130,246,0.08),transparent 60%);
+}
+.ads-net-tab.active.onclicka .ads-net-tab-name{color:#3b82f6;}
+.ads-net-tab.active.onclicka .ads-net-tab-badge{
+  color:#3b82f6;background:rgba(59,130,246,0.12);
+}
 
 /* NETWORK CONTENT */
 .ads-network-content{animation:adsFadeIn .3s ease;}
@@ -154,6 +166,16 @@
 .ads-reward-val.monetag-val{
   color:#a855f7;
 }
+.ads-reward-info.onclicka{
+  background:linear-gradient(90deg,rgba(59,130,246,0.04),rgba(96,165,250,0.04));
+  border-color:rgba(59,130,246,0.15);
+}
+.ads-reward-icon.onclicka-icon{
+  background:rgba(59,130,246,0.1);
+}
+.ads-reward-val.onclicka-val{
+  color:#3b82f6;
+}
 .ads-reward-val span{color:rgba(232,242,255,0.4);font-size:10px;margin-left:4px;}
 
 /* LIMIT BAR */
@@ -182,6 +204,10 @@
 }
 .ads-limit-fill.monetag-fill{
   background:linear-gradient(90deg,#a855f7,#ec4899);
+}
+.ads-limit-count.onclicka-count{color:#3b82f6;}
+.ads-limit-fill.onclicka-fill{
+  background:linear-gradient(90deg,#3b82f6,#60a5fa);
 }
 .ads-limit-fill.full{background:linear-gradient(90deg,#ff4d6a,#ff8a65);}
 
@@ -234,6 +260,18 @@
   animation:adsWatchPulse 2s ease-in-out infinite;
 }
 .monetag-btn .ads-watch-arrow{color:#a855f7;}
+
+.ads-watch-btn.onclicka-btn{
+  border-color:rgba(59,130,246,0.25);
+}
+.ads-watch-btn.onclicka-btn:active{border-color:rgba(59,130,246,0.5);}
+.ads-watch-glow.onclicka-glow{
+  background:radial-gradient(circle,rgba(59,130,246,0.06) 0%,transparent 70%);
+}
+.onclicka-btn .ads-watch-icon{
+  background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));
+}
+.onclicka-btn .ads-watch-arrow{color:#3b82f6;}
 @keyframes adsWatchPulse{0%,100%{opacity:.4;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
 
 /* EARNINGS CARD */
@@ -262,6 +300,14 @@
 }
 .ads-earnings-val.monetag-earnings-gradient{
   background:linear-gradient(135deg,#a855f7,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.ads-earnings.onclicka-earnings{
+  background:linear-gradient(135deg,rgba(59,130,246,0.04),rgba(96,165,250,0.03));
+  border-color:rgba(59,130,246,0.15);
+}
+.ads-earnings-val.onclicka-earnings-gradient{
+  background:linear-gradient(135deg,#3b82f6,#60a5fa);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
 .ads-earnings-sub{

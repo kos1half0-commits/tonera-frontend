@@ -6,7 +6,7 @@ import './Ads.css'
 let monetagHandler = null
 
 export default function Ads({ onBack }) {
-  const [activeTab, setActiveTab] = useState('adsgram') // 'adsgram' | 'monetag'
+  const [activeTab, setActiveTab] = useState('adsgram') // 'adsgram' | 'monetag' | 'onclicka'
 
   // Adsgram state
   const [blockId, setBlockId] = useState('')
@@ -31,6 +31,18 @@ export default function Ads({ onBack }) {
   const [monetagError, setMontagError] = useState('')
   const [monetagReady, setMontagReady] = useState(false)
 
+  // OnClickA state
+  const [onclickaSpotId, setOnclickaSpotId] = useState('')
+  const [onclickaReward, setOnclickaReward] = useState(0)
+  const [onclickaDailyLimit, setOnclickaDailyLimit] = useState(10)
+  const [onclickaTodayCount, setOnclickaTodayCount] = useState(0)
+  const [onclickaTotalEarned, setOnclickaTotalEarned] = useState(0)
+  const [onclickaLoading, setOnclickaLoading] = useState(false)
+  const [onclickaRewarded, setOnclickaRewarded] = useState(false)
+  const [onclickaError, setOnclickaError] = useState('')
+  const [onclickaReady, setOnclickaReady] = useState(false)
+  const onclickaShowRef = useRef(null)
+
   // Load settings
   useEffect(() => {
     api.get('/api/ads/adsgram-info').then(r => {
@@ -47,6 +59,13 @@ export default function Ads({ onBack }) {
       if (d.monetagDailyLimit != null) setMontagDailyLimit(parseInt(d.monetagDailyLimit))
       setMontagTodayCount(parseInt(d.monetagTodayCount) || 0)
       setMontagTotalEarned(parseFloat(d.monetagTotalEarned) || 0)
+
+      // OnClickA
+      if (d.onclickaSpotId) setOnclickaSpotId(d.onclickaSpotId)
+      if (d.onclickaReward != null) setOnclickaReward(parseFloat(d.onclickaReward))
+      if (d.onclickaDailyLimit != null) setOnclickaDailyLimit(parseInt(d.onclickaDailyLimit))
+      setOnclickaTodayCount(parseInt(d.onclickaTodayCount) || 0)
+      setOnclickaTotalEarned(parseFloat(d.onclickaTotalEarned) || 0)
 
       setInfoLoaded(true)
     }).catch(() => {
@@ -101,6 +120,57 @@ export default function Ads({ onBack }) {
     initMonetag()
   }, [monetagZoneId])
 
+  // Init OnClickA SDK
+  useEffect(() => {
+    if (!onclickaSpotId) return
+
+    const initOnClickA = async () => {
+      try {
+        // Load OnClickA script if not already loaded
+        if (!document.querySelector('script[src*="onclckmn"]')) {
+          const script = document.createElement('script')
+          script.src = 'https://js.onclckmn.com/static/onclicka.js'
+          script.async = true
+          document.head.appendChild(script)
+          // Wait for script to load
+          await new Promise((resolve, reject) => {
+            script.onload = resolve
+            script.onerror = reject
+            setTimeout(resolve, 3000)
+          })
+        }
+
+        // Init with spot ID
+        if (window.initCdTma) {
+          const show = await window.initCdTma({ id: onclickaSpotId })
+          onclickaShowRef.current = show
+          setOnclickaReady(true)
+        } else {
+          // Retry a few times
+          let attempts = 0
+          const interval = setInterval(async () => {
+            attempts++
+            if (window.initCdTma) {
+              clearInterval(interval)
+              try {
+                const show = await window.initCdTma({ id: onclickaSpotId })
+                onclickaShowRef.current = show
+                setOnclickaReady(true)
+              } catch (e) {
+                console.warn('OnClickA init error:', e)
+              }
+            }
+            if (attempts >= 15) clearInterval(interval)
+          }, 500)
+        }
+      } catch (e) {
+        console.warn('OnClickA SDK init error:', e)
+      }
+    }
+
+    initOnClickA()
+  }, [onclickaSpotId])
+
   // Adsgram
   const remaining = Math.max(0, dailyLimit - todayCount)
   const limitPercent = dailyLimit > 0 ? Math.min(100, (todayCount / dailyLimit) * 100) : 100
@@ -109,9 +179,14 @@ export default function Ads({ onBack }) {
   const monetagRemaining = Math.max(0, monetagDailyLimit - monetagTodayCount)
   const monetagLimitPercent = monetagDailyLimit > 0 ? Math.min(100, (monetagTodayCount / monetagDailyLimit) * 100) : 100
 
+  // OnClickA
+  const onclickaRemaining = Math.max(0, onclickaDailyLimit - onclickaTodayCount)
+  const onclickaLimitPercent = onclickaDailyLimit > 0 ? Math.min(100, (onclickaTodayCount / onclickaDailyLimit) * 100) : 100
+
   // Combined stats
-  const combinedTotalEarned = totalEarned + monetagTotalEarned
-  const combinedTodayViews = todayCount + monetagTodayCount
+  const combinedTotalEarned = totalEarned + monetagTotalEarned + onclickaTotalEarned
+  const combinedTodayViews = todayCount + monetagTodayCount + onclickaTodayCount
+  const networkCount = [blockId, monetagZoneId, onclickaSpotId].filter(Boolean).length || 3
 
   const showAd = useCallback(async () => {
     if (!adController || loading || remaining <= 0) return
@@ -165,9 +240,33 @@ export default function Ads({ onBack }) {
     setMontagLoading(false)
   }, [monetagLoading, monetagRemaining, monetagReward])
 
-  const curRewarded = activeTab === 'adsgram' ? rewarded : monetagRewarded
-  const curError = activeTab === 'adsgram' ? error : monetagError
-  const curReward = activeTab === 'adsgram' ? reward : monetagReward
+  const showOnClickA = useCallback(async () => {
+    if (!onclickaShowRef.current || onclickaLoading || onclickaRemaining <= 0) return
+    setOnclickaLoading(true)
+    setOnclickaError('')
+    try {
+      await onclickaShowRef.current()
+      const r = await api.post('/api/ads/onclicka-reward')
+      const earnedReward = parseFloat(r.data?.reward) || onclickaReward
+      setOnclickaRewarded(true)
+      setOnclickaTodayCount(prev => prev + 1)
+      setOnclickaTotalEarned(prev => prev + earnedReward)
+      setTimeout(() => setOnclickaRewarded(false), 5000)
+    } catch (e) {
+      console.warn('OnClickA show error:', e)
+      if (e?.response?.data?.error) {
+        setOnclickaError(e.response.data.error)
+      } else {
+        setOnclickaError('OnClickA реклама недоступна')
+      }
+      setTimeout(() => setOnclickaError(''), 4000)
+    }
+    setOnclickaLoading(false)
+  }, [onclickaLoading, onclickaRemaining, onclickaReward])
+
+  const curRewarded = activeTab === 'adsgram' ? rewarded : activeTab === 'monetag' ? monetagRewarded : onclickaRewarded
+  const curError = activeTab === 'adsgram' ? error : activeTab === 'monetag' ? monetagError : onclickaError
+  const curReward = activeTab === 'adsgram' ? reward : activeTab === 'monetag' ? monetagReward : onclickaReward
 
   return (
     <div className="ads-page fade-up">
@@ -202,7 +301,7 @@ export default function Ads({ onBack }) {
           <div className="ads-stat-lbl">Заработано</div>
         </div>
         <div className="ads-stat gold">
-          <div className="ads-stat-val gold">2</div>
+          <div className="ads-stat-val gold">{networkCount}</div>
           <div className="ads-stat-lbl">Сети</div>
         </div>
       </div>
@@ -224,6 +323,14 @@ export default function Ads({ onBack }) {
           <span className="ads-net-tab-icon">📺</span>
           <span className="ads-net-tab-name">Monetag</span>
           <span className="ads-net-tab-badge">{monetagRemaining}</span>
+        </button>
+        <button
+          className={`ads-net-tab ${activeTab === 'onclicka' ? 'active onclicka' : ''}`}
+          onClick={() => setActiveTab('onclicka')}
+        >
+          <span className="ads-net-tab-icon">🔵</span>
+          <span className="ads-net-tab-name">OnClickA</span>
+          <span className="ads-net-tab-badge">{onclickaRemaining}</span>
         </button>
       </div>
 
@@ -371,6 +478,78 @@ export default function Ads({ onBack }) {
         </div>
       )}
 
+      {/* === ONCLICKA TAB === */}
+      {activeTab === 'onclicka' && (
+        <div className="ads-network-content fade-up">
+          {/* Reward info */}
+          <div className="ads-reward-info onclicka">
+            <div className="ads-reward-icon onclicka-icon">🔵</div>
+            <div className="ads-reward-text">
+              <div className="ads-reward-label">НАГРАДА ЗА ПРОСМОТР · ONCLICKA</div>
+              <div className="ads-reward-val onclicka-val">
+                +{onclickaReward.toFixed(4)}<span>TON</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Daily limit bar */}
+          <div className="ads-limit">
+            <div className="ads-limit-header">
+              <div className="ads-limit-label">ДНЕВНОЙ ЛИМИТ ONCLICKA</div>
+              <div className="ads-limit-count onclicka-count">{onclickaTodayCount} / {onclickaDailyLimit}</div>
+            </div>
+            <div className="ads-limit-bar">
+              <div
+                className={`ads-limit-fill onclicka-fill ${onclickaRemaining <= 0 ? 'full' : ''}`}
+                style={{ width: onclickaLimitPercent + '%' }}
+              />
+            </div>
+          </div>
+
+          {/* Watch button */}
+          <button
+            className={`ads-watch-btn onclicka-btn ${onclickaLoading ? 'loading' : ''}`}
+            onClick={showOnClickA}
+            disabled={onclickaLoading || !onclickaReady || onclickaRemaining <= 0}
+          >
+            <div className="ads-watch-glow onclicka-glow" />
+            <div className="ads-watch-icon">
+              {onclickaLoading ? '⏳' : onclickaRemaining <= 0 ? '⏰' : '🔵'}
+            </div>
+            <div className="ads-watch-text">
+              <span className="ads-watch-title">
+                {onclickaLoading ? 'Загрузка...' : onclickaRemaining <= 0 ? 'Лимит исчерпан' : 'Смотреть OnClickA'}
+              </span>
+              <span className="ads-watch-sub">
+                {onclickaRemaining <= 0
+                  ? 'Приходите завтра для новых просмотров'
+                  : `Получите +${onclickaReward.toFixed(4)} TON за просмотр`}
+              </span>
+            </div>
+            {onclickaRemaining > 0 && !onclickaLoading && (
+              <div className="ads-watch-arrow">▸</div>
+            )}
+          </button>
+
+          {/* OnClickA earnings */}
+          <div className="ads-earnings onclicka-earnings">
+            <div className="ads-earnings-title">ЗАРАБОТАНО С ONCLICKA</div>
+            <div className="ads-earnings-val onclicka-earnings-gradient">{onclickaTotalEarned.toFixed(4)} TON</div>
+            <div className="ads-earnings-sub">Начислено на ваш баланс автоматически</div>
+          </div>
+
+          {!onclickaSpotId && (
+            <div style={{
+              textAlign:'center', padding:'20px',
+              fontFamily: 'DM Sans, sans-serif', fontSize: '12px',
+              color: 'rgba(232,242,255,0.25)'
+            }}>
+              OnClickA сейчас недоступен
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Banners */}
       <div className="ads-banners">
         <div className="ads-banners-title">📢 СПОНСОРЫ</div>
@@ -384,7 +563,7 @@ export default function Ads({ onBack }) {
           <div className="ads-howto-num">1</div>
           <div className="ads-howto-text">
             <div className="ads-howto-text-title">Выберите рекламную сеть</div>
-            <div className="ads-howto-text-sub">Adsgram или Monetag — каждая с отдельным лимитом</div>
+            <div className="ads-howto-text-sub">Adsgram, Monetag или OnClickA — каждая с отдельным лимитом</div>
           </div>
         </div>
         <div className="ads-howto-step">
@@ -407,7 +586,7 @@ export default function Ads({ onBack }) {
       <div className="ads-earnings total-earnings">
         <div className="ads-earnings-title">ВСЕГО ЗАРАБОТАНО С РЕКЛАМЫ</div>
         <div className="ads-earnings-val">{combinedTotalEarned.toFixed(4)} TON</div>
-        <div className="ads-earnings-sub">Adsgram: {totalEarned.toFixed(4)} · Monetag: {monetagTotalEarned.toFixed(4)}</div>
+        <div className="ads-earnings-sub">Adsgram: {totalEarned.toFixed(4)} · Monetag: {monetagTotalEarned.toFixed(4)} · OnClickA: {onclickaTotalEarned.toFixed(4)}</div>
       </div>
     </div>
   )
