@@ -187,16 +187,36 @@ export default function Ads() {
     })()
   }, [onclickaSpotId])
 
-  // Init RichAds — uses JS tag from dashboard
+  // Init RichAds — TelegramAdsController SDK
   useEffect(() => {
     if (!richadsWidgetId) return
-    if (!document.querySelector('script[data-richads]')) {
-      const s = document.createElement('script')
-      s.src = `https://richads.io/w/${richadsWidgetId}.js`
-      s.async = true; s.setAttribute('data-richads', '1')
-      document.head.appendChild(s)
-    }
-    setRichadsReady(true)
+    const parts = richadsWidgetId.split(':')
+    const pubId = parts[0]; const appId = parts[1] || ''
+    if (!pubId) return
+    ;(async () => {
+      try {
+        if (!document.querySelector('script[data-richads]')) {
+          const s = document.createElement('script')
+          s.src = 'https://richinfo.co/richpartners/telegram/js/tg-ob.js'
+          s.async = true; s.setAttribute('data-richads', '1')
+          document.head.appendChild(s)
+          await new Promise((r, j) => { s.onload = r; s.onerror = j; setTimeout(r, 5000) })
+        }
+        let a = 0
+        const i = setInterval(() => {
+          a++
+          if (window.TelegramAdsController) {
+            clearInterval(i)
+            try {
+              window._richAdsCtrl = new window.TelegramAdsController()
+              window._richAdsCtrl.initialize({ pubId, appId })
+              setRichadsReady(true)
+            } catch (e) { console.warn('RichAds init err:', e) }
+          }
+          if (a >= 20) clearInterval(i)
+        }, 500)
+      } catch (e) { console.warn('RichAds init:', e) }
+    })()
   }, [richadsWidgetId])
 
   // Init Tads — React widget
@@ -293,12 +313,23 @@ export default function Ads() {
     if (richadsLoading || richadsRemaining <= 0 || cooldowns.richads > 0) return
     setRichadsLoading(true); setRichadsError('')
     try {
-      if (window.richAdsShow) await window.richAdsShow()
+      const ctrl = window._richAdsCtrl
+      if (ctrl?.showAd) {
+        await new Promise((resolve, reject) => {
+          ctrl.showAd({
+            onReward: () => resolve(),
+            onError: (e) => reject(e),
+            onSkip: () => reject({ message: 'Досмотрите до конца для награды' }),
+            onClose: () => resolve(),
+          })
+          setTimeout(resolve, 60000)
+        })
+      }
       const r = await api.post('/api/ads/richads-reward')
       setRichadsRewarded(true); setRichadsTodayCount(p => p + 1); setRichadsTotalEarned(p => p + (parseFloat(r.data?.reward) || richadsReward))
       setTimeout(() => setRichadsRewarded(false), 5000)
       startCooldown('richads')
-    } catch (e) { setRichadsError(e?.response?.data?.error || 'RichAds недоступна'); setTimeout(() => setRichadsError(''), 4000) }
+    } catch (e) { setRichadsError(e?.response?.data?.error || e?.message || 'RichAds недоступна'); setTimeout(() => setRichadsError(''), 4000) }
     setRichadsLoading(false)
   }, [richadsLoading, richadsRemaining, richadsReward, cooldowns.richads, startCooldown])
 
