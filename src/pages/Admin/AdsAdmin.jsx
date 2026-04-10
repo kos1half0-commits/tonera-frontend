@@ -1,6 +1,30 @@
 import { useState, useEffect } from 'react'
 import api from '../../api/index'
 
+const AD_NETWORK_SETTINGS = [
+  { key: 'ad_cooldown_seconds', label: '⏱ Кулдаун между рекламой (секунды)', type: 'number' },
+  { key: 'adsgram_enabled',   label: '🎬 Adsgram: ВКЛ/ВЫКЛ (1/0)', type: 'number' },
+  { key: 'adsgram_block_id', label: '🎬 Adsgram: Block ID', type: 'text' },
+  { key: 'adsgram_reward',   label: '🎬 Adsgram: Награда за просмотр (TON)', type: 'number' },
+  { key: 'adsgram_daily_limit', label: '🎬 Adsgram: Лимит просмотров в день', type: 'number' },
+  { key: 'monetag_enabled',    label: '📺 Monetag: ВКЛ/ВЫКЛ (1/0)', type: 'number' },
+  { key: 'monetag_zone_id',    label: '📺 Monetag: Zone ID', type: 'text' },
+  { key: 'monetag_reward',     label: '📺 Monetag: Награда за просмотр (TON)', type: 'number' },
+  { key: 'monetag_daily_limit', label: '📺 Monetag: Лимит просмотров в день', type: 'number' },
+  { key: 'onclicka_enabled',    label: '🔵 OnClickA: ВКЛ/ВЫКЛ (1/0)', type: 'number' },
+  { key: 'onclicka_spot_id',    label: '🔵 OnClickA: Spot ID', type: 'text' },
+  { key: 'onclicka_reward',     label: '🔵 OnClickA: Награда за просмотр (TON)', type: 'number' },
+  { key: 'onclicka_daily_limit', label: '🔵 OnClickA: Лимит просмотров в день', type: 'number' },
+  { key: 'richads_enabled',    label: '💚 RichAds: ВКЛ/ВЫКЛ (1/0)', type: 'number' },
+  { key: 'richads_widget_id',  label: '💚 RichAds: Widget ID (pubId-appId)', type: 'text' },
+  { key: 'richads_reward',     label: '💚 RichAds: Награда за просмотр (TON)', type: 'number' },
+  { key: 'richads_daily_limit', label: '💚 RichAds: Лимит просмотров в день', type: 'number' },
+  { key: 'tads_enabled',    label: '🟠 Tads.me: ВКЛ/ВЫКЛ (1/0)', type: 'number' },
+  { key: 'tads_widget_id',  label: '🟠 Tads.me: Widget ID', type: 'text' },
+  { key: 'tads_reward',     label: '🟠 Tads.me: Награда за просмотр (TON)', type: 'number' },
+  { key: 'tads_daily_limit', label: '🟠 Tads.me: Лимит просмотров в день', type: 'number' },
+]
+
 export default function AdsAdmin() {
   const [ads, setAds] = useState([])
   const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', linkToAdOrder:false, expires_at:'' })
@@ -10,13 +34,26 @@ export default function AdsAdmin() {
   // Network stats
   const [netStats, setNetStats] = useState(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  // Settings
+  const [settings, setSettings] = useState({})
+  const [saving, setSaving] = useState(null)
 
   const showToast = m => { setAdsToast(m); setTimeout(()=>setAdsToast(''),3000) }
   const load = () => api.get('/api/ads/all').then(r=>setAds(r.data||[])).catch(()=>{})
   useEffect(()=>{
     load()
     api.get('/api/ads/admin-stats').then(r => { setNetStats(r.data); setStatsLoading(false) }).catch(() => setStatsLoading(false))
+    api.get('/api/admin/settings').then(r => setSettings(r.data || {})).catch(()=>{})
   },[])
+
+  const saveSetting = async (key) => {
+    setSaving(key)
+    try {
+      await api.post('/api/admin/settings', { key, value: settings[key] })
+      showToast('✅ Сохранено')
+    } catch { showToast('❌ Ошибка') }
+    setSaving(null)
+  }
 
   const PAGE_OPTIONS = ['home','tasks','games','staking','miner','wallet']
 
@@ -28,7 +65,7 @@ export default function AdsAdmin() {
       await api.post('/api/ads', form)
     }
     setForm({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', expires_at:'' })
-    await load(); showToast('\u2705 \u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e')
+    await load(); showToast('✅ Сохранено')
   }
 
   const manualAds = ads.filter(a => !a.type || a.type === 'manual')
@@ -64,7 +101,7 @@ export default function AdsAdmin() {
     const isPartner = ad.type === 'partner'
     const isExpired = ad.expires_at && new Date(ad.expires_at) < new Date()
     const statusColor = !ad.active ? '#ff4d6a' : isExpired ? '#ffb300' : '#00e676'
-    const statusText = !ad.active ? '\u0412\u044b\u043a\u043b' : isExpired ? '\u0418\u0441\u0442\u0451\u043a' : '\u0410\u043a\u0442\u0438\u0432\u0435\u043d'
+    const statusText = !ad.active ? 'Выкл' : isExpired ? 'Истёк' : 'Активен'
     const clicks = parseInt(ad.clicks||0)
     const views = parseInt(ad.views||0)
     const ctr = views > 0 ? (clicks / views * 100).toFixed(1) : '0'
@@ -74,50 +111,43 @@ export default function AdsAdmin() {
       <div key={ad.id} style={{background:'#0e1c3a',border:`1px solid ${ad.active && !isExpired?'rgba(26,95,255,0.2)':'rgba(255,77,106,0.15)'}`,borderRadius:10,padding:'10px 12px',marginBottom:6}}>
         {ad.image_url && <img src={ad.image_url} style={{width:'100%',borderRadius:8,marginBottom:6,maxHeight:80,objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>}
         <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff',flex:1}}>{ad.title||'\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f'}</div>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff',flex:1}}>{ad.title||'Без названия'}</div>
           <span style={{fontSize:8,fontFamily:'Orbitron',fontWeight:700,color:statusColor,background:`${statusColor}15`,padding:'3px 8px',borderRadius:5}}>{statusText}</span>
-          {isPartner && <span style={{fontSize:8,fontFamily:'Orbitron',fontWeight:700,color:'#a855f7',background:'rgba(168,85,247,0.1)',padding:'3px 8px',borderRadius:5}}>{'\u041f\u0430\u0440\u0442\u043d\u0451\u0440'}</span>}
+          {isPartner && <span style={{fontSize:8,fontFamily:'Orbitron',fontWeight:700,color:'#a855f7',background:'rgba(168,85,247,0.1)',padding:'3px 8px',borderRadius:5}}>Партнёр</span>}
         </div>
         <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:2}}>{ad.text}</div>
-
-        {/* Stats row */}
         <div style={{display:'flex',gap:8,marginBottom:6,marginTop:6}}>
           <div style={{background:'rgba(0,212,255,0.06)',border:'1px solid rgba(0,212,255,0.12)',borderRadius:8,padding:'5px 10px',flex:1,textAlign:'center'}}>
             <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#00d4ff'}}>{views}</div>
-            <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>{'\u041f\u041e\u041a\u0410\u0417\u042b'}</div>
+            <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>ПОКАЗЫ</div>
           </div>
           <div style={{background:'rgba(0,230,118,0.06)',border:'1px solid rgba(0,230,118,0.12)',borderRadius:8,padding:'5px 10px',flex:1,textAlign:'center'}}>
             <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#00e676'}}>{clicks}</div>
-            <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>{'\u041a\u041b\u0418\u041a\u0418'}</div>
+            <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>КЛИКИ</div>
           </div>
           <div style={{background:'rgba(255,179,0,0.06)',border:'1px solid rgba(255,179,0,0.12)',borderRadius:8,padding:'5px 10px',flex:1,textAlign:'center'}}>
             <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#ffb300'}}>{ctr}%</div>
             <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>CTR</div>
           </div>
         </div>
-
-        {/* Meta info */}
         <div style={{display:'flex',gap:8,fontSize:9,color:'rgba(232,242,255,0.3)',marginBottom:6,flexWrap:'wrap'}}>
-          <span>{'\uD83D\uDCC4 '+ad.pages}</span>
-          {isPartner && ad.username && <span>{'\uD83D\uDC64 @'+ad.username}</span>}
-          {ad.expires_at && <span>{'\u23F0 '+fmtDate(ad.expires_at)}</span>}
-          {days !== null && days > 0 && <span style={{color:'#00e676'}}>{'\u2705 '+days+' \u0434\u043d.'}</span>}
-          {days !== null && days <= 0 && <span style={{color:'#ff4d6a'}}>{'\u274C \u0438\u0441\u0442\u0451\u043a'}</span>}
+          <span>{'📄 '+ad.pages}</span>
+          {isPartner && ad.username && <span>{'👤 @'+ad.username}</span>}
+          {ad.expires_at && <span>{'⏰ '+fmtDate(ad.expires_at)}</span>}
+          {days !== null && days > 0 && <span style={{color:'#00e676'}}>{'✅ '+days+' дн.'}</span>}
+          {days !== null && days <= 0 && <span style={{color:'#ff4d6a'}}>{'❌ истёк'}</span>}
         </div>
-
-        {/* Expiry progress bar */}
         {ad.expires_at && (
           <div style={{height:3,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
             <div style={{height:'100%',borderRadius:2,background:isExpired?'#ff4d6a':'linear-gradient(90deg,#1a5fff,#00d4ff)',width:isExpired?'100%':(Math.max(0,Math.min(100,(new Date(ad.expires_at)-new Date())/(14*24*60*60*1000)*100))+'%'),transition:'width .5s'}}/>
           </div>
         )}
-
         <div style={{display:'flex',gap:6}}>
-          {!isPartner && <button style={S.btn({flex:1,background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={()=>{setEditing(ad.id);setForm({title:ad.title||'',text:ad.text||'',image_url:ad.image_url||'',link:ad.link||'',pages:ad.pages||'',expires_at:ad.expires_at?ad.expires_at.substring(0,10):''})}}>{'\u270F\uFE0F \u0420\u0435\u0434.'}</button>}
+          {!isPartner && <button style={S.btn({flex:1,background:'rgba(26,95,255,0.15)',color:'#00d4ff'})} onClick={()=>{setEditing(ad.id);setForm({title:ad.title||'',text:ad.text||'',image_url:ad.image_url||'',link:ad.link||'',pages:ad.pages||'',expires_at:ad.expires_at?ad.expires_at.substring(0,10):''})}}>✏️ Ред.</button>}
           <button style={S.btn({background:ad.active?'rgba(255,179,0,0.15)':'rgba(0,230,118,0.15)',color:ad.active?'#ffb300':'#00e676'})} onClick={async()=>{await api.put(`/api/ads/${ad.id}`,{...ad,active:!ad.active});load()}}>
-            {ad.active?'\u23F8':'\u25B6\uFE0F'}
+            {ad.active?'⏸':'▶️'}
           </button>
-          <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})} onClick={async()=>{await api.delete(`/api/ads/${ad.id}`);load()}}>{'\uD83D\uDDD1'}</button>
+          <button style={S.btn({background:'rgba(255,77,106,0.1)',color:'#ff4d6a'})} onClick={async()=>{await api.delete(`/api/ads/${ad.id}`);load()}}>🗑</button>
         </div>
       </div>
     )
@@ -127,40 +157,41 @@ export default function AdsAdmin() {
     <div>
       {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
 
-      {/* Stats */}
-      <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
-        <div style={S.statCard}>
-          <div style={S.statVal('#00d4ff')}>{ads.length}</div>
-          <div style={S.statLbl}>{'\u0412\u0441\u0435\u0433\u043e'}</div>
-        </div>
-        <div style={S.statCard}>
-          <div style={S.statVal('#00e676')}>{ads.filter(a=>a.active).length}</div>
-          <div style={S.statLbl}>{'\u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0445'}</div>
-        </div>
-        <div style={S.statCard}>
-          <div style={S.statVal('#00d4ff')}>{totalViews}</div>
-          <div style={S.statLbl}>{'\u041f\u043e\u043a\u0430\u0437\u043e\u0432'}</div>
-        </div>
-        <div style={S.statCard}>
-          <div style={S.statVal('#ffb300')}>{totalClicks}</div>
-          <div style={S.statLbl}>{'\u041a\u043b\u0438\u043a\u043e\u0432'}</div>
-        </div>
-      </div>
-
       {/* Tabs */}
       <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
-        <button style={S.ptab(adsTab==='stats')} onClick={()=>setAdsTab('stats')}>{'📊 Статистика'}</button>
-        <button style={S.ptab(adsTab==='manual')} onClick={()=>setAdsTab('manual')}>{'🎯 Ручные ('+manualAds.length+')'}</button>
-        <button style={S.ptab(adsTab==='partner')} onClick={()=>setAdsTab('partner')}>{'🤝 Партнёрские ('+partnerAds.length+')'}</button>
-        <button style={S.ptab(adsTab==='all')} onClick={()=>setAdsTab('all')}>{'📋 Все ('+ads.length+')'}</button>
+        <button style={S.ptab(adsTab==='stats')} onClick={()=>setAdsTab('stats')}>📊 Статистика</button>
+        <button style={S.ptab(adsTab==='settings')} onClick={()=>setAdsTab('settings')}>⚙️ Настройки сетей</button>
+        <button style={S.ptab(adsTab==='manual')} onClick={()=>setAdsTab('manual')}>🎯 Баннеры ({manualAds.length})</button>
+        <button style={S.ptab(adsTab==='partner')} onClick={()=>setAdsTab('partner')}>🤝 Партнёрские ({partnerAds.length})</button>
       </div>
 
       {/* === STATS TAB === */}
       {adsTab === 'stats' && (
         <div>
+          {/* Banner stats */}
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <div style={S.statCard}>
+              <div style={S.statVal('#00d4ff')}>{ads.length}</div>
+              <div style={S.statLbl}>Всего баннеров</div>
+            </div>
+            <div style={S.statCard}>
+              <div style={S.statVal('#00e676')}>{ads.filter(a=>a.active).length}</div>
+              <div style={S.statLbl}>Активных</div>
+            </div>
+            <div style={S.statCard}>
+              <div style={S.statVal('#00d4ff')}>{totalViews}</div>
+              <div style={S.statLbl}>Показов</div>
+            </div>
+            <div style={S.statCard}>
+              <div style={S.statVal('#ffb300')}>{totalClicks}</div>
+              <div style={S.statLbl}>Кликов</div>
+            </div>
+          </div>
+
           {statsLoading && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>}
           {netStats && (<>
             {/* Combined totals */}
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>📊 РЕКЛАМНЫЕ СЕТИ</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:12}}>
               <div style={{...S.statCard,textAlign:'center'}}>
                 <div style={S.statVal('#00d4ff')}>{netStats.todayAll}</div>
@@ -177,7 +208,6 @@ export default function AdsAdmin() {
             </div>
 
             {/* Per-network cards */}
-            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>📊 ПО СЕТЯМ</div>
             {netStats.stats.map(net => {
               const maxToday = Math.max(...netStats.stats.map(n => n.today), 1)
               const barWidth = Math.max(5, (net.today / maxToday) * 100)
@@ -210,7 +240,6 @@ export default function AdsAdmin() {
                       <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>ВСЕГО</div>
                     </div>
                   </div>
-                  {/* Comparison bar */}
                   <div style={{height:4,background:'rgba(26,95,255,0.08)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
                     <div style={{height:'100%',width:barWidth+'%',background:`linear-gradient(90deg,${color},${color}88)`,borderRadius:2,transition:'width .5s'}}/>
                   </div>
@@ -248,70 +277,99 @@ export default function AdsAdmin() {
         </div>
       )}
 
-      {/* Create form — only for manual/all tab */}
-      {adsTab !== 'partner' && adsTab !== 'stats' && (
-        <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:12}}>
-          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>
-            {editing ? '\u270F\uFE0F \u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435' : '\u2795 \u041d\u043e\u0432\u044b\u0439 \u0431\u0430\u043d\u043d\u0435\u0440'}
-          </div>
-          <span style={S.label}>{'\u0417\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a'}</span>
-          <input style={S.input} value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder={'\u0417\u0430\u0433\u043e\u043b\u043e\u0432\u043e\u043a \u0440\u0435\u043a\u043b\u0430\u043c\u044b'}/>
-          <span style={S.label}>{'\u0422\u0435\u043a\u0441\u0442'}</span>
-          <textarea style={{...S.input,resize:'none'}} rows={2} value={form.text} onChange={e=>setForm(p=>({...p,text:e.target.value}))} placeholder={'\u041e\u043f\u0438\u0441\u0430\u043d\u0438\u0435...'}/>
-          <span style={S.label}>{'\u041a\u0430\u0440\u0442\u0438\u043d\u043a\u0430'}</span>
-          {form.image_url ? (
-            <div style={{position:'relative',marginBottom:8}}>
-              <img src={form.image_url} style={{width:'100%',borderRadius:8,maxHeight:80,objectFit:'cover'}}/>
-              <button onClick={()=>setForm(p=>({...p,image_url:''}))} style={{position:'absolute',top:4,right:4,padding:'3px 7px',border:'none',borderRadius:5,background:'rgba(255,77,106,0.8)',color:'#fff',cursor:'pointer',fontSize:10}}>{'\u2715'}</button>
+      {/* === SETTINGS TAB === */}
+      {adsTab === 'settings' && (
+        <div>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:12}}>⚙️ НАСТРОЙКИ РЕКЛАМНЫХ СЕТЕЙ</div>
+          {AD_NETWORK_SETTINGS.map(s => (
+            <div key={s.key} style={{marginBottom:8}}>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:10,color:'rgba(232,242,255,0.5)',marginBottom:3}}>{s.label}</div>
+              <div style={{display:'flex',gap:6}}>
+                <input
+                  style={{...S.input,marginBottom:0,flex:1}}
+                  type={s.type || 'text'}
+                  step={s.type === 'number' ? '0.0001' : undefined}
+                  value={settings[s.key] ?? ''}
+                  onChange={e => setSettings(p => ({...p, [s.key]: e.target.value}))}
+                />
+                <button
+                  style={S.btn({background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',padding:'8px 14px',flexShrink:0})}
+                  onClick={() => saveSetting(s.key)}
+                >
+                  {saving === s.key ? '...' : '💾'}
+                </button>
+              </div>
             </div>
-          ) : (
-            <label style={{display:'block',padding:'10px',border:'1px dashed rgba(26,95,255,0.3)',borderRadius:8,textAlign:'center',cursor:'pointer',color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans,sans-serif',fontSize:12,marginBottom:8}}>
-              {'\uD83D\uDCF7 \u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c'}
-              <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
-                const file = e.target.files[0]
-                if (!file) return
-                const reader = new FileReader()
-                reader.onload = ev => setForm(p=>({...p,image_url:ev.target.result}))
-                reader.readAsDataURL(file)
-              }}/>
-            </label>
-          )}
-          <span style={S.label}>{'\u0421\u0441\u044b\u043b\u043a\u0430 (\u043e\u043f\u0446.)'}</span>
-          <input style={{...S.input,opacity:form.linkToAdOrder?0.3:1}} value={form.link} onChange={e=>setForm(p=>({...p,link:e.target.value}))} placeholder="https://..." disabled={form.linkToAdOrder}/>
-          <span style={S.label}>{'\u0421\u0440\u043e\u043a \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f'}</span>
-          <input style={S.input} type="date" value={form.expires_at||''} onChange={e=>setForm(p=>({...p,expires_at:e.target.value}))} placeholder="DD.MM.YYYY"/>
-          <span style={S.label}>{'\u0421\u0442\u0440\u0430\u043d\u0438\u0446\u044b'}</span>
-          <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
-            {PAGE_OPTIONS.map(p => {
-              const active = form.pages.split(',').includes(p)
-              return (
-                <button key={p} style={S.btn({background:active?'rgba(26,95,255,0.3)':'rgba(26,95,255,0.08)',color:active?'#00d4ff':'rgba(232,242,255,0.3)',border:`1px solid ${active?'rgba(0,212,255,0.4)':'rgba(26,95,255,0.15)'}`})}
-                  onClick={()=>{
-                    const cur = form.pages.split(',').filter(Boolean)
-                    const next = active ? cur.filter(x=>x!==p) : [...cur,p]
-                    setForm(f=>({...f,pages:next.join(',')}))
-                  }}>{p}</button>
-              )
-            })}
-          </div>
-          <div style={{display:'flex',gap:6}}>
-            <button style={S.btn({flex:1,background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',padding:'10px'})} onClick={save}>
-              {editing ? '\uD83D\uDCBE \u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c' : '\u2795 \u0421\u043e\u0437\u0434\u0430\u0442\u044c'}
-            </button>
-            {editing && <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>{setEditing(null);setForm({title:'',text:'',image_url:'',link:'',pages:'home,tasks,games,staking,miner,wallet',expires_at:''})}}>{'\u2715'}</button>}
-          </div>
+          ))}
         </div>
       )}
 
-      {/* Ad list */}
-      {(adsTab === 'manual' ? manualAds : adsTab === 'partner' ? partnerAds : ads).length === 0 && (
-        <div style={{textAlign:'center',color:'rgba(232,242,255,0.25)',padding:'30px 20px',fontFamily:'DM Sans',fontSize:13}}>
-          {adsTab === 'manual' && '\uD83C\uDFAF \u041d\u0435\u0442 \u0440\u0443\u0447\u043d\u044b\u0445 \u0431\u0430\u043d\u043d\u0435\u0440\u043e\u0432'}
-          {adsTab === 'partner' && '\uD83E\uDD1D \u041d\u0435\u0442 \u043f\u0430\u0440\u0442\u043d\u0451\u0440\u0441\u043a\u0438\u0445 \u0431\u0430\u043d\u043d\u0435\u0440\u043e\u0432'}
-          {adsTab === 'all' && '\u041d\u0435\u0442 \u0431\u0430\u043d\u043d\u0435\u0440\u043e\u0432'}
-        </div>
-      )}
-      {(adsTab === 'manual' ? manualAds : adsTab === 'partner' ? partnerAds : ads).map(ad => renderAd(ad))}
+      {/* === BANNERS TABS === */}
+      {(adsTab === 'manual' || adsTab === 'partner') && (<>
+        {/* Create form — only for manual tab */}
+        {adsTab === 'manual' && (
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:12}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>
+              {editing ? '✏️ Редактирование' : '➕ Новый баннер'}
+            </div>
+            <span style={S.label}>Заголовок</span>
+            <input style={S.input} value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder='Заголовок рекламы'/>
+            <span style={S.label}>Текст</span>
+            <textarea style={{...S.input,resize:'none'}} rows={2} value={form.text} onChange={e=>setForm(p=>({...p,text:e.target.value}))} placeholder='Описание...'/>
+            <span style={S.label}>Картинка</span>
+            {form.image_url ? (
+              <div style={{position:'relative',marginBottom:8}}>
+                <img src={form.image_url} style={{width:'100%',borderRadius:8,maxHeight:80,objectFit:'cover'}}/>
+                <button onClick={()=>setForm(p=>({...p,image_url:''}))} style={{position:'absolute',top:4,right:4,padding:'3px 7px',border:'none',borderRadius:5,background:'rgba(255,77,106,0.8)',color:'#fff',cursor:'pointer',fontSize:10}}>✕</button>
+              </div>
+            ) : (
+              <label style={{display:'block',padding:'10px',border:'1px dashed rgba(26,95,255,0.3)',borderRadius:8,textAlign:'center',cursor:'pointer',color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans,sans-serif',fontSize:12,marginBottom:8}}>
+                📷 Загрузить
+                <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
+                  const file = e.target.files[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = ev => setForm(p=>({...p,image_url:ev.target.result}))
+                  reader.readAsDataURL(file)
+                }}/>
+              </label>
+            )}
+            <span style={S.label}>Ссылка (опц.)</span>
+            <input style={{...S.input,opacity:form.linkToAdOrder?0.3:1}} value={form.link} onChange={e=>setForm(p=>({...p,link:e.target.value}))} placeholder="https://..." disabled={form.linkToAdOrder}/>
+            <span style={S.label}>Срок действия</span>
+            <input style={S.input} type="date" value={form.expires_at||''} onChange={e=>setForm(p=>({...p,expires_at:e.target.value}))} placeholder="DD.MM.YYYY"/>
+            <span style={S.label}>Страницы</span>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:10}}>
+              {PAGE_OPTIONS.map(p => {
+                const active = form.pages.split(',').includes(p)
+                return (
+                  <button key={p} style={S.btn({background:active?'rgba(26,95,255,0.3)':'rgba(26,95,255,0.08)',color:active?'#00d4ff':'rgba(232,242,255,0.3)',border:`1px solid ${active?'rgba(0,212,255,0.4)':'rgba(26,95,255,0.15)'}`})}
+                    onClick={()=>{
+                      const cur = form.pages.split(',').filter(Boolean)
+                      const next = active ? cur.filter(x=>x!==p) : [...cur,p]
+                      setForm(f=>({...f,pages:next.join(',')}))
+                    }}>{p}</button>
+                )
+              })}
+            </div>
+            <div style={{display:'flex',gap:6}}>
+              <button style={S.btn({flex:1,background:'linear-gradient(135deg,#1a5fff,#0930cc)',color:'#fff',padding:'10px'})} onClick={save}>
+                {editing ? '💾 Сохранить' : '➕ Создать'}
+              </button>
+              {editing && <button style={S.btn({background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>{setEditing(null);setForm({title:'',text:'',image_url:'',link:'',pages:'home,tasks,games,staking,miner,wallet',expires_at:''})}}>✕</button>}
+            </div>
+          </div>
+        )}
+
+        {/* Ad list */}
+        {(adsTab === 'manual' ? manualAds : partnerAds).length === 0 && (
+          <div style={{textAlign:'center',color:'rgba(232,242,255,0.25)',padding:'30px 20px',fontFamily:'DM Sans',fontSize:13}}>
+            {adsTab === 'manual' && '🎯 Нет ручных баннеров'}
+            {adsTab === 'partner' && '🤝 Нет партнёрских баннеров'}
+          </div>
+        )}
+        {(adsTab === 'manual' ? manualAds : partnerAds).map(ad => renderAd(ad))}
+      </>)}
     </div>
   )
 }
