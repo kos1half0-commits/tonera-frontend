@@ -193,27 +193,25 @@ export default function Ads() {
     const parts = richadsWidgetId.split('-')
     const pubId = parts[0]; const appId = parts[1] || ''
     if (!pubId) return
-    ;(async () => {
-      try {
-        if (!document.querySelector('script[data-richads]')) {
-          const s = document.createElement('script')
-          s.src = 'https://richinfo.co/richpartners/telegram/js/tg-ob.js'
-          s.async = true; s.setAttribute('data-richads', '1')
-          document.head.appendChild(s)
-          await new Promise((r) => { s.onload = r; s.onerror = r; setTimeout(r, 5000) })
-        }
-        // Try to init immediately
-        setTimeout(() => {
-          try {
-            if (typeof TelegramAdsController !== 'undefined') {
-              window._richAdsCtrl = new TelegramAdsController()
-              window._richAdsCtrl.initialize({ pubId, appId })
-            }
-          } catch (e) { console.warn('RichAds init:', e) }
-        }, 1000)
-        setRichadsReady(true)
-      } catch (e) { console.warn('RichAds init:', e); setRichadsReady(true) }
-    })()
+    if (document.querySelector('script[data-richads]')) { setRichadsReady(true); return }
+
+    const s = document.createElement('script')
+    s.src = 'https://richinfo.co/richpartners/telegram/js/tg-ob.js'
+    s.setAttribute('data-richads', '1')
+    s.onload = () => {
+      // Run init in global scope via inline script, exactly as RichAds docs
+      const initScript = document.createElement('script')
+      initScript.textContent = `
+        try {
+          window._richAdsCtrl = new TelegramAdsController();
+          window._richAdsCtrl.initialize({ pubId: "${pubId}", appId: "${appId}" });
+        } catch(e) { console.warn('RichAds init:', e); }
+      `
+      document.head.appendChild(initScript)
+      setRichadsReady(true)
+    }
+    s.onerror = () => { setRichadsReady(true) }
+    document.head.appendChild(s)
   }, [richadsWidgetId])
 
   // Init Tads — React widget
