@@ -2780,7 +2780,7 @@ export default function Admin() {
                     ) : (
                       <input
                         className="setting-input"
-                        type={s.key.includes('wallet') ? 'text' : 'number'}
+                        type={s.key.includes('wallet') || s.key.includes('_id') || s.key.includes('block_id') ? 'text' : 'number'}
                         step="0.0001"
                         value={settings[s.key] ?? ''}
                         onChange={e => setSettings(p => ({...p, [s.key]: e.target.value}))}
