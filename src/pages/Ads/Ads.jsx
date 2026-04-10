@@ -15,6 +15,17 @@ export default function Ads({ onBack }) {
   const [richadsEnabled, setRichadsEnabled] = useState(true)
   const [tadsEnabled, setTadsEnabled] = useState(true)
 
+  // Per-network cooldowns
+  const [cooldownSeconds, setCooldownSeconds] = useState(60)
+  const [cooldowns, setCooldowns] = useState({
+    adsgram: 0,
+    monetag: 0,
+    onclicka: 0,
+    richads: 0,
+    tads: 0,
+  })
+  const cooldownRefs = useRef({})
+
   // Adsgram state
   const [blockId, setBlockId] = useState('')
   const [adController, setAdController] = useState(null)
@@ -81,6 +92,9 @@ export default function Ads({ onBack }) {
       setTodayCount(parseInt(d.todayCount) || 0)
       setTotalEarned(parseFloat(d.totalEarned) || 0)
       if (d.blockId) setBlockId(d.blockId)
+
+      // Cooldown
+      if (d.cooldownSeconds != null) setCooldownSeconds(parseInt(d.cooldownSeconds) || 60)
 
       // Enabled flags
       setAdsgramEnabled(d.adsgramEnabled !== false)
@@ -208,73 +222,97 @@ export default function Ads({ onBack }) {
   const combinedTotalEarned = totalEarned + monetagTotalEarned + onclickaTotalEarned + richadsTotalEarned + tadsTotalEarned
   const combinedTodayViews = todayCount + monetagTodayCount + onclickaTodayCount + richadsTodayCount + tadsTodayCount
 
+  // Start per-network cooldown timer
+  const startCooldown = useCallback((networkKey) => {
+    if (cooldownRefs.current[networkKey]) clearInterval(cooldownRefs.current[networkKey])
+    setCooldowns(prev => ({ ...prev, [networkKey]: cooldownSeconds }))
+    cooldownRefs.current[networkKey] = setInterval(() => {
+      setCooldowns(prev => {
+        const val = prev[networkKey]
+        if (val <= 1) { clearInterval(cooldownRefs.current[networkKey]); cooldownRefs.current[networkKey] = null; return { ...prev, [networkKey]: 0 } }
+        return { ...prev, [networkKey]: val - 1 }
+      })
+    }, 1000)
+  }, [cooldownSeconds])
+
+  // Cleanup intervals on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(cooldownRefs.current).forEach(id => { if (id) clearInterval(id) })
+    }
+  }, [])
+
   // Show handlers
   const showAd = useCallback(async () => {
-    if (!adController || loading || remaining <= 0) return
+    if (!adController || loading || remaining <= 0 || cooldowns.adsgram > 0) return
     setLoading(true); setError('')
     try {
       await adController.show()
       const r = await api.post('/api/ads/adsgram-reward')
       setRewarded(true); setTodayCount(p => p + 1); setTotalEarned(p => p + (parseFloat(r.data?.reward) || reward))
       setTimeout(() => setRewarded(false), 5000)
+      startCooldown('adsgram')
     } catch (e) {
       console.warn('Adsgram:', JSON.stringify(e))
-      const d = e?.description || e?.error || e?.message || ''
-      if (d === 'no-ads' || d.includes('No ads')) setError('Нет доступной рекламы. Попробуйте позже')
-      else if (d === 'dismissed' || d.includes('close')) setError('Досмотрите до конца для награды')
+      const dd = e?.description || e?.error || e?.message || ''
+      if (dd === 'no-ads' || dd.includes('No ads')) setError('Нет доступной рекламы. Попробуйте позже')
+      else if (dd === 'dismissed' || dd.includes('close')) setError('Досмотрите до конца для награды')
       else setError(e?.response?.data?.error || 'Реклама недоступна')
       setTimeout(() => setError(''), 5000)
     }
     setLoading(false)
-  }, [adController, loading, remaining, reward])
+  }, [adController, loading, remaining, reward, cooldowns.adsgram, startCooldown])
 
   const showMonetag = useCallback(async () => {
-    if (!monetagHandler || monetagLoading || monetagRemaining <= 0) return
+    if (!monetagHandler || monetagLoading || monetagRemaining <= 0 || cooldowns.monetag > 0) return
     setMontagLoading(true); setMontagError('')
     try {
       await monetagHandler()
       const r = await api.post('/api/ads/monetag-reward')
       setMontagRewarded(true); setMontagTodayCount(p => p + 1); setMontagTotalEarned(p => p + (parseFloat(r.data?.reward) || monetagReward))
       setTimeout(() => setMontagRewarded(false), 5000)
+      startCooldown('monetag')
     } catch (e) { setMontagError(e?.response?.data?.error || 'Monetag недоступна'); setTimeout(() => setMontagError(''), 4000) }
     setMontagLoading(false)
-  }, [monetagLoading, monetagRemaining, monetagReward])
+  }, [monetagLoading, monetagRemaining, monetagReward, cooldowns.monetag, startCooldown])
 
   const showOnClickA = useCallback(async () => {
-    if (!onclickaShowRef.current || onclickaLoading || onclickaRemaining <= 0) return
+    if (!onclickaShowRef.current || onclickaLoading || onclickaRemaining <= 0 || cooldowns.onclicka > 0) return
     setOnclickaLoading(true); setOnclickaError('')
     try {
       await onclickaShowRef.current()
       const r = await api.post('/api/ads/onclicka-reward')
       setOnclickaRewarded(true); setOnclickaTodayCount(p => p + 1); setOnclickaTotalEarned(p => p + (parseFloat(r.data?.reward) || onclickaReward))
       setTimeout(() => setOnclickaRewarded(false), 5000)
+      startCooldown('onclicka')
     } catch (e) { setOnclickaError(e?.response?.data?.error || 'OnClickA недоступна'); setTimeout(() => setOnclickaError(''), 4000) }
     setOnclickaLoading(false)
-  }, [onclickaLoading, onclickaRemaining, onclickaReward])
+  }, [onclickaLoading, onclickaRemaining, onclickaReward, cooldowns.onclicka, startCooldown])
 
   const showRichAds = useCallback(async () => {
-    if (richadsLoading || richadsRemaining <= 0) return
+    if (richadsLoading || richadsRemaining <= 0 || cooldowns.richads > 0) return
     setRichadsLoading(true); setRichadsError('')
     try {
-      // RichAds shows via injected JS, we trigger reward after interaction
       if (window.richAdsShow) await window.richAdsShow()
       const r = await api.post('/api/ads/richads-reward')
       setRichadsRewarded(true); setRichadsTodayCount(p => p + 1); setRichadsTotalEarned(p => p + (parseFloat(r.data?.reward) || richadsReward))
       setTimeout(() => setRichadsRewarded(false), 5000)
+      startCooldown('richads')
     } catch (e) { setRichadsError(e?.response?.data?.error || 'RichAds недоступна'); setTimeout(() => setRichadsError(''), 4000) }
     setRichadsLoading(false)
-  }, [richadsLoading, richadsRemaining, richadsReward])
+  }, [richadsLoading, richadsRemaining, richadsReward, cooldowns.richads, startCooldown])
 
   const showTads = useCallback(async () => {
-    if (tadsLoading || tadsRemaining <= 0) return
+    if (tadsLoading || tadsRemaining <= 0 || cooldowns.tads > 0) return
     setTadsLoading(true); setTadsError('')
     try {
       const r = await api.post('/api/ads/tads-reward')
       setTadsRewarded(true); setTadsTodayCount(p => p + 1); setTadsTotalEarned(p => p + (parseFloat(r.data?.reward) || tadsReward))
       setTimeout(() => setTadsRewarded(false), 5000)
+      startCooldown('tads')
     } catch (e) { setTadsError(e?.response?.data?.error || 'Tads недоступна'); setTimeout(() => setTadsError(''), 4000) }
     setTadsLoading(false)
-  }, [tadsLoading, tadsRemaining, tadsReward])
+  }, [tadsLoading, tadsRemaining, tadsReward, cooldowns.tads, startCooldown])
 
   // Current tab state
   const tabMap = {
@@ -286,48 +324,77 @@ export default function Ads({ onBack }) {
   }
   const cur = tabMap[activeTab] || tabMap.adsgram
 
-  // Helper to render a network tab content
-  const renderNetworkContent = (cfg) => (
-    <div className="ads-network-content fade-up">
-      <div className={`ads-reward-info ${cfg.cls}`}>
-        <div className={`ads-reward-icon ${cfg.iconCls}`}>{cfg.icon}</div>
-        <div className="ads-reward-text">
-          <div className="ads-reward-label">НАГРАДА ЗА ПРОСМОТР · {cfg.name}</div>
-          <div className={`ads-reward-val ${cfg.valCls}`}>+{cfg.reward.toFixed(4)}<span>TON</span></div>
-        </div>
-      </div>
-      <div className="ads-limit">
-        <div className="ads-limit-header">
-          <div className="ads-limit-label">ДНЕВНОЙ ЛИМИТ {cfg.name}</div>
-          <div className={`ads-limit-count ${cfg.countCls}`}>{cfg.todayCount} / {cfg.dailyLimit}</div>
-        </div>
-        <div className="ads-limit-bar">
-          <div className={`ads-limit-fill ${cfg.fillCls} ${cfg.remaining <= 0 ? 'full' : ''}`} style={{ width: cfg.limitPercent + '%' }} />
-        </div>
-      </div>
-      <button className={`ads-watch-btn ${cfg.btnCls} ${cfg.loading ? 'loading' : ''}`} onClick={cfg.onClick} disabled={cfg.loading || cfg.disabled || cfg.remaining <= 0}>
-        <div className={`ads-watch-glow ${cfg.glowCls}`} />
-        <div className="ads-watch-icon">{cfg.loading ? '⏳' : cfg.remaining <= 0 ? '⏰' : cfg.btnIcon}</div>
-        <div className="ads-watch-text">
-          <span className="ads-watch-title">{cfg.loading ? 'Загрузка...' : cfg.remaining <= 0 ? 'Лимит исчерпан' : `Смотреть ${cfg.name}`}</span>
-          <span className="ads-watch-sub">{cfg.remaining <= 0 ? 'Приходите завтра' : `+${cfg.reward.toFixed(4)} TON за просмотр`}</span>
-        </div>
-        {cfg.remaining > 0 && !cfg.loading && <div className="ads-watch-arrow">▸</div>}
-      </button>
-      <div className={`ads-earnings ${cfg.earningsCls}`}>
-        <div className="ads-earnings-title">ЗАРАБОТАНО С {cfg.name}</div>
-        <div className={`ads-earnings-val ${cfg.earningsGradient}`}>{cfg.totalEarned.toFixed(4)} TON</div>
-        <div className="ads-earnings-sub">Начислено автоматически</div>
-      </div>
-      {!cfg.hasId && (
-        <div style={{ textAlign:'center', padding:'20px', fontFamily:'DM Sans, sans-serif', fontSize:'12px', color:'rgba(232,242,255,0.25)' }}>
-          {cfg.name} сейчас недоступен
-        </div>
-      )}
-    </div>
-  )
+  // Helper to format cooldown as mm:ss
+  const fmtCooldown = (secs) => {
+    if (secs <= 0) return ''
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    if (m > 0) return `${m}:${s.toString().padStart(2, '0')}`
+    return `${s}`
+  }
 
-  // Tab configs
+  // Helper to render a network tab content
+  const renderNetworkContent = (cfg) => {
+    const netCooldown = cooldowns[cfg.networkKey] || 0
+    const isNetCooldown = netCooldown > 0
+    const cooldownProgress = isNetCooldown ? ((cooldownSeconds - netCooldown) / cooldownSeconds) * 100 : 0
+
+    return (
+      <div className="ads-network-content fade-up">
+        <div className={`ads-reward-info ${cfg.cls}`}>
+          <div className={`ads-reward-icon ${cfg.iconCls}`}>{cfg.icon}</div>
+          <div className="ads-reward-text">
+            <div className="ads-reward-label">НАГРАДА ЗА ПРОСМОТР · {cfg.name}</div>
+            <div className={`ads-reward-val ${cfg.valCls}`}>+{cfg.reward.toFixed(4)}<span>TON</span></div>
+          </div>
+        </div>
+        <div className="ads-limit">
+          <div className="ads-limit-header">
+            <div className="ads-limit-label">ДНЕВНОЙ ЛИМИТ {cfg.name}</div>
+            <div className={`ads-limit-count ${cfg.countCls}`}>{cfg.todayCount} / {cfg.dailyLimit}</div>
+          </div>
+          <div className="ads-limit-bar">
+            <div className={`ads-limit-fill ${cfg.fillCls} ${cfg.remaining <= 0 ? 'full' : ''}`} style={{ width: cfg.limitPercent + '%' }} />
+          </div>
+        </div>
+
+        {/* Cooldown progress bar */}
+        {isNetCooldown && (
+          <div className="ads-cooldown-bar">
+            <div className="ads-cooldown-header">
+              <div className="ads-cooldown-label">⏱ КУЛДАУН {cfg.name}</div>
+              <div className={`ads-cooldown-time ${cfg.countCls}`}>{fmtCooldown(netCooldown)}</div>
+            </div>
+            <div className="ads-cooldown-track">
+              <div className={`ads-cooldown-fill ${cfg.fillCls}`} style={{ width: cooldownProgress + '%' }} />
+            </div>
+          </div>
+        )}
+
+        <button className={`ads-watch-btn ${cfg.btnCls} ${cfg.loading ? 'loading' : ''} ${isNetCooldown ? 'cooldown' : ''}`} onClick={cfg.onClick} disabled={cfg.loading || cfg.disabled || cfg.remaining <= 0 || isNetCooldown}>
+          <div className={`ads-watch-glow ${cfg.glowCls}`} />
+          <div className="ads-watch-icon">{cfg.loading ? '⏳' : isNetCooldown ? '⏱' : cfg.remaining <= 0 ? '⏰' : cfg.btnIcon}</div>
+          <div className="ads-watch-text">
+            <span className="ads-watch-title">{cfg.loading ? 'Загрузка...' : isNetCooldown ? `Подождите ${fmtCooldown(netCooldown)}` : cfg.remaining <= 0 ? 'Лимит исчерпан' : `Смотреть ${cfg.name}`}</span>
+            <span className="ads-watch-sub">{isNetCooldown ? 'Кулдаун перед следующей рекламой' : cfg.remaining <= 0 ? 'Приходите завтра' : `+${cfg.reward.toFixed(4)} TON за просмотр`}</span>
+          </div>
+          {cfg.remaining > 0 && !cfg.loading && !isNetCooldown && <div className="ads-watch-arrow">▸</div>}
+        </button>
+        <div className={`ads-earnings ${cfg.earningsCls}`}>
+          <div className="ads-earnings-title">ЗАРАБОТАНО С {cfg.name}</div>
+          <div className={`ads-earnings-val ${cfg.earningsGradient}`}>{cfg.totalEarned.toFixed(4)} TON</div>
+          <div className="ads-earnings-sub">Начислено автоматически</div>
+        </div>
+        {!cfg.hasId && (
+          <div style={{ textAlign:'center', padding:'20px', fontFamily:'DM Sans, sans-serif', fontSize:'12px', color:'rgba(232,242,255,0.25)' }}>
+            {cfg.name} сейчас недоступен
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Tab configs — add cooldown badge
   const tabs = [
     { key: 'adsgram', enabled: adsgramEnabled, icon: '🎬', name: 'Adsgram', badge: remaining },
     { key: 'monetag', enabled: monetagEnabled, icon: '📺', name: 'Monetag', badge: monetagRemaining },
@@ -358,24 +425,31 @@ export default function Ads({ onBack }) {
 
       {/* Network Tabs */}
       <div className="ads-net-tabs" style={{ gridTemplateColumns: `repeat(${visibleTabs.length || 1}, 1fr)` }}>
-        {visibleTabs.map(t => (
-          <button key={t.key} className={`ads-net-tab ${activeTab === t.key ? `active ${t.key}` : ''}`} onClick={() => setActiveTab(t.key)}>
-            <span className="ads-net-tab-icon">{t.icon}</span>
-            <span className="ads-net-tab-name">{t.name}</span>
-            <span className="ads-net-tab-badge">{t.badge}</span>
-          </button>
-        ))}
+        {visibleTabs.map(t => {
+          const cd = cooldowns[t.key] || 0
+          return (
+            <button key={t.key} className={`ads-net-tab ${activeTab === t.key ? `active ${t.key}` : ''} ${cd > 0 ? 'has-cooldown' : ''}`} onClick={() => setActiveTab(t.key)}>
+              <span className="ads-net-tab-icon">{t.icon}</span>
+              <span className="ads-net-tab-name">{t.name}</span>
+              {cd > 0 ? (
+                <span className="ads-net-tab-badge cooldown-badge">⏱{fmtCooldown(cd)}</span>
+              ) : (
+                <span className="ads-net-tab-badge">{t.badge}</span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {/* Network Contents */}
       {activeTab === 'adsgram' && adsgramEnabled && renderNetworkContent({
-        cls: '', iconCls: '', icon: '💰', name: 'ADSGRAM', valCls: '', countCls: '', fillCls: '', btnCls: '', glowCls: '', btnIcon: '▶️',
+        networkKey: 'adsgram', cls: '', iconCls: '', icon: '💰', name: 'ADSGRAM', valCls: '', countCls: '', fillCls: '', btnCls: '', glowCls: '', btnIcon: '▶️',
         earningsCls: '', earningsGradient: '', reward, todayCount, dailyLimit, remaining, limitPercent, loading, totalEarned,
         onClick: showAd, disabled: !adController, hasId: !!blockId,
       })}
 
       {activeTab === 'monetag' && monetagEnabled && renderNetworkContent({
-        cls: 'monetag', iconCls: 'monetag-icon', icon: '💎', name: 'MONETAG', valCls: 'monetag-val', countCls: 'monetag-count',
+        networkKey: 'monetag', cls: 'monetag', iconCls: 'monetag-icon', icon: '💎', name: 'MONETAG', valCls: 'monetag-val', countCls: 'monetag-count',
         fillCls: 'monetag-fill', btnCls: 'monetag-btn', glowCls: 'monetag-glow', btnIcon: '📺',
         earningsCls: 'monetag-earnings', earningsGradient: 'monetag-earnings-gradient',
         reward: monetagReward, todayCount: monetagTodayCount, dailyLimit: monetagDailyLimit, remaining: monetagRemaining,
@@ -384,7 +458,7 @@ export default function Ads({ onBack }) {
       })}
 
       {activeTab === 'onclicka' && onclickaEnabled && renderNetworkContent({
-        cls: 'onclicka', iconCls: 'onclicka-icon', icon: '🔵', name: 'ONCLICKA', valCls: 'onclicka-val', countCls: 'onclicka-count',
+        networkKey: 'onclicka', cls: 'onclicka', iconCls: 'onclicka-icon', icon: '🔵', name: 'ONCLICKA', valCls: 'onclicka-val', countCls: 'onclicka-count',
         fillCls: 'onclicka-fill', btnCls: 'onclicka-btn', glowCls: 'onclicka-glow', btnIcon: '🔵',
         earningsCls: 'onclicka-earnings', earningsGradient: 'onclicka-earnings-gradient',
         reward: onclickaReward, todayCount: onclickaTodayCount, dailyLimit: onclickaDailyLimit, remaining: onclickaRemaining,
@@ -393,7 +467,7 @@ export default function Ads({ onBack }) {
       })}
 
       {activeTab === 'richads' && richadsEnabled && renderNetworkContent({
-        cls: 'richads', iconCls: 'richads-icon', icon: '💚', name: 'RICHADS', valCls: 'richads-val', countCls: 'richads-count',
+        networkKey: 'richads', cls: 'richads', iconCls: 'richads-icon', icon: '💚', name: 'RICHADS', valCls: 'richads-val', countCls: 'richads-count',
         fillCls: 'richads-fill', btnCls: 'richads-btn', glowCls: 'richads-glow', btnIcon: '💚',
         earningsCls: 'richads-earnings', earningsGradient: 'richads-earnings-gradient',
         reward: richadsReward, todayCount: richadsTodayCount, dailyLimit: richadsDailyLimit, remaining: richadsRemaining,
@@ -402,7 +476,7 @@ export default function Ads({ onBack }) {
       })}
 
       {activeTab === 'tads' && tadsEnabled && renderNetworkContent({
-        cls: 'tads', iconCls: 'tads-icon', icon: '🟠', name: 'TADS', valCls: 'tads-val', countCls: 'tads-count',
+        networkKey: 'tads', cls: 'tads', iconCls: 'tads-icon', icon: '🟠', name: 'TADS', valCls: 'tads-val', countCls: 'tads-count',
         fillCls: 'tads-fill', btnCls: 'tads-btn', glowCls: 'tads-glow', btnIcon: '🟠',
         earningsCls: 'tads-earnings', earningsGradient: 'tads-earnings-gradient',
         reward: tadsReward, todayCount: tadsTodayCount, dailyLimit: tadsDailyLimit, remaining: tadsRemaining,
@@ -417,7 +491,7 @@ export default function Ads({ onBack }) {
 
       <div className="ads-howto">
         <div className="ads-howto-title">КАК ЭТО РАБОТАЕТ</div>
-        <div className="ads-howto-step"><div className="ads-howto-num">1</div><div className="ads-howto-text"><div className="ads-howto-text-title">Выберите рекламную сеть</div><div className="ads-howto-text-sub">До 5 сетей — каждая с отдельным лимитом</div></div></div>
+        <div className="ads-howto-step"><div className="ads-howto-num">1</div><div className="ads-howto-text"><div className="ads-howto-text-title">Выберите рекламную сеть</div><div className="ads-howto-text-sub">До 5 сетей — каждая с отдельным лимитом и кулдауном</div></div></div>
         <div className="ads-howto-step"><div className="ads-howto-num">2</div><div className="ads-howto-text"><div className="ads-howto-text-title">Досмотрите рекламу</div><div className="ads-howto-text-sub">Обычно это занимает 15–30 секунд</div></div></div>
         <div className="ads-howto-step"><div className="ads-howto-num">3</div><div className="ads-howto-text"><div className="ads-howto-text-title">Получите TON</div><div className="ads-howto-text-sub">Награда зачислится на баланс мгновенно</div></div></div>
       </div>

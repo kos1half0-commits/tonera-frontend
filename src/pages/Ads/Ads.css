@@ -313,6 +313,48 @@
 .tads-btn .ads-watch-icon{background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05));}
 .tads-btn .ads-watch-arrow{color:#f59e0b;}
 @keyframes adsWatchPulse{0%,100%{opacity:.4;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
+/* COOLDOWN PROGRESS BAR */
+.ads-cooldown-bar{
+  background:#0e1c3a;border:1px solid rgba(255,179,0,0.15);border-radius:14px;
+  padding:12px 14px;margin-bottom:14px;
+  animation:adsFadeIn .3s ease;
+}
+.ads-cooldown-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;
+}
+.ads-cooldown-label{
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;
+  color:rgba(255,179,0,0.6);letter-spacing:.08em;
+}
+.ads-cooldown-time{
+  font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;
+  color:#ffb300;animation:adsCooldownPulse 1.5s ease-in-out infinite;
+}
+.ads-cooldown-track{
+  height:6px;background:rgba(255,179,0,0.08);border-radius:3px;overflow:hidden;
+}
+.ads-cooldown-fill{
+  height:100%;border-radius:3px;transition:width 1s linear;
+  background:linear-gradient(90deg,#ffb300,#ff8a00);
+}
+.ads-cooldown-fill.monetag-fill{background:linear-gradient(90deg,#a855f7,#ec4899);}
+.ads-cooldown-fill.onclicka-fill{background:linear-gradient(90deg,#3b82f6,#60a5fa);}
+.ads-cooldown-fill.richads-fill{background:linear-gradient(90deg,#10b981,#34d399);}
+.ads-cooldown-fill.tads-fill{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+
+/* COOLDOWN TAB BADGE */
+.ads-net-tab-badge.cooldown-badge{
+  color:#ffb300 !important;background:rgba(255,179,0,0.12) !important;
+  font-size:8px !important;animation:adsCooldownPulse 1.5s ease-in-out infinite;
+}
+.ads-net-tab.has-cooldown{
+  border-color:rgba(255,179,0,0.15);
+}
+
+.ads-watch-btn.cooldown{opacity:.6;border-color:rgba(255,179,0,0.3) !important;}
+.ads-watch-btn.cooldown .ads-watch-icon{background:linear-gradient(135deg,rgba(255,179,0,0.15),rgba(255,179,0,0.05)) !important;animation:adsCooldownPulse 1s ease-in-out infinite;}
+.ads-watch-btn.cooldown .ads-watch-title{color:#ffb300 !important;}
+@keyframes adsCooldownPulse{0%,100%{opacity:.5}50%{opacity:1}}
 
 /* EARNINGS CARD */
 .ads-earnings{
