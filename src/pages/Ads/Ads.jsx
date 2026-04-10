@@ -126,14 +126,18 @@ export default function Ads({ onBack }) {
       setTotalEarned(prev => prev + earnedReward)
       setTimeout(() => setRewarded(false), 5000)
     } catch (e) {
-      if (e?.error === 'no-ads') {
-        setError('Нет доступной рекламы')
+      console.warn('Adsgram show error:', JSON.stringify(e))
+      const desc = e?.description || e?.error || e?.message || ''
+      if (desc === 'no-ads' || desc.includes('No ads')) {
+        setError('Нет доступной рекламы. Попробуйте позже')
+      } else if (desc === 'dismissed' || desc.includes('close') || desc.includes('skip')) {
+        setError('Вы закрыли рекламу. Досмотрите до конца для награды')
       } else if (e?.response?.data?.error) {
         setError(e.response.data.error)
       } else {
-        setError('Реклама недоступна')
+        setError('Реклама недоступна: ' + (desc || 'попробуйте позже'))
       }
-      setTimeout(() => setError(''), 4000)
+      setTimeout(() => setError(''), 5000)
     }
     setLoading(false)
   }, [adController, loading, remaining, reward])
