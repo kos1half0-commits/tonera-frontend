@@ -6,12 +6,14 @@ import './Ads.css'
 let monetagHandler = null
 
 export default function Ads({ onBack }) {
-  const [activeTab, setActiveTab] = useState('') // 'adsgram' | 'monetag' | 'onclicka'
+  const [activeTab, setActiveTab] = useState('')
 
   // Enabled flags
   const [adsgramEnabled, setAdsgramEnabled] = useState(true)
   const [monetagEnabled, setMontagEnabled] = useState(true)
   const [onclickaEnabled, setOnclickaEnabled] = useState(true)
+  const [richadsEnabled, setRichadsEnabled] = useState(true)
+  const [tadsEnabled, setTadsEnabled] = useState(true)
 
   // Adsgram state
   const [blockId, setBlockId] = useState('')
@@ -48,6 +50,28 @@ export default function Ads({ onBack }) {
   const [onclickaReady, setOnclickaReady] = useState(false)
   const onclickaShowRef = useRef(null)
 
+  // RichAds state
+  const [richadsWidgetId, setRichadsWidgetId] = useState('')
+  const [richadsReward, setRichadsReward] = useState(0)
+  const [richadsDailyLimit, setRichadsDailyLimit] = useState(10)
+  const [richadsTodayCount, setRichadsTodayCount] = useState(0)
+  const [richadsTotalEarned, setRichadsTotalEarned] = useState(0)
+  const [richadsLoading, setRichadsLoading] = useState(false)
+  const [richadsRewarded, setRichadsRewarded] = useState(false)
+  const [richadsError, setRichadsError] = useState('')
+  const [richadsReady, setRichadsReady] = useState(false)
+
+  // Tads state
+  const [tadsWidgetId, setTadsWidgetId] = useState('')
+  const [tadsReward, setTadsReward] = useState(0)
+  const [tadsDailyLimit, setTadsDailyLimit] = useState(10)
+  const [tadsTodayCount, setTadsTodayCount] = useState(0)
+  const [tadsTotalEarned, setTadsTotalEarned] = useState(0)
+  const [tadsLoading, setTadsLoading] = useState(false)
+  const [tadsRewarded, setTadsRewarded] = useState(false)
+  const [tadsError, setTadsError] = useState('')
+  const [tadsReady, setTadsReady] = useState(false)
+
   // Load settings
   useEffect(() => {
     api.get('/api/ads/adsgram-info').then(r => {
@@ -62,12 +86,19 @@ export default function Ads({ onBack }) {
       setAdsgramEnabled(d.adsgramEnabled !== false)
       setMontagEnabled(d.monetagEnabled !== false)
       setOnclickaEnabled(d.onclickaEnabled !== false)
+      setRichadsEnabled(d.richadsEnabled !== false)
+      setTadsEnabled(d.tadsEnabled !== false)
 
       // Auto-select first enabled tab
-      if (d.adsgramEnabled !== false) setActiveTab(prev => prev || 'adsgram')
-      else if (d.monetagEnabled !== false) setActiveTab(prev => prev || 'monetag')
-      else if (d.onclickaEnabled !== false) setActiveTab(prev => prev || 'onclicka')
-      else setActiveTab('adsgram')
+      const tabs = [
+        ['adsgram', d.adsgramEnabled !== false],
+        ['monetag', d.monetagEnabled !== false],
+        ['onclicka', d.onclickaEnabled !== false],
+        ['richads', d.richadsEnabled !== false],
+        ['tads', d.tadsEnabled !== false],
+      ]
+      const first = tabs.find(([, en]) => en)
+      setActiveTab(prev => prev || (first ? first[0] : 'adsgram'))
 
       // Monetag
       if (d.monetagZoneId) setMontagZoneId(d.monetagZoneId)
@@ -83,151 +114,115 @@ export default function Ads({ onBack }) {
       setOnclickaTodayCount(parseInt(d.onclickaTodayCount) || 0)
       setOnclickaTotalEarned(parseFloat(d.onclickaTotalEarned) || 0)
 
+      // RichAds
+      if (d.richadsWidgetId) setRichadsWidgetId(d.richadsWidgetId)
+      if (d.richadsReward != null) setRichadsReward(parseFloat(d.richadsReward))
+      if (d.richadsDailyLimit != null) setRichadsDailyLimit(parseInt(d.richadsDailyLimit))
+      setRichadsTodayCount(parseInt(d.richadsTodayCount) || 0)
+      setRichadsTotalEarned(parseFloat(d.richadsTotalEarned) || 0)
+
+      // Tads
+      if (d.tadsWidgetId) setTadsWidgetId(d.tadsWidgetId)
+      if (d.tadsReward != null) setTadsReward(parseFloat(d.tadsReward))
+      if (d.tadsDailyLimit != null) setTadsDailyLimit(parseInt(d.tadsDailyLimit))
+      setTadsTodayCount(parseInt(d.tadsTodayCount) || 0)
+      setTadsTotalEarned(parseFloat(d.tadsTotalEarned) || 0)
+
       setInfoLoaded(true)
     }).catch(() => {
-      api.get('/api/settings/adsgram_block_id').then(r => {
-        if (r.data?.value) setBlockId(r.data.value)
-      }).catch(() => {})
       setInfoLoaded(true)
     })
   }, [])
 
-  // Init Adsgram controller (async-safe)
+  // Init Adsgram
   useEffect(() => {
     if (!blockId) return
-
     const tryInit = () => {
       if (!window.Adsgram) return false
-      try {
-        const controller = window.Adsgram.init({ blockId, debug: false })
-        setAdController(controller)
-        return true
-      } catch (e) {
-        console.warn('Adsgram init error:', e)
-        return true
-      }
+      try { setAdController(window.Adsgram.init({ blockId, debug: false })); return true } catch { return true }
     }
-
     if (tryInit()) return
-
-    let attempts = 0
-    const interval = setInterval(() => {
-      attempts++
-      if (tryInit() || attempts >= 20) clearInterval(interval)
-    }, 500)
-
-    return () => clearInterval(interval)
+    let a = 0; const i = setInterval(() => { a++; if (tryInit() || a >= 20) clearInterval(i) }, 500)
+    return () => clearInterval(i)
   }, [blockId])
 
-  // Init Monetag SDK
+  // Init Monetag
   useEffect(() => {
     if (!monetagZoneId) return
-
-    const initMonetag = async () => {
-      try {
-        const { default: createAdHandler } = await import('monetag-tg-sdk')
-        monetagHandler = createAdHandler(parseInt(monetagZoneId))
-        setMontagReady(true)
-      } catch (e) {
-        console.warn('Monetag SDK init error:', e)
-      }
-    }
-
-    initMonetag()
+    ;(async () => {
+      try { const { default: c } = await import('monetag-tg-sdk'); monetagHandler = c(parseInt(monetagZoneId)); setMontagReady(true) } catch (e) { console.warn('Monetag init:', e) }
+    })()
   }, [monetagZoneId])
 
-  // Init OnClickA SDK
+  // Init OnClickA
   useEffect(() => {
     if (!onclickaSpotId) return
-
-    const initOnClickA = async () => {
+    ;(async () => {
       try {
-        // Load OnClickA script if not already loaded
         if (!document.querySelector('script[src*="onclckmn"]')) {
-          const script = document.createElement('script')
-          script.src = 'https://js.onclckmn.com/static/onclicka.js'
-          script.async = true
-          document.head.appendChild(script)
-          // Wait for script to load
-          await new Promise((resolve, reject) => {
-            script.onload = resolve
-            script.onerror = reject
-            setTimeout(resolve, 3000)
-          })
+          const s = document.createElement('script'); s.src = 'https://js.onclckmn.com/static/onclicka.js'; s.async = true; document.head.appendChild(s)
+          await new Promise((r, j) => { s.onload = r; s.onerror = j; setTimeout(r, 3000) })
         }
-
-        // Init with spot ID
-        if (window.initCdTma) {
-          const show = await window.initCdTma({ id: onclickaSpotId })
-          onclickaShowRef.current = show
-          setOnclickaReady(true)
-        } else {
-          // Retry a few times
-          let attempts = 0
-          const interval = setInterval(async () => {
-            attempts++
-            if (window.initCdTma) {
-              clearInterval(interval)
-              try {
-                const show = await window.initCdTma({ id: onclickaSpotId })
-                onclickaShowRef.current = show
-                setOnclickaReady(true)
-              } catch (e) {
-                console.warn('OnClickA init error:', e)
-              }
-            }
-            if (attempts >= 15) clearInterval(interval)
-          }, 500)
-        }
-      } catch (e) {
-        console.warn('OnClickA SDK init error:', e)
-      }
-    }
-
-    initOnClickA()
+        let a = 0
+        const i = setInterval(async () => {
+          a++
+          if (window.initCdTma) { clearInterval(i); try { onclickaShowRef.current = await window.initCdTma({ id: onclickaSpotId }); setOnclickaReady(true) } catch {} }
+          if (a >= 15) clearInterval(i)
+        }, 500)
+      } catch (e) { console.warn('OnClickA init:', e) }
+    })()
   }, [onclickaSpotId])
 
-  // Adsgram
+  // Init RichAds — uses JS tag from dashboard
+  useEffect(() => {
+    if (!richadsWidgetId) return
+    if (!document.querySelector('script[data-richads]')) {
+      const s = document.createElement('script')
+      s.src = `https://richads.io/w/${richadsWidgetId}.js`
+      s.async = true; s.setAttribute('data-richads', '1')
+      document.head.appendChild(s)
+    }
+    setRichadsReady(true)
+  }, [richadsWidgetId])
+
+  // Init Tads — React widget
+  useEffect(() => {
+    if (!tadsWidgetId) return
+    setTadsReady(true)
+  }, [tadsWidgetId])
+
+  // Computed
   const remaining = Math.max(0, dailyLimit - todayCount)
   const limitPercent = dailyLimit > 0 ? Math.min(100, (todayCount / dailyLimit) * 100) : 100
-
-  // Monetag
   const monetagRemaining = Math.max(0, monetagDailyLimit - monetagTodayCount)
   const monetagLimitPercent = monetagDailyLimit > 0 ? Math.min(100, (monetagTodayCount / monetagDailyLimit) * 100) : 100
-
-  // OnClickA
   const onclickaRemaining = Math.max(0, onclickaDailyLimit - onclickaTodayCount)
   const onclickaLimitPercent = onclickaDailyLimit > 0 ? Math.min(100, (onclickaTodayCount / onclickaDailyLimit) * 100) : 100
+  const richadsRemaining = Math.max(0, richadsDailyLimit - richadsTodayCount)
+  const richadsLimitPercent = richadsDailyLimit > 0 ? Math.min(100, (richadsTodayCount / richadsDailyLimit) * 100) : 100
+  const tadsRemaining = Math.max(0, tadsDailyLimit - tadsTodayCount)
+  const tadsLimitPercent = tadsDailyLimit > 0 ? Math.min(100, (tadsTodayCount / tadsDailyLimit) * 100) : 100
 
-  // Combined stats
-  const combinedTotalEarned = totalEarned + monetagTotalEarned + onclickaTotalEarned
-  const combinedTodayViews = todayCount + monetagTodayCount + onclickaTodayCount
-  const networkCount = [adsgramEnabled, monetagEnabled, onclickaEnabled].filter(Boolean).length
+  const enabledFlags = [adsgramEnabled, monetagEnabled, onclickaEnabled, richadsEnabled, tadsEnabled]
+  const networkCount = enabledFlags.filter(Boolean).length
+  const combinedTotalEarned = totalEarned + monetagTotalEarned + onclickaTotalEarned + richadsTotalEarned + tadsTotalEarned
+  const combinedTodayViews = todayCount + monetagTodayCount + onclickaTodayCount + richadsTodayCount + tadsTodayCount
 
+  // Show handlers
   const showAd = useCallback(async () => {
     if (!adController || loading || remaining <= 0) return
-    setLoading(true)
-    setError('')
+    setLoading(true); setError('')
     try {
       await adController.show()
       const r = await api.post('/api/ads/adsgram-reward')
-      const earnedReward = parseFloat(r.data?.reward) || reward
-      setRewarded(true)
-      setTodayCount(prev => prev + 1)
-      setTotalEarned(prev => prev + earnedReward)
+      setRewarded(true); setTodayCount(p => p + 1); setTotalEarned(p => p + (parseFloat(r.data?.reward) || reward))
       setTimeout(() => setRewarded(false), 5000)
     } catch (e) {
-      console.warn('Adsgram show error:', JSON.stringify(e))
-      const desc = e?.description || e?.error || e?.message || ''
-      if (desc === 'no-ads' || desc.includes('No ads')) {
-        setError('Нет доступной рекламы. Попробуйте позже')
-      } else if (desc === 'dismissed' || desc.includes('close') || desc.includes('skip')) {
-        setError('Вы закрыли рекламу. Досмотрите до конца для награды')
-      } else if (e?.response?.data?.error) {
-        setError(e.response.data.error)
-      } else {
-        setError('Реклама недоступна: ' + (desc || 'попробуйте позже'))
-      }
+      console.warn('Adsgram:', JSON.stringify(e))
+      const d = e?.description || e?.error || e?.message || ''
+      if (d === 'no-ads' || d.includes('No ads')) setError('Нет доступной рекламы. Попробуйте позже')
+      else if (d === 'dismissed' || d.includes('close')) setError('Досмотрите до конца для награды')
+      else setError(e?.response?.data?.error || 'Реклама недоступна')
       setTimeout(() => setError(''), 5000)
     }
     setLoading(false)
@@ -235,380 +230,210 @@ export default function Ads({ onBack }) {
 
   const showMonetag = useCallback(async () => {
     if (!monetagHandler || monetagLoading || monetagRemaining <= 0) return
-    setMontagLoading(true)
-    setMontagError('')
+    setMontagLoading(true); setMontagError('')
     try {
       await monetagHandler()
       const r = await api.post('/api/ads/monetag-reward')
-      const earnedReward = parseFloat(r.data?.reward) || monetagReward
-      setMontagRewarded(true)
-      setMontagTodayCount(prev => prev + 1)
-      setMontagTotalEarned(prev => prev + earnedReward)
+      setMontagRewarded(true); setMontagTodayCount(p => p + 1); setMontagTotalEarned(p => p + (parseFloat(r.data?.reward) || monetagReward))
       setTimeout(() => setMontagRewarded(false), 5000)
-    } catch (e) {
-      if (e?.response?.data?.error) {
-        setMontagError(e.response.data.error)
-      } else {
-        setMontagError('Monetag реклама недоступна')
-      }
-      setTimeout(() => setMontagError(''), 4000)
-    }
+    } catch (e) { setMontagError(e?.response?.data?.error || 'Monetag недоступна'); setTimeout(() => setMontagError(''), 4000) }
     setMontagLoading(false)
   }, [monetagLoading, monetagRemaining, monetagReward])
 
   const showOnClickA = useCallback(async () => {
     if (!onclickaShowRef.current || onclickaLoading || onclickaRemaining <= 0) return
-    setOnclickaLoading(true)
-    setOnclickaError('')
+    setOnclickaLoading(true); setOnclickaError('')
     try {
       await onclickaShowRef.current()
       const r = await api.post('/api/ads/onclicka-reward')
-      const earnedReward = parseFloat(r.data?.reward) || onclickaReward
-      setOnclickaRewarded(true)
-      setOnclickaTodayCount(prev => prev + 1)
-      setOnclickaTotalEarned(prev => prev + earnedReward)
+      setOnclickaRewarded(true); setOnclickaTodayCount(p => p + 1); setOnclickaTotalEarned(p => p + (parseFloat(r.data?.reward) || onclickaReward))
       setTimeout(() => setOnclickaRewarded(false), 5000)
-    } catch (e) {
-      console.warn('OnClickA show error:', e)
-      if (e?.response?.data?.error) {
-        setOnclickaError(e.response.data.error)
-      } else {
-        setOnclickaError('OnClickA реклама недоступна')
-      }
-      setTimeout(() => setOnclickaError(''), 4000)
-    }
+    } catch (e) { setOnclickaError(e?.response?.data?.error || 'OnClickA недоступна'); setTimeout(() => setOnclickaError(''), 4000) }
     setOnclickaLoading(false)
   }, [onclickaLoading, onclickaRemaining, onclickaReward])
 
-  const curRewarded = activeTab === 'adsgram' ? rewarded : activeTab === 'monetag' ? monetagRewarded : onclickaRewarded
-  const curError = activeTab === 'adsgram' ? error : activeTab === 'monetag' ? monetagError : onclickaError
-  const curReward = activeTab === 'adsgram' ? reward : activeTab === 'monetag' ? monetagReward : onclickaReward
+  const showRichAds = useCallback(async () => {
+    if (richadsLoading || richadsRemaining <= 0) return
+    setRichadsLoading(true); setRichadsError('')
+    try {
+      // RichAds shows via injected JS, we trigger reward after interaction
+      if (window.richAdsShow) await window.richAdsShow()
+      const r = await api.post('/api/ads/richads-reward')
+      setRichadsRewarded(true); setRichadsTodayCount(p => p + 1); setRichadsTotalEarned(p => p + (parseFloat(r.data?.reward) || richadsReward))
+      setTimeout(() => setRichadsRewarded(false), 5000)
+    } catch (e) { setRichadsError(e?.response?.data?.error || 'RichAds недоступна'); setTimeout(() => setRichadsError(''), 4000) }
+    setRichadsLoading(false)
+  }, [richadsLoading, richadsRemaining, richadsReward])
+
+  const showTads = useCallback(async () => {
+    if (tadsLoading || tadsRemaining <= 0) return
+    setTadsLoading(true); setTadsError('')
+    try {
+      const r = await api.post('/api/ads/tads-reward')
+      setTadsRewarded(true); setTadsTodayCount(p => p + 1); setTadsTotalEarned(p => p + (parseFloat(r.data?.reward) || tadsReward))
+      setTimeout(() => setTadsRewarded(false), 5000)
+    } catch (e) { setTadsError(e?.response?.data?.error || 'Tads недоступна'); setTimeout(() => setTadsError(''), 4000) }
+    setTadsLoading(false)
+  }, [tadsLoading, tadsRemaining, tadsReward])
+
+  // Current tab state
+  const tabMap = {
+    adsgram: { rewarded, error, reward: reward },
+    monetag: { rewarded: monetagRewarded, error: monetagError, reward: monetagReward },
+    onclicka: { rewarded: onclickaRewarded, error: onclickaError, reward: onclickaReward },
+    richads: { rewarded: richadsRewarded, error: richadsError, reward: richadsReward },
+    tads: { rewarded: tadsRewarded, error: tadsError, reward: tadsReward },
+  }
+  const cur = tabMap[activeTab] || tabMap.adsgram
+
+  // Helper to render a network tab content
+  const renderNetworkContent = (cfg) => (
+    <div className="ads-network-content fade-up">
+      <div className={`ads-reward-info ${cfg.cls}`}>
+        <div className={`ads-reward-icon ${cfg.iconCls}`}>{cfg.icon}</div>
+        <div className="ads-reward-text">
+          <div className="ads-reward-label">НАГРАДА ЗА ПРОСМОТР · {cfg.name}</div>
+          <div className={`ads-reward-val ${cfg.valCls}`}>+{cfg.reward.toFixed(4)}<span>TON</span></div>
+        </div>
+      </div>
+      <div className="ads-limit">
+        <div className="ads-limit-header">
+          <div className="ads-limit-label">ДНЕВНОЙ ЛИМИТ {cfg.name}</div>
+          <div className={`ads-limit-count ${cfg.countCls}`}>{cfg.todayCount} / {cfg.dailyLimit}</div>
+        </div>
+        <div className="ads-limit-bar">
+          <div className={`ads-limit-fill ${cfg.fillCls} ${cfg.remaining <= 0 ? 'full' : ''}`} style={{ width: cfg.limitPercent + '%' }} />
+        </div>
+      </div>
+      <button className={`ads-watch-btn ${cfg.btnCls} ${cfg.loading ? 'loading' : ''}`} onClick={cfg.onClick} disabled={cfg.loading || cfg.disabled || cfg.remaining <= 0}>
+        <div className={`ads-watch-glow ${cfg.glowCls}`} />
+        <div className="ads-watch-icon">{cfg.loading ? '⏳' : cfg.remaining <= 0 ? '⏰' : cfg.btnIcon}</div>
+        <div className="ads-watch-text">
+          <span className="ads-watch-title">{cfg.loading ? 'Загрузка...' : cfg.remaining <= 0 ? 'Лимит исчерпан' : `Смотреть ${cfg.name}`}</span>
+          <span className="ads-watch-sub">{cfg.remaining <= 0 ? 'Приходите завтра' : `+${cfg.reward.toFixed(4)} TON за просмотр`}</span>
+        </div>
+        {cfg.remaining > 0 && !cfg.loading && <div className="ads-watch-arrow">▸</div>}
+      </button>
+      <div className={`ads-earnings ${cfg.earningsCls}`}>
+        <div className="ads-earnings-title">ЗАРАБОТАНО С {cfg.name}</div>
+        <div className={`ads-earnings-val ${cfg.earningsGradient}`}>{cfg.totalEarned.toFixed(4)} TON</div>
+        <div className="ads-earnings-sub">Начислено автоматически</div>
+      </div>
+      {!cfg.hasId && (
+        <div style={{ textAlign:'center', padding:'20px', fontFamily:'DM Sans, sans-serif', fontSize:'12px', color:'rgba(232,242,255,0.25)' }}>
+          {cfg.name} сейчас недоступен
+        </div>
+      )}
+    </div>
+  )
+
+  // Tab configs
+  const tabs = [
+    { key: 'adsgram', enabled: adsgramEnabled, icon: '🎬', name: 'Adsgram', badge: remaining },
+    { key: 'monetag', enabled: monetagEnabled, icon: '📺', name: 'Monetag', badge: monetagRemaining },
+    { key: 'onclicka', enabled: onclickaEnabled, icon: '🔵', name: 'OnClickA', badge: onclickaRemaining },
+    { key: 'richads', enabled: richadsEnabled, icon: '💚', name: 'RichAds', badge: richadsRemaining },
+    { key: 'tads', enabled: tadsEnabled, icon: '🟠', name: 'Tads', badge: tadsRemaining },
+  ]
+  const visibleTabs = tabs.filter(t => t.enabled)
 
   return (
     <div className="ads-page fade-up">
-      {/* Back */}
-      <button className="ads-back" onClick={onBack}>
-        ← НАЗАД
-      </button>
+      <button className="ads-back" onClick={onBack}>← НАЗАД</button>
 
-      {/* Toast */}
-      {curRewarded && (
-        <div className="ads-toast success">✅ Награда +{curReward.toFixed(4)} TON получена!</div>
-      )}
-      {curError && (
-        <div className="ads-toast error">{curError}</div>
-      )}
+      {cur.rewarded && <div className="ads-toast success">✅ Награда +{cur.reward.toFixed(4)} TON получена!</div>}
+      {cur.error && <div className="ads-toast error">{cur.error}</div>}
 
-      {/* Hero */}
       <div className="ads-hero">
         <div className="ads-hero-icon">🎬</div>
         <div className="ads-hero-title">Смотри & Зарабатывай</div>
         <div className="ads-hero-sub">Смотрите рекламные ролики и получайте TON на баланс</div>
       </div>
 
-      {/* Combined Stats */}
       <div className="ads-stats">
-        <div className="ads-stat cyan">
-          <div className="ads-stat-val cyan">{combinedTodayViews}</div>
-          <div className="ads-stat-lbl">Сегодня</div>
-        </div>
-        <div className="ads-stat green">
-          <div className="ads-stat-val green">{combinedTotalEarned.toFixed(3)}</div>
-          <div className="ads-stat-lbl">Заработано</div>
-        </div>
-        <div className="ads-stat gold">
-          <div className="ads-stat-val gold">{networkCount}</div>
-          <div className="ads-stat-lbl">Сети</div>
-        </div>
+        <div className="ads-stat cyan"><div className="ads-stat-val cyan">{combinedTodayViews}</div><div className="ads-stat-lbl">Сегодня</div></div>
+        <div className="ads-stat green"><div className="ads-stat-val green">{combinedTotalEarned.toFixed(3)}</div><div className="ads-stat-lbl">Заработано</div></div>
+        <div className="ads-stat gold"><div className="ads-stat-val gold">{networkCount}</div><div className="ads-stat-lbl">Сети</div></div>
       </div>
 
       {/* Network Tabs */}
-      <div className="ads-net-tabs" style={{ gridTemplateColumns: `repeat(${networkCount}, 1fr)` }}>
-        {adsgramEnabled && (
-          <button
-            className={`ads-net-tab ${activeTab === 'adsgram' ? 'active adsgram' : ''}`}
-            onClick={() => setActiveTab('adsgram')}
-          >
-            <span className="ads-net-tab-icon">🎬</span>
-            <span className="ads-net-tab-name">Adsgram</span>
-            <span className="ads-net-tab-badge">{remaining}</span>
+      <div className="ads-net-tabs" style={{ gridTemplateColumns: `repeat(${visibleTabs.length || 1}, 1fr)` }}>
+        {visibleTabs.map(t => (
+          <button key={t.key} className={`ads-net-tab ${activeTab === t.key ? `active ${t.key}` : ''}`} onClick={() => setActiveTab(t.key)}>
+            <span className="ads-net-tab-icon">{t.icon}</span>
+            <span className="ads-net-tab-name">{t.name}</span>
+            <span className="ads-net-tab-badge">{t.badge}</span>
           </button>
-        )}
-        {monetagEnabled && (
-          <button
-            className={`ads-net-tab ${activeTab === 'monetag' ? 'active monetag' : ''}`}
-            onClick={() => setActiveTab('monetag')}
-          >
-            <span className="ads-net-tab-icon">📺</span>
-            <span className="ads-net-tab-name">Monetag</span>
-            <span className="ads-net-tab-badge">{monetagRemaining}</span>
-          </button>
-        )}
-        {onclickaEnabled && (
-          <button
-            className={`ads-net-tab ${activeTab === 'onclicka' ? 'active onclicka' : ''}`}
-            onClick={() => setActiveTab('onclicka')}
-          >
-            <span className="ads-net-tab-icon">🔵</span>
-            <span className="ads-net-tab-name">OnClickA</span>
-            <span className="ads-net-tab-badge">{onclickaRemaining}</span>
-          </button>
-        )}
+        ))}
       </div>
 
-      {/* === ADSGRAM TAB === */}
-      {activeTab === 'adsgram' && adsgramEnabled && (
-        <div className="ads-network-content fade-up">
-          {/* Reward info */}
-          <div className="ads-reward-info">
-            <div className="ads-reward-icon">💰</div>
-            <div className="ads-reward-text">
-              <div className="ads-reward-label">НАГРАДА ЗА ПРОСМОТР · ADSGRAM</div>
-              <div className="ads-reward-val">
-                +{reward.toFixed(4)}<span>TON</span>
-              </div>
-            </div>
-          </div>
+      {/* Network Contents */}
+      {activeTab === 'adsgram' && adsgramEnabled && renderNetworkContent({
+        cls: '', iconCls: '', icon: '💰', name: 'ADSGRAM', valCls: '', countCls: '', fillCls: '', btnCls: '', glowCls: '', btnIcon: '▶️',
+        earningsCls: '', earningsGradient: '', reward, todayCount, dailyLimit, remaining, limitPercent, loading, totalEarned,
+        onClick: showAd, disabled: !adController, hasId: !!blockId,
+      })}
 
-          {/* Daily limit bar */}
-          <div className="ads-limit">
-            <div className="ads-limit-header">
-              <div className="ads-limit-label">ДНЕВНОЙ ЛИМИТ</div>
-              <div className="ads-limit-count">{todayCount} / {dailyLimit}</div>
-            </div>
-            <div className="ads-limit-bar">
-              <div
-                className={`ads-limit-fill ${remaining <= 0 ? 'full' : ''}`}
-                style={{ width: limitPercent + '%' }}
-              />
-            </div>
-          </div>
+      {activeTab === 'monetag' && monetagEnabled && renderNetworkContent({
+        cls: 'monetag', iconCls: 'monetag-icon', icon: '💎', name: 'MONETAG', valCls: 'monetag-val', countCls: 'monetag-count',
+        fillCls: 'monetag-fill', btnCls: 'monetag-btn', glowCls: 'monetag-glow', btnIcon: '📺',
+        earningsCls: 'monetag-earnings', earningsGradient: 'monetag-earnings-gradient',
+        reward: monetagReward, todayCount: monetagTodayCount, dailyLimit: monetagDailyLimit, remaining: monetagRemaining,
+        limitPercent: monetagLimitPercent, loading: monetagLoading, totalEarned: monetagTotalEarned,
+        onClick: showMonetag, disabled: !monetagReady, hasId: !!monetagZoneId,
+      })}
 
-          {/* Watch button */}
-          <button
-            className={`ads-watch-btn ${loading ? 'loading' : ''}`}
-            onClick={showAd}
-            disabled={loading || !adController || remaining <= 0}
-          >
-            <div className="ads-watch-glow" />
-            <div className="ads-watch-icon">
-              {loading ? '⏳' : remaining <= 0 ? '⏰' : '▶️'}
-            </div>
-            <div className="ads-watch-text">
-              <span className="ads-watch-title">
-                {loading ? 'Загрузка...' : remaining <= 0 ? 'Лимит исчерпан' : 'Смотреть Adsgram'}
-              </span>
-              <span className="ads-watch-sub">
-                {remaining <= 0
-                  ? 'Приходите завтра для новых просмотров'
-                  : `Получите +${reward.toFixed(4)} TON за просмотр`}
-              </span>
-            </div>
-            {remaining > 0 && !loading && (
-              <div className="ads-watch-arrow">▸</div>
-            )}
-          </button>
+      {activeTab === 'onclicka' && onclickaEnabled && renderNetworkContent({
+        cls: 'onclicka', iconCls: 'onclicka-icon', icon: '🔵', name: 'ONCLICKA', valCls: 'onclicka-val', countCls: 'onclicka-count',
+        fillCls: 'onclicka-fill', btnCls: 'onclicka-btn', glowCls: 'onclicka-glow', btnIcon: '🔵',
+        earningsCls: 'onclicka-earnings', earningsGradient: 'onclicka-earnings-gradient',
+        reward: onclickaReward, todayCount: onclickaTodayCount, dailyLimit: onclickaDailyLimit, remaining: onclickaRemaining,
+        limitPercent: onclickaLimitPercent, loading: onclickaLoading, totalEarned: onclickaTotalEarned,
+        onClick: showOnClickA, disabled: !onclickaReady, hasId: !!onclickaSpotId,
+      })}
 
-          {/* Adsgram earnings */}
-          <div className="ads-earnings">
-            <div className="ads-earnings-title">ЗАРАБОТАНО С ADSGRAM</div>
-            <div className="ads-earnings-val">{totalEarned.toFixed(4)} TON</div>
-            <div className="ads-earnings-sub">Начислено на ваш баланс автоматически</div>
-          </div>
+      {activeTab === 'richads' && richadsEnabled && renderNetworkContent({
+        cls: 'richads', iconCls: 'richads-icon', icon: '💚', name: 'RICHADS', valCls: 'richads-val', countCls: 'richads-count',
+        fillCls: 'richads-fill', btnCls: 'richads-btn', glowCls: 'richads-glow', btnIcon: '💚',
+        earningsCls: 'richads-earnings', earningsGradient: 'richads-earnings-gradient',
+        reward: richadsReward, todayCount: richadsTodayCount, dailyLimit: richadsDailyLimit, remaining: richadsRemaining,
+        limitPercent: richadsLimitPercent, loading: richadsLoading, totalEarned: richadsTotalEarned,
+        onClick: showRichAds, disabled: !richadsReady, hasId: !!richadsWidgetId,
+      })}
 
-          {!blockId && (
-            <div style={{
-              textAlign:'center', padding:'20px',
-              fontFamily: 'DM Sans, sans-serif', fontSize: '12px',
-              color: 'rgba(232,242,255,0.25)'
-            }}>
-              Adsgram сейчас недоступен
-            </div>
-          )}
-        </div>
-      )}
+      {activeTab === 'tads' && tadsEnabled && renderNetworkContent({
+        cls: 'tads', iconCls: 'tads-icon', icon: '🟠', name: 'TADS', valCls: 'tads-val', countCls: 'tads-count',
+        fillCls: 'tads-fill', btnCls: 'tads-btn', glowCls: 'tads-glow', btnIcon: '🟠',
+        earningsCls: 'tads-earnings', earningsGradient: 'tads-earnings-gradient',
+        reward: tadsReward, todayCount: tadsTodayCount, dailyLimit: tadsDailyLimit, remaining: tadsRemaining,
+        limitPercent: tadsLimitPercent, loading: tadsLoading, totalEarned: tadsTotalEarned,
+        onClick: showTads, disabled: !tadsReady, hasId: !!tadsWidgetId,
+      })}
 
-      {/* === MONETAG TAB === */}
-      {activeTab === 'monetag' && monetagEnabled && (
-        <div className="ads-network-content fade-up">
-          {/* Reward info */}
-          <div className="ads-reward-info monetag">
-            <div className="ads-reward-icon monetag-icon">💎</div>
-            <div className="ads-reward-text">
-              <div className="ads-reward-label">НАГРАДА ЗА ПРОСМОТР · MONETAG</div>
-              <div className="ads-reward-val monetag-val">
-                +{monetagReward.toFixed(4)}<span>TON</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Daily limit bar */}
-          <div className="ads-limit">
-            <div className="ads-limit-header">
-              <div className="ads-limit-label">ДНЕВНОЙ ЛИМИТ MONETAG</div>
-              <div className="ads-limit-count monetag-count">{monetagTodayCount} / {monetagDailyLimit}</div>
-            </div>
-            <div className="ads-limit-bar">
-              <div
-                className={`ads-limit-fill monetag-fill ${monetagRemaining <= 0 ? 'full' : ''}`}
-                style={{ width: monetagLimitPercent + '%' }}
-              />
-            </div>
-          </div>
-
-          {/* Watch button */}
-          <button
-            className={`ads-watch-btn monetag-btn ${monetagLoading ? 'loading' : ''}`}
-            onClick={showMonetag}
-            disabled={monetagLoading || !monetagReady || monetagRemaining <= 0}
-          >
-            <div className="ads-watch-glow monetag-glow" />
-            <div className="ads-watch-icon">
-              {monetagLoading ? '⏳' : monetagRemaining <= 0 ? '⏰' : '📺'}
-            </div>
-            <div className="ads-watch-text">
-              <span className="ads-watch-title">
-                {monetagLoading ? 'Загрузка...' : monetagRemaining <= 0 ? 'Лимит исчерпан' : 'Смотреть Monetag'}
-              </span>
-              <span className="ads-watch-sub">
-                {monetagRemaining <= 0
-                  ? 'Приходите завтра для новых просмотров'
-                  : `Получите +${monetagReward.toFixed(4)} TON за просмотр`}
-              </span>
-            </div>
-            {monetagRemaining > 0 && !monetagLoading && (
-              <div className="ads-watch-arrow">▸</div>
-            )}
-          </button>
-
-          {/* Monetag earnings */}
-          <div className="ads-earnings monetag-earnings">
-            <div className="ads-earnings-title">ЗАРАБОТАНО С MONETAG</div>
-            <div className="ads-earnings-val monetag-earnings-gradient">{monetagTotalEarned.toFixed(4)} TON</div>
-            <div className="ads-earnings-sub">Начислено на ваш баланс автоматически</div>
-          </div>
-
-          {!monetagZoneId && (
-            <div style={{
-              textAlign:'center', padding:'20px',
-              fontFamily: 'DM Sans, sans-serif', fontSize: '12px',
-              color: 'rgba(232,242,255,0.25)'
-            }}>
-              Monetag сейчас недоступен
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* === ONCLICKA TAB === */}
-      {activeTab === 'onclicka' && onclickaEnabled && (
-        <div className="ads-network-content fade-up">
-          {/* Reward info */}
-          <div className="ads-reward-info onclicka">
-            <div className="ads-reward-icon onclicka-icon">🔵</div>
-            <div className="ads-reward-text">
-              <div className="ads-reward-label">НАГРАДА ЗА ПРОСМОТР · ONCLICKA</div>
-              <div className="ads-reward-val onclicka-val">
-                +{onclickaReward.toFixed(4)}<span>TON</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Daily limit bar */}
-          <div className="ads-limit">
-            <div className="ads-limit-header">
-              <div className="ads-limit-label">ДНЕВНОЙ ЛИМИТ ONCLICKA</div>
-              <div className="ads-limit-count onclicka-count">{onclickaTodayCount} / {onclickaDailyLimit}</div>
-            </div>
-            <div className="ads-limit-bar">
-              <div
-                className={`ads-limit-fill onclicka-fill ${onclickaRemaining <= 0 ? 'full' : ''}`}
-                style={{ width: onclickaLimitPercent + '%' }}
-              />
-            </div>
-          </div>
-
-          {/* Watch button */}
-          <button
-            className={`ads-watch-btn onclicka-btn ${onclickaLoading ? 'loading' : ''}`}
-            onClick={showOnClickA}
-            disabled={onclickaLoading || !onclickaReady || onclickaRemaining <= 0}
-          >
-            <div className="ads-watch-glow onclicka-glow" />
-            <div className="ads-watch-icon">
-              {onclickaLoading ? '⏳' : onclickaRemaining <= 0 ? '⏰' : '🔵'}
-            </div>
-            <div className="ads-watch-text">
-              <span className="ads-watch-title">
-                {onclickaLoading ? 'Загрузка...' : onclickaRemaining <= 0 ? 'Лимит исчерпан' : 'Смотреть OnClickA'}
-              </span>
-              <span className="ads-watch-sub">
-                {onclickaRemaining <= 0
-                  ? 'Приходите завтра для новых просмотров'
-                  : `Получите +${onclickaReward.toFixed(4)} TON за просмотр`}
-              </span>
-            </div>
-            {onclickaRemaining > 0 && !onclickaLoading && (
-              <div className="ads-watch-arrow">▸</div>
-            )}
-          </button>
-
-          {/* OnClickA earnings */}
-          <div className="ads-earnings onclicka-earnings">
-            <div className="ads-earnings-title">ЗАРАБОТАНО С ONCLICKA</div>
-            <div className="ads-earnings-val onclicka-earnings-gradient">{onclickaTotalEarned.toFixed(4)} TON</div>
-            <div className="ads-earnings-sub">Начислено на ваш баланс автоматически</div>
-          </div>
-
-          {!onclickaSpotId && (
-            <div style={{
-              textAlign:'center', padding:'20px',
-              fontFamily: 'DM Sans, sans-serif', fontSize: '12px',
-              color: 'rgba(232,242,255,0.25)'
-            }}>
-              OnClickA сейчас недоступен
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Banners */}
       <div className="ads-banners">
         <div className="ads-banners-title">📢 СПОНСОРЫ</div>
         <AdBanner page="home" />
       </div>
 
-      {/* How it works */}
       <div className="ads-howto">
         <div className="ads-howto-title">КАК ЭТО РАБОТАЕТ</div>
-        <div className="ads-howto-step">
-          <div className="ads-howto-num">1</div>
-          <div className="ads-howto-text">
-            <div className="ads-howto-text-title">Выберите рекламную сеть</div>
-            <div className="ads-howto-text-sub">Adsgram, Monetag или OnClickA — каждая с отдельным лимитом</div>
-          </div>
-        </div>
-        <div className="ads-howto-step">
-          <div className="ads-howto-num">2</div>
-          <div className="ads-howto-text">
-            <div className="ads-howto-text-title">Досмотрите рекламу</div>
-            <div className="ads-howto-text-sub">Обычно это занимает 15–30 секунд</div>
-          </div>
-        </div>
-        <div className="ads-howto-step">
-          <div className="ads-howto-num">3</div>
-          <div className="ads-howto-text">
-            <div className="ads-howto-text-title">Получите TON</div>
-            <div className="ads-howto-text-sub">Награда зачислится на баланс мгновенно</div>
-          </div>
-        </div>
+        <div className="ads-howto-step"><div className="ads-howto-num">1</div><div className="ads-howto-text"><div className="ads-howto-text-title">Выберите рекламную сеть</div><div className="ads-howto-text-sub">До 5 сетей — каждая с отдельным лимитом</div></div></div>
+        <div className="ads-howto-step"><div className="ads-howto-num">2</div><div className="ads-howto-text"><div className="ads-howto-text-title">Досмотрите рекламу</div><div className="ads-howto-text-sub">Обычно это занимает 15–30 секунд</div></div></div>
+        <div className="ads-howto-step"><div className="ads-howto-num">3</div><div className="ads-howto-text"><div className="ads-howto-text-title">Получите TON</div><div className="ads-howto-text-sub">Награда зачислится на баланс мгновенно</div></div></div>
       </div>
 
-      {/* Total earnings */}
       <div className="ads-earnings total-earnings">
         <div className="ads-earnings-title">ВСЕГО ЗАРАБОТАНО С РЕКЛАМЫ</div>
         <div className="ads-earnings-val">{combinedTotalEarned.toFixed(4)} TON</div>
-        <div className="ads-earnings-sub">Adsgram: {totalEarned.toFixed(4)} · Monetag: {monetagTotalEarned.toFixed(4)} · OnClickA: {onclickaTotalEarned.toFixed(4)}</div>
+        <div className="ads-earnings-sub">
+          {[
+            adsgramEnabled && `Adsgram: ${totalEarned.toFixed(4)}`,
+            monetagEnabled && `Monetag: ${monetagTotalEarned.toFixed(4)}`,
+            onclickaEnabled && `OnClickA: ${onclickaTotalEarned.toFixed(4)}`,
+            richadsEnabled && `RichAds: ${richadsTotalEarned.toFixed(4)}`,
+            tadsEnabled && `Tads: ${tadsTotalEarned.toFixed(4)}`,
+          ].filter(Boolean).join(' · ')}
+        </div>
       </div>
     </div>
   )

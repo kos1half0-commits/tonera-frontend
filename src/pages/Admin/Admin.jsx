@@ -66,6 +66,14 @@ const SETTING_GROUPS = [
       { key: 'onclicka_spot_id',    label: '🔵 OnClickA: Spot ID' },
       { key: 'onclicka_reward',     label: '🔵 OnClickA: Награда за просмотр (TON)' },
       { key: 'onclicka_daily_limit', label: '🔵 OnClickA: Лимит просмотров в день' },
+      { key: 'richads_enabled',    label: '💚 RichAds: ВКЛ/ВЫКЛ (1/0)' },
+      { key: 'richads_widget_id',  label: '💚 RichAds: Widget ID' },
+      { key: 'richads_reward',     label: '💚 RichAds: Награда за просмотр (TON)' },
+      { key: 'richads_daily_limit', label: '💚 RichAds: Лимит просмотров в день' },
+      { key: 'tads_enabled',    label: '🟠 Tads.me: ВКЛ/ВЫКЛ (1/0)' },
+      { key: 'tads_widget_id',  label: '🟠 Tads.me: Widget ID' },
+      { key: 'tads_reward',     label: '🟠 Tads.me: Награда за просмотр (TON)' },
+      { key: 'tads_daily_limit', label: '🟠 Tads.me: Лимит просмотров в день' },
     ]
   },
   {

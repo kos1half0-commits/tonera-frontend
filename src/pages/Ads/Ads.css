@@ -130,6 +130,24 @@
 .ads-net-tab.active.onclicka .ads-net-tab-badge{
   color:#3b82f6;background:rgba(59,130,246,0.12);
 }
+.ads-net-tab.active.richads{
+  border-color:rgba(16,185,129,0.4);
+  background:linear-gradient(135deg,rgba(16,185,129,0.06),rgba(16,185,129,0.02));
+}
+.ads-net-tab.active.richads::before{
+  opacity:1;background:radial-gradient(circle at 80% 20%,rgba(16,185,129,0.08),transparent 60%);
+}
+.ads-net-tab.active.richads .ads-net-tab-name{color:#10b981;}
+.ads-net-tab.active.richads .ads-net-tab-badge{color:#10b981;background:rgba(16,185,129,0.12);}
+.ads-net-tab.active.tads{
+  border-color:rgba(245,158,11,0.4);
+  background:linear-gradient(135deg,rgba(245,158,11,0.06),rgba(245,158,11,0.02));
+}
+.ads-net-tab.active.tads::before{
+  opacity:1;background:radial-gradient(circle at 80% 20%,rgba(245,158,11,0.08),transparent 60%);
+}
+.ads-net-tab.active.tads .ads-net-tab-name{color:#f59e0b;}
+.ads-net-tab.active.tads .ads-net-tab-badge{color:#f59e0b;background:rgba(245,158,11,0.12);}
 
 /* NETWORK CONTENT */
 .ads-network-content{animation:adsFadeIn .3s ease;}
@@ -173,9 +191,19 @@
 .ads-reward-icon.onclicka-icon{
   background:rgba(59,130,246,0.1);
 }
-.ads-reward-val.onclicka-val{
-  color:#3b82f6;
+.ads-reward-val.onclicka-val{color:#3b82f6;}
+.ads-reward-info.richads{
+  background:linear-gradient(90deg,rgba(16,185,129,0.04),rgba(52,211,153,0.04));
+  border-color:rgba(16,185,129,0.15);
 }
+.ads-reward-icon.richads-icon{background:rgba(16,185,129,0.1);}
+.ads-reward-val.richads-val{color:#10b981;}
+.ads-reward-info.tads{
+  background:linear-gradient(90deg,rgba(245,158,11,0.04),rgba(251,191,36,0.04));
+  border-color:rgba(245,158,11,0.15);
+}
+.ads-reward-icon.tads-icon{background:rgba(245,158,11,0.1);}
+.ads-reward-val.tads-val{color:#f59e0b;}
 .ads-reward-val span{color:rgba(232,242,255,0.4);font-size:10px;margin-left:4px;}
 
 /* LIMIT BAR */
@@ -206,9 +234,11 @@
   background:linear-gradient(90deg,#a855f7,#ec4899);
 }
 .ads-limit-count.onclicka-count{color:#3b82f6;}
-.ads-limit-fill.onclicka-fill{
-  background:linear-gradient(90deg,#3b82f6,#60a5fa);
-}
+.ads-limit-fill.onclicka-fill{background:linear-gradient(90deg,#3b82f6,#60a5fa);}
+.ads-limit-count.richads-count{color:#10b981;}
+.ads-limit-fill.richads-fill{background:linear-gradient(90deg,#10b981,#34d399);}
+.ads-limit-count.tads-count{color:#f59e0b;}
+.ads-limit-fill.tads-fill{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
 .ads-limit-fill.full{background:linear-gradient(90deg,#ff4d6a,#ff8a65);}
 
 /* WATCH BUTTON */
@@ -272,6 +302,16 @@
   background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));
 }
 .onclicka-btn .ads-watch-arrow{color:#3b82f6;}
+.ads-watch-btn.richads-btn{border-color:rgba(16,185,129,0.25);}
+.ads-watch-btn.richads-btn:active{border-color:rgba(16,185,129,0.5);}
+.ads-watch-glow.richads-glow{background:radial-gradient(circle,rgba(16,185,129,0.06) 0%,transparent 70%);}
+.richads-btn .ads-watch-icon{background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(16,185,129,0.05));}
+.richads-btn .ads-watch-arrow{color:#10b981;}
+.ads-watch-btn.tads-btn{border-color:rgba(245,158,11,0.25);}
+.ads-watch-btn.tads-btn:active{border-color:rgba(245,158,11,0.5);}
+.ads-watch-glow.tads-glow{background:radial-gradient(circle,rgba(245,158,11,0.06) 0%,transparent 70%);}
+.tads-btn .ads-watch-icon{background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05));}
+.tads-btn .ads-watch-arrow{color:#f59e0b;}
 @keyframes adsWatchPulse{0%,100%{opacity:.4;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
 
 /* EARNINGS CARD */
@@ -308,6 +348,22 @@
 }
 .ads-earnings-val.onclicka-earnings-gradient{
   background:linear-gradient(135deg,#3b82f6,#60a5fa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.ads-earnings.richads-earnings{
+  background:linear-gradient(135deg,rgba(16,185,129,0.04),rgba(52,211,153,0.03));
+  border-color:rgba(16,185,129,0.15);
+}
+.ads-earnings-val.richads-earnings-gradient{
+  background:linear-gradient(135deg,#10b981,#34d399);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.ads-earnings.tads-earnings{
+  background:linear-gradient(135deg,rgba(245,158,11,0.04),rgba(251,191,36,0.03));
+  border-color:rgba(245,158,11,0.15);
+}
+.ads-earnings-val.tads-earnings-gradient{
+  background:linear-gradient(135deg,#f59e0b,#fbbf24);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
 .ads-earnings-sub{
