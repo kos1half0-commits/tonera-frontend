@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useUserStore } from './store/userStore'
 import { authLogin } from './api/index'
 import api from './api/index'
@@ -85,6 +85,44 @@ export default function App() {
   useEffect(() => { api.get('/api/trading/info').then(r => setTradingStatus(String(r.data?.trading_enabled ?? '1'))).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/partnership/status').then(r => setPartnershipStatus(String(r.data?.value ?? '1'))).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/settings/miner_enabled').then(r => setMinerStatus(String(r.data?.value ?? '0'))).catch(()=>{ setMinerStatus('1') }) }, [])
+
+  // === Daily random Adsgram interstitial (1 раз в день) ===
+  const dailyAdShown = useRef(false)
+  useEffect(() => {
+    if (dailyAdShown.current) return
+    const today = new Date().toISOString().slice(0, 10)
+    const lastShown = localStorage.getItem('tonera_daily_ad_date')
+    if (lastShown === today) return // Already shown today
+
+    // Fetch block ID
+    api.get('/api/ads/adsgram-info').then(r => {
+      const blockId = r.data?.blockId
+      const enabled = r.data?.adsgramEnabled !== false
+      if (!blockId || !enabled) return
+
+      // Random delay 10-60 seconds
+      const delay = Math.floor(Math.random() * 50000) + 10000
+      const timer = setTimeout(() => {
+        if (dailyAdShown.current) return
+        try {
+          if (!window.Adsgram) return
+          const controller = window.Adsgram.init({ blockId, debug: false })
+          controller.show().then(() => {
+            dailyAdShown.current = true
+            localStorage.setItem('tonera_daily_ad_date', today)
+            console.log('Daily Adsgram shown')
+          }).catch(() => {
+            // No ads available or dismissed — still mark as attempted
+            dailyAdShown.current = true
+            localStorage.setItem('tonera_daily_ad_date', today)
+          })
+        } catch (e) {
+          console.warn('Daily ad error:', e)
+        }
+      }, delay)
+      return () => clearTimeout(timer)
+    }).catch(() => {})
+  }, [user])
   const visibleTabs = TABS.filter(t => (t.id !== 'admin' || isAdmin) && t.id !== 'customer' && (t.id !== 'games' || true))
   const balance = parseFloat(user?.balance_ton ?? 0)
 
