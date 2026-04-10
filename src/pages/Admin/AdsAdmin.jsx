@@ -6,11 +6,17 @@ export default function AdsAdmin() {
   const [form, setForm] = useState({ title:'', text:'', image_url:'', link:'', pages:'home,tasks,games,staking,miner,wallet', linkToAdOrder:false, expires_at:'' })
   const [editing, setEditing] = useState(null)
   const [toast, setAdsToast] = useState('')
-  const [adsTab, setAdsTab] = useState('manual')
+  const [adsTab, setAdsTab] = useState('stats')
+  // Network stats
+  const [netStats, setNetStats] = useState(null)
+  const [statsLoading, setStatsLoading] = useState(true)
 
   const showToast = m => { setAdsToast(m); setTimeout(()=>setAdsToast(''),3000) }
   const load = () => api.get('/api/ads/all').then(r=>setAds(r.data||[])).catch(()=>{})
-  useEffect(()=>{ load() },[])
+  useEffect(()=>{
+    load()
+    api.get('/api/ads/admin-stats').then(r => { setNetStats(r.data); setStatsLoading(false) }).catch(() => setStatsLoading(false))
+  },[])
 
   const PAGE_OPTIONS = ['home','tasks','games','staking','miner','wallet']
 
@@ -143,13 +149,107 @@ export default function AdsAdmin() {
 
       {/* Tabs */}
       <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
-        <button style={S.ptab(adsTab==='manual')} onClick={()=>setAdsTab('manual')}>{'\uD83C\uDFAF \u0420\u0443\u0447\u043d\u044b\u0435 ('+manualAds.length+')'}</button>
-        <button style={S.ptab(adsTab==='partner')} onClick={()=>setAdsTab('partner')}>{'\uD83E\uDD1D \u041f\u0430\u0440\u0442\u043d\u0451\u0440\u0441\u043a\u0438\u0435 ('+partnerAds.length+')'}</button>
-        <button style={S.ptab(adsTab==='all')} onClick={()=>setAdsTab('all')}>{'\uD83D\uDCCA \u0412\u0441\u0435 ('+ads.length+')'}</button>
+        <button style={S.ptab(adsTab==='stats')} onClick={()=>setAdsTab('stats')}>{'📊 Статистика'}</button>
+        <button style={S.ptab(adsTab==='manual')} onClick={()=>setAdsTab('manual')}>{'🎯 Ручные ('+manualAds.length+')'}</button>
+        <button style={S.ptab(adsTab==='partner')} onClick={()=>setAdsTab('partner')}>{'🤝 Партнёрские ('+partnerAds.length+')'}</button>
+        <button style={S.ptab(adsTab==='all')} onClick={()=>setAdsTab('all')}>{'📋 Все ('+ads.length+')'}</button>
       </div>
 
-      {/* Create form — only for manual tab */}
-      {adsTab !== 'partner' && (
+      {/* === STATS TAB === */}
+      {adsTab === 'stats' && (
+        <div>
+          {statsLoading && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>}
+          {netStats && (<>
+            {/* Combined totals */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:12}}>
+              <div style={{...S.statCard,textAlign:'center'}}>
+                <div style={S.statVal('#00d4ff')}>{netStats.todayAll}</div>
+                <div style={S.statLbl}>Сегодня</div>
+              </div>
+              <div style={{...S.statCard,textAlign:'center'}}>
+                <div style={S.statVal('#00e676')}>{parseFloat(netStats.earnedAll).toFixed(4)}</div>
+                <div style={S.statLbl}>Выплачено TON</div>
+              </div>
+              <div style={{...S.statCard,textAlign:'center'}}>
+                <div style={S.statVal('#ffb300')}>{netStats.totalAll}</div>
+                <div style={S.statLbl}>Всего просм.</div>
+              </div>
+            </div>
+
+            {/* Per-network cards */}
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8}}>📊 ПО СЕТЯМ</div>
+            {netStats.stats.map(net => {
+              const maxToday = Math.max(...netStats.stats.map(n => n.today), 1)
+              const barWidth = Math.max(5, (net.today / maxToday) * 100)
+              const colors = { adsgram:'#ffb300', monetag:'#a855f7', onclicka:'#3b82f6', richads:'#10b981', tads:'#f59e0b' }
+              const color = colors[net.key] || '#00d4ff'
+              return (
+                <div key={net.key} style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.12)',borderRadius:12,padding:'12px 14px',marginBottom:6}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+                    <span style={{fontSize:16}}>{net.icon}</span>
+                    <span style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color,flex:1}}>{net.label}</span>
+                    <span style={{fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,color:net.today > 0 ? '#00e676' : 'rgba(232,242,255,0.2)',padding:'3px 8px',borderRadius:6,background:net.today > 0 ? 'rgba(0,230,118,0.1)' : 'rgba(26,95,255,0.05)'}}>
+                      {net.today > 0 ? 'АКТИВНА' : 'НЕТ ДАННЫХ'}
+                    </span>
+                  </div>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6,marginBottom:8}}>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color}}>{net.today}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>СЕГОДНЯ</div>
+                    </div>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'rgba(232,242,255,0.6)'}}>{net.yesterday}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>ВЧЕРА</div>
+                    </div>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#00d4ff'}}>{net.week}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>НЕДЕЛЯ</div>
+                    </div>
+                    <div style={{textAlign:'center'}}>
+                      <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#e8f2ff'}}>{net.total}</div>
+                      <div style={{fontSize:7,color:'rgba(232,242,255,0.3)',fontFamily:'Orbitron'}}>ВСЕГО</div>
+                    </div>
+                  </div>
+                  {/* Comparison bar */}
+                  <div style={{height:4,background:'rgba(26,95,255,0.08)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
+                    <div style={{height:'100%',width:barWidth+'%',background:`linear-gradient(90deg,${color},${color}88)`,borderRadius:2,transition:'width .5s'}}/>
+                  </div>
+                  <div style={{display:'flex',justifyContent:'space-between',fontSize:9,fontFamily:'DM Sans,sans-serif',color:'rgba(232,242,255,0.35)'}}>
+                    <span>💰 {parseFloat(net.earned).toFixed(4)} TON</span>
+                    <span>👥 {net.users} юзеров</span>
+                  </div>
+                </div>
+              )
+            })}
+
+            {/* Top users */}
+            {netStats.topUsers?.length > 0 && (<>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:9,color:'rgba(232,242,255,0.3)',letterSpacing:'.1em',marginBottom:8,marginTop:12}}>🏆 ТОП-10 ПО РЕКЛАМЕ</div>
+              {netStats.topUsers.map((u, i) => (
+                <div key={u.telegram_id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.1)',borderRadius:8,marginBottom:4}}>
+                  <div style={{width:22,height:22,borderRadius:6,background:i < 3 ? 'rgba(255,179,0,0.15)' : 'rgba(26,95,255,0.08)',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Orbitron',fontSize:9,fontWeight:900,color:i < 3 ? '#ffb300' : 'rgba(232,242,255,0.3)',flexShrink:0}}>
+                    {i + 1}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,fontWeight:700,color:'#e8f2ff',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                      {u.username ? '@' + u.username : u.first_name || 'User'}
+                    </div>
+                    <div style={{fontFamily:'DM Sans,sans-serif',fontSize:8,color:'rgba(232,242,255,0.3)'}}>
+                      {parseInt(u.views)} просмотров
+                    </div>
+                  </div>
+                  <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00e676',flexShrink:0}}>
+                    {parseFloat(u.earned).toFixed(4)} TON
+                  </div>
+                </div>
+              ))}
+            </>)}
+          </>)}
+        </div>
+      )}
+
+      {/* Create form — only for manual/all tab */}
+      {adsTab !== 'partner' && adsTab !== 'stats' && (
         <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.2)',borderRadius:12,padding:14,marginBottom:12}}>
           <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>
             {editing ? '\u270F\uFE0F \u0420\u0435\u0434\u0430\u043a\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435' : '\u2795 \u041d\u043e\u0432\u044b\u0439 \u0431\u0430\u043d\u043d\u0435\u0440'}
