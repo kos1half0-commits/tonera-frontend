@@ -6,7 +6,12 @@ import './Ads.css'
 let monetagHandler = null
 
 export default function Ads({ onBack }) {
-  const [activeTab, setActiveTab] = useState('adsgram') // 'adsgram' | 'monetag' | 'onclicka'
+  const [activeTab, setActiveTab] = useState('') // 'adsgram' | 'monetag' | 'onclicka'
+
+  // Enabled flags
+  const [adsgramEnabled, setAdsgramEnabled] = useState(true)
+  const [monetagEnabled, setMontagEnabled] = useState(true)
+  const [onclickaEnabled, setOnclickaEnabled] = useState(true)
 
   // Adsgram state
   const [blockId, setBlockId] = useState('')
@@ -52,6 +57,17 @@ export default function Ads({ onBack }) {
       setTodayCount(parseInt(d.todayCount) || 0)
       setTotalEarned(parseFloat(d.totalEarned) || 0)
       if (d.blockId) setBlockId(d.blockId)
+
+      // Enabled flags
+      setAdsgramEnabled(d.adsgramEnabled !== false)
+      setMontagEnabled(d.monetagEnabled !== false)
+      setOnclickaEnabled(d.onclickaEnabled !== false)
+
+      // Auto-select first enabled tab
+      if (d.adsgramEnabled !== false) setActiveTab(prev => prev || 'adsgram')
+      else if (d.monetagEnabled !== false) setActiveTab(prev => prev || 'monetag')
+      else if (d.onclickaEnabled !== false) setActiveTab(prev => prev || 'onclicka')
+      else setActiveTab('adsgram')
 
       // Monetag
       if (d.monetagZoneId) setMontagZoneId(d.monetagZoneId)
@@ -186,7 +202,7 @@ export default function Ads({ onBack }) {
   // Combined stats
   const combinedTotalEarned = totalEarned + monetagTotalEarned + onclickaTotalEarned
   const combinedTodayViews = todayCount + monetagTodayCount + onclickaTodayCount
-  const networkCount = [blockId, monetagZoneId, onclickaSpotId].filter(Boolean).length || 3
+  const networkCount = [adsgramEnabled, monetagEnabled, onclickaEnabled].filter(Boolean).length
 
   const showAd = useCallback(async () => {
     if (!adController || loading || remaining <= 0) return
@@ -307,35 +323,41 @@ export default function Ads({ onBack }) {
       </div>
 
       {/* Network Tabs */}
-      <div className="ads-net-tabs">
-        <button
-          className={`ads-net-tab ${activeTab === 'adsgram' ? 'active adsgram' : ''}`}
-          onClick={() => setActiveTab('adsgram')}
-        >
-          <span className="ads-net-tab-icon">🎬</span>
-          <span className="ads-net-tab-name">Adsgram</span>
-          <span className="ads-net-tab-badge">{remaining}</span>
-        </button>
-        <button
-          className={`ads-net-tab ${activeTab === 'monetag' ? 'active monetag' : ''}`}
-          onClick={() => setActiveTab('monetag')}
-        >
-          <span className="ads-net-tab-icon">📺</span>
-          <span className="ads-net-tab-name">Monetag</span>
-          <span className="ads-net-tab-badge">{monetagRemaining}</span>
-        </button>
-        <button
-          className={`ads-net-tab ${activeTab === 'onclicka' ? 'active onclicka' : ''}`}
-          onClick={() => setActiveTab('onclicka')}
-        >
-          <span className="ads-net-tab-icon">🔵</span>
-          <span className="ads-net-tab-name">OnClickA</span>
-          <span className="ads-net-tab-badge">{onclickaRemaining}</span>
-        </button>
+      <div className="ads-net-tabs" style={{ gridTemplateColumns: `repeat(${networkCount}, 1fr)` }}>
+        {adsgramEnabled && (
+          <button
+            className={`ads-net-tab ${activeTab === 'adsgram' ? 'active adsgram' : ''}`}
+            onClick={() => setActiveTab('adsgram')}
+          >
+            <span className="ads-net-tab-icon">🎬</span>
+            <span className="ads-net-tab-name">Adsgram</span>
+            <span className="ads-net-tab-badge">{remaining}</span>
+          </button>
+        )}
+        {monetagEnabled && (
+          <button
+            className={`ads-net-tab ${activeTab === 'monetag' ? 'active monetag' : ''}`}
+            onClick={() => setActiveTab('monetag')}
+          >
+            <span className="ads-net-tab-icon">📺</span>
+            <span className="ads-net-tab-name">Monetag</span>
+            <span className="ads-net-tab-badge">{monetagRemaining}</span>
+          </button>
+        )}
+        {onclickaEnabled && (
+          <button
+            className={`ads-net-tab ${activeTab === 'onclicka' ? 'active onclicka' : ''}`}
+            onClick={() => setActiveTab('onclicka')}
+          >
+            <span className="ads-net-tab-icon">🔵</span>
+            <span className="ads-net-tab-name">OnClickA</span>
+            <span className="ads-net-tab-badge">{onclickaRemaining}</span>
+          </button>
+        )}
       </div>
 
       {/* === ADSGRAM TAB === */}
-      {activeTab === 'adsgram' && (
+      {activeTab === 'adsgram' && adsgramEnabled && (
         <div className="ads-network-content fade-up">
           {/* Reward info */}
           <div className="ads-reward-info">
@@ -407,7 +429,7 @@ export default function Ads({ onBack }) {
       )}
 
       {/* === MONETAG TAB === */}
-      {activeTab === 'monetag' && (
+      {activeTab === 'monetag' && monetagEnabled && (
         <div className="ads-network-content fade-up">
           {/* Reward info */}
           <div className="ads-reward-info monetag">
@@ -479,7 +501,7 @@ export default function Ads({ onBack }) {
       )}
 
       {/* === ONCLICKA TAB === */}
-      {activeTab === 'onclicka' && (
+      {activeTab === 'onclicka' && onclickaEnabled && (
         <div className="ads-network-content fade-up">
           {/* Reward info */}
           <div className="ads-reward-info onclicka">
