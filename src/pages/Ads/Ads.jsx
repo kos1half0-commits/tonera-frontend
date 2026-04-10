@@ -311,17 +311,17 @@ export default function Ads() {
     setRichadsLoading(true); setRichadsError('')
     try {
       const ctrl = window._richAdsCtrl
-      if (ctrl?.showAd) {
-        await new Promise((resolve, reject) => {
-          ctrl.showAd({
-            onReward: () => resolve(),
-            onError: (e) => reject(e),
-            onSkip: () => reject({ message: 'Досмотрите до конца для награды' }),
-            onClose: () => resolve(),
-          })
-          setTimeout(resolve, 60000)
+      if (!ctrl || !ctrl.showAd) throw { message: 'RichAds SDK ещё загружается. Подождите 5 сек и попробуйте снова' }
+      let adShown = false
+      await new Promise((resolve, reject) => {
+        ctrl.showAd({
+          onReward: () => { adShown = true; resolve() },
+          onError: (e) => reject(e || { message: 'Нет доступной рекламы' }),
+          onSkip: () => reject({ message: 'Досмотрите до конца для награды' }),
+          onClose: () => { adShown = true; resolve() },
         })
-      }
+        setTimeout(() => { if (!adShown) reject({ message: 'Реклама не загрузилась. Попробуйте позже' }) }, 30000)
+      })
       const r = await api.post('/api/ads/richads-reward')
       setRichadsRewarded(true); setRichadsTodayCount(p => p + 1); setRichadsTotalEarned(p => p + (parseFloat(r.data?.reward) || richadsReward))
       setTimeout(() => setRichadsRewarded(false), 5000)
