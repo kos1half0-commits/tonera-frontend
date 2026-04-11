@@ -2428,10 +2428,15 @@ export default function Admin() {
     try {
       const text = await file.text()
       const data = JSON.parse(text)
-      if (!data.users) { showToast('НЕВЕРНЫЙ ФАЙЛ', true); return }
-      if (!window.confirm(`Восстановить из бэкапа от ${data.date?.slice(0,10)}? Данные будут перезаписаны.`)) return
+      const hasData = data.version === 2 ? data.tables && Object.keys(data.tables).length > 0 : !!data.users
+      if (!hasData) { showToast('НЕВЕРНЫЙ ФАЙЛ', true); return }
+      const tableCount = data.version === 2 ? Object.keys(data.tables).length : 5
+      const rowCount = data.version === 2 ? Object.values(data.summary || {}).reduce((a,b) => a+b, 0) : (data.users?.length || 0)
+      if (!window.confirm(`Восстановить бэкап от ${data.date?.slice(0,10)}?\n${tableCount} таблиц, ~${rowCount} записей.\nДанные будут перезаписаны.`)) return
       const r = await api.post('/api/admin/restore', data)
-      showToast(`ВОССТАНОВЛЕНО: ${r.data.restored.users} юзеров, ${r.data.restored.stakes} стейков`)
+      const res = r.data.restored || {}
+      const summary = Object.entries(res).map(([k,v]) => `${k}: ${v}`).join(', ')
+      showToast(`✅ ВОССТАНОВЛЕНО: ${summary}`)
       await loadAll()
     } catch (e) { showToast(e?.response?.data?.error || 'ОШИБКА', true) }
   }
