@@ -510,23 +510,23 @@ export default function Partnership({ onBack }) {
                   Уровень определяется количеством подписчиков вашего канала. Чем выше уровень — тем больше выполнений задания и выше награды промокодов.
                 </div>
                 <div className="p-landing-levels">
-                  {[
-                    {emoji:'🥉',name:'BRONZE',min:'0',execs:'100',promo:'0.01 TON',color:'#cd7f32'},
-                    {emoji:'🥈',name:'SILVER',min:'5 000',execs:'500',promo:'0.02 TON',color:'#c0c0c0'},
-                    {emoji:'🥇',name:'GOLD',min:'20 000',execs:'2 000',promo:'0.05 TON',color:'#ffd700'},
-                    {emoji:'💎',name:'DIAMOND',min:'50 000',execs:'10 000',promo:'0.1 TON',color:'#b9f2ff'},
-                  ].map((l,i) => (
+                  {(info?.levels || [
+                    {emoji:'🥉',name:'Bronze',min:0,maxExecs:100,promoReward:0.01,color:'#cd7f32'},
+                    {emoji:'🥈',name:'Silver',min:5000,maxExecs:500,promoReward:0.02,color:'#c0c0c0'},
+                    {emoji:'🥇',name:'Gold',min:20000,maxExecs:2000,promoReward:0.05,color:'#ffd700'},
+                    {emoji:'💎',name:'Diamond',min:50000,maxExecs:10000,promoReward:0.1,color:'#b9f2ff'},
+                  ]).map((l,i) => (
                     <div key={i} className="p-landing-level" style={{borderColor:`${l.color}25`}}>
                       <div className="p-landing-level-left">
                         <div style={{fontSize:22}}>{l.emoji}</div>
                         <div>
-                          <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:900,color:l.color,letterSpacing:'.05em'}}>{l.name}</div>
-                          <div style={{fontSize:9,color:'rgba(232,242,255,0.3)'}}>от {l.min} подп.</div>
+                          <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:900,color:l.color,letterSpacing:'.05em'}}>{l.name.toUpperCase()}</div>
+                          <div style={{fontSize:9,color:'rgba(232,242,255,0.3)'}}>от {l.min.toLocaleString()} подп.</div>
                         </div>
                       </div>
                       <div className="p-landing-level-right">
-                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Задание: <b style={{color:'#00d4ff'}}>{l.execs}</b> вып.</div>
-                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Промо: <b style={{color:'#a855f7'}}>{l.promo}</b></div>
+                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Задание: <b style={{color:'#00d4ff'}}>{l.maxExecs.toLocaleString()}</b> вып.</div>
+                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Промо: <b style={{color:'#a855f7'}}>{l.promoReward} TON</b></div>
                       </div>
                     </div>
                   ))}
