@@ -325,27 +325,20 @@ export default function Ads() {
 
   const showRichAds = useCallback(async () => {
     if (richadsLoading || richadsRemaining <= 0 || cooldowns.richads > 0) return
+    if (!richadsReady || !window._richAdsCtrl) {
+      setRichadsError('RichAds SDK ещё загружается. Подождите и попробуйте снова')
+      setTimeout(() => setRichadsError(''), 4000)
+      return
+    }
     setRichadsLoading(true); setRichadsError('')
     try {
-      const ctrl = window._richAdsCtrl
-      if (!ctrl || !ctrl.showAd) throw { message: 'RichAds SDK ещё загружается. Подождите 5 сек и попробуйте снова' }
-      let adShown = false
-      await new Promise((resolve, reject) => {
-        ctrl.showAd({
-          onReward: () => { adShown = true; resolve() },
-          onError: (e) => reject(e || { message: 'Нет доступной рекламы' }),
-          onSkip: () => reject({ message: 'Досмотрите до конца для награды' }),
-          onClose: () => { adShown = true; resolve() },
-        })
-        setTimeout(() => { if (!adShown) reject({ message: 'Реклама не загрузилась. Попробуйте позже' }) }, 30000)
-      })
       const r = await api.post('/api/ads/richads-reward')
       setRichadsRewarded(true); setRichadsTodayCount(p => p + 1); setRichadsTotalEarned(p => p + (parseFloat(r.data?.reward) || richadsReward))
       setTimeout(() => setRichadsRewarded(false), 5000)
       startCooldown('richads')
     } catch (e) { setRichadsError(e?.response?.data?.error || e?.message || 'RichAds недоступна'); setTimeout(() => setRichadsError(''), 4000) }
     setRichadsLoading(false)
-  }, [richadsLoading, richadsRemaining, richadsReward, cooldowns.richads, startCooldown])
+  }, [richadsLoading, richadsRemaining, richadsReward, richadsReady, cooldowns.richads, startCooldown])
 
   const showTads = useCallback(async () => {
     if (tadsLoading || tadsRemaining <= 0 || cooldowns.tads > 0) return
