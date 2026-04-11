@@ -124,17 +124,14 @@ export default function App() {
           } else if (net.key === 'onclicka' && window.initCdTma) {
             try { const fn = await window.initCdTma({ id: net.spotId }); await fn() } catch {}
           } else if (net.key === 'richads') {
+            // RichAds SDK loaded in head, just init — it shows interstitials automatically
             const parts = net.widgetId.split('-')
-            if (!document.querySelector('script[data-richads-startup]')) {
-              const s = document.createElement('script')
-              s.src = 'https://richinfo.co/richpartners/telegram/js/tg-ob.js'
-              s.setAttribute('data-richads-startup', '1')
-              document.head.appendChild(s)
-              await new Promise(r => { s.onload = r; s.onerror = r; setTimeout(r, 5000) })
-              const init = document.createElement('script')
-              init.textContent = `try { var c = new TelegramAdsController(); c.initialize({ pubId:"${parts[0]}", appId:"${parts[1]||''}" }); if(c.showAd) c.showAd({}); } catch(e){}`
-              document.head.appendChild(init)
-            }
+            try {
+              if (typeof TelegramAdsController !== 'undefined') {
+                const ctrl = new TelegramAdsController()
+                ctrl.initialize({ pubId: parts[0], appId: parts[1] || '' })
+              }
+            } catch (e) { console.warn('RichAds startup:', e) }
           }
           // Record startup view
           api.post('/api/ads/startup-view', { network: net.key }).catch(() => {})
