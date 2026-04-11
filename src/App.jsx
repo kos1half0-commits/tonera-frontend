@@ -77,11 +77,11 @@ export default function App() {
     })
   }, [])
 
-  // === PC BLOCK — only allow mobile Telegram ===
+  // === PC BLOCK — only allow mobile Telegram (admins bypass) ===
   const tgPlatform = window.Telegram?.WebApp?.platform || ''
   const isMobileTg = tgPlatform === 'android' || tgPlatform === 'ios' || tgPlatform === 'android_x'
   const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-  const isPcBlocked = !(isMobileTg || (isMobileUA && !!window.Telegram?.WebApp?.initData))
+  const isPcBlocked = !user?.is_admin && !(isMobileTg || (isMobileUA && !!window.Telegram?.WebApp?.initData))
 
   const goCreate = () => { setTasksView('create'); setTab('tasks') }
   const goMyTasks = () => { setTasksView('my'); setTab('tasks') }
