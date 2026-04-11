@@ -2068,6 +2068,159 @@ function MiniDonut({ value, max, color = '#00d4ff', size = 44, label }) {
   )
 }
 
+function TransactionsAdmin() {
+  const [data, setData] = useState({ transactions: [], total: 0, page: 1, pages: 1, summary: {} })
+  const [loading, setLoading] = useState(true)
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [toast, setToast] = useState('')
+
+  const showToast = m => { setToast(m); setTimeout(() => setToast(''), 3000) }
+
+  const load = async (p = page, t = typeFilter, s = search) => {
+    setLoading(true)
+    try {
+      const r = await api.get(`/api/admin/transactions?page=${p}&type=${t}&search=${encodeURIComponent(s)}`)
+      setData(r.data)
+    } catch { showToast('❌ Ошибка загрузки') }
+    setLoading(false)
+  }
+
+  useEffect(() => { load(1) }, [])
+  useEffect(() => { load(1, typeFilter, search) }, [typeFilter])
+
+  const typeLabels = {
+    deposit: { icon: '💰', label: 'Депозит', color: '#00e676' },
+    withdraw: { icon: '💸', label: 'Вывод', color: '#ff4d6a' },
+    task: { icon: '✅', label: 'Задание', color: '#00d4ff' },
+    trading: { icon: '📊', label: 'Трейдинг', color: '#a855f7' },
+    trading_profit: { icon: '📈', label: 'Выигрыш трейд', color: '#00e676' },
+    spin_result: { icon: '🎰', label: 'Спин', color: '#ffb300' },
+    spin_profit: { icon: '🎰', label: 'Спин выигрыш', color: '#00e676' },
+    stake_deposit: { icon: '💎', label: 'Стейк', color: '#1a5fff' },
+    stake_collect: { icon: '💎', label: 'Сбор стейка', color: '#00d4ff' },
+    stake_withdraw: { icon: '💎', label: 'Вывод стейка', color: '#ff4d6a' },
+    ref_bonus: { icon: '👥', label: 'Реф. бонус', color: '#a855f7' },
+    admin_adjust: { icon: '👑', label: 'Админ', color: '#ffb300' },
+    fee: { icon: '🏦', label: 'Комиссия', color: '#888' },
+    promo: { icon: '🎁', label: 'Промокод', color: '#a855f7' },
+    slots: { icon: '🎰', label: 'Слоты', color: '#ffb300' },
+    ad_reward: { icon: '📺', label: 'Реклама', color: '#00d4ff' },
+    miner_withdraw: { icon: '⛏', label: 'Вывод майнера', color: '#ff4d6a' },
+  }
+
+  const getType = t => typeLabels[t] || { icon: '📝', label: t, color: '#888' }
+
+  const S = {
+    stat: { background: '#0e1c3a', border: '1px solid rgba(26,95,255,0.15)', borderRadius: 10, padding: '10px 12px', textAlign: 'center' },
+    btn: (c = {}) => ({ padding: '6px 10px', border: 'none', borderRadius: 7, fontFamily: 'Orbitron,sans-serif', fontSize: 8, fontWeight: 700, cursor: 'pointer', ...c }),
+  }
+
+  const sm = data.summary || {}
+
+  return (
+    <div>
+      {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron',fontSize:9,color:'#00e676',marginBottom:10}}>{toast}</div>}
+
+      {/* SUMMARY */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginBottom:12}}>
+        <div style={S.stat}>
+          <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#00e676'}}>{parseFloat(sm.total_deposits||0).toFixed(2)}</div>
+          <div style={{fontFamily:'DM Sans',fontSize:8,color:'rgba(232,242,255,0.4)'}}>💰 Депозиты ({parseInt(sm.deposit_count||0)})</div>
+        </div>
+        <div style={S.stat}>
+          <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#ff4d6a'}}>{parseFloat(sm.total_withdrawals||0).toFixed(2)}</div>
+          <div style={{fontFamily:'DM Sans',fontSize:8,color:'rgba(232,242,255,0.4)'}}>💸 Выводы ({parseInt(sm.withdrawal_count||0)})</div>
+        </div>
+        <div style={S.stat}>
+          <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#e8f2ff'}}>{parseInt(sm.total_transactions||0)}</div>
+          <div style={{fontFamily:'DM Sans',fontSize:8,color:'rgba(232,242,255,0.4)'}}>📊 Всего</div>
+        </div>
+      </div>
+
+      {/* SEARCH */}
+      <div style={{display:'flex',gap:6,marginBottom:10}}>
+        <input
+          placeholder="🔍 Поиск по имени, ID, описанию..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && load(1, typeFilter, search)}
+          style={{flex:1,background:'#0b1630',border:'1px solid rgba(26,95,255,0.15)',borderRadius:8,padding:'8px 10px',color:'#e8f2ff',fontFamily:'DM Sans',fontSize:11,outline:'none'}}
+        />
+        <button onClick={() => load(1, typeFilter, search)} style={S.btn({background:'rgba(26,95,255,0.15)',color:'#00d4ff'})}>🔍</button>
+      </div>
+
+      {/* FILTER */}
+      <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:10}}>
+        {[
+          { k: 'all', l: 'ВСЕ' },
+          { k: 'deposit', l: '💰 ДЕПОЗИТ' },
+          { k: 'withdraw', l: '💸 ВЫВОД' },
+          { k: 'task', l: '✅ ЗАДАНИЯ' },
+          { k: 'trading', l: '📊 ТРЕЙД' },
+          { k: 'spin_result', l: '🎰 СПИН' },
+          { k: 'ref_bonus', l: '👥 РЕФ' },
+          { k: 'admin_adjust', l: '👑 АДМИН' },
+          { k: 'promo', l: '🎁 ПРОМО' },
+        ].map(f => (
+          <button key={f.k} onClick={() => { setTypeFilter(f.k); setPage(1) }} style={S.btn({
+            background: typeFilter === f.k ? 'rgba(26,95,255,0.2)' : 'rgba(26,95,255,0.06)',
+            color: typeFilter === f.k ? '#00d4ff' : 'rgba(232,242,255,0.4)',
+            border: typeFilter === f.k ? '1px solid rgba(0,212,255,0.3)' : '1px solid transparent',
+          })}>{f.l}</button>
+        ))}
+      </div>
+
+      {/* LIST */}
+      {loading ? (
+        <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)'}}>Загрузка...</div>
+      ) : data.transactions.length === 0 ? (
+        <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет транзакций</div>
+      ) : (
+        <>
+          {data.transactions.map(tx => {
+            const t = getType(tx.type)
+            const amt = parseFloat(tx.amount)
+            return (
+              <div key={tx.id} style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.1)',borderRadius:10,padding:'10px 12px',marginBottom:4}}>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontSize:16}}>{t.icon}</span>
+                  <div style={{flex:1}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <span style={{fontFamily:'DM Sans',fontSize:11,fontWeight:700,color:'#e8f2ff'}}>
+                        {tx.username ? '@' + tx.username : tx.first_name}
+                      </span>
+                      <span style={{fontFamily:'Orbitron',fontSize:11,fontWeight:900,color:amt >= 0 ? '#00e676' : '#ff4d6a'}}>
+                        {amt >= 0 ? '+' : ''}{amt.toFixed(4)} TON
+                      </span>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',marginTop:2}}>
+                      <span style={{fontFamily:'Orbitron',fontSize:7,fontWeight:700,color:t.color,background:t.color+'15',padding:'2px 6px',borderRadius:4}}>{t.label}</span>
+                      <span style={{fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.25)'}}>{new Date(tx.created_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+                    </div>
+                    {tx.label && <div style={{fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.3)',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:280}}>{tx.label}</div>}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* PAGINATION */}
+          {data.pages > 1 && (
+            <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:6,marginTop:10}}>
+              <button disabled={data.page <= 1} onClick={() => { setPage(p => p - 1); load(page - 1) }} style={S.btn({background:'rgba(26,95,255,0.1)',color:'#00d4ff',opacity:data.page<=1?0.3:1})}>← НАЗАД</button>
+              <span style={{fontFamily:'Orbitron',fontSize:9,color:'rgba(232,242,255,0.4)'}}>{data.page} / {data.pages}</span>
+              <button disabled={data.page >= data.pages} onClick={() => { setPage(p => p + 1); load(page + 1) }} style={S.btn({background:'rgba(26,95,255,0.1)',color:'#00d4ff',opacity:data.page>=data.pages?0.3:1})}>ДАЛЕЕ →</button>
+            </div>
+          )}
+          <div style={{textAlign:'center',fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:6}}>Всего: {data.total} транзакций</div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function Admin() {
   const [tab, setTab] = useState('stats')
   const [settingsTab, setSettingsTab] = useState('staking')
@@ -2361,6 +2514,7 @@ export default function Admin() {
           {id:'adorders',icon:'📋',label:'ЗАЯВКИ РЕК'},
           {id:'miners',icon:'⛏',label:'МАЙНЕРЫ'},
           {id:'auctions',icon:'🏛',label:'АУКЦИОН'},
+          {id:'deposits',icon:'💳',label:'ТРАНЗАКЦИИ'},
           {id:'activity',icon:'⚡',label:'АКТИВНОСТЬ'},
           {id:'admins',icon:'👑',label:'АДМИНЫ'},
           {id:'system',icon:'🔧',label:'СИСТЕМА'},
@@ -3425,6 +3579,12 @@ export default function Admin() {
       {tab === 'auctions' && (
         <div className="admin-section">
           <AuctionsAdmin />
+        </div>
+      )}
+
+      {tab === 'deposits' && (
+        <div className="admin-section">
+          <TransactionsAdmin />
         </div>
       )}
 
