@@ -237,10 +237,10 @@ export default function Ads() {
   const tadsRemaining = Math.max(0, tadsDailyLimit - tadsTodayCount)
   const tadsLimitPercent = tadsDailyLimit > 0 ? Math.min(100, (tadsTodayCount / tadsDailyLimit) * 100) : 100
 
-  const enabledFlags = [adsgramEnabled, monetagEnabled, onclickaEnabled, richadsEnabled, tadsEnabled]
+  const enabledFlags = [adsgramEnabled, monetagEnabled, onclickaEnabled, tadsEnabled]
   const networkCount = enabledFlags.filter(Boolean).length
-  const combinedTotalEarned = totalEarned + monetagTotalEarned + onclickaTotalEarned + richadsTotalEarned + tadsTotalEarned
-  const combinedTodayViews = todayCount + monetagTodayCount + onclickaTodayCount + richadsTodayCount + tadsTodayCount
+  const combinedTotalEarned = totalEarned + monetagTotalEarned + onclickaTotalEarned + tadsTotalEarned
+  const combinedTodayViews = todayCount + monetagTodayCount + onclickaTodayCount + tadsTodayCount
 
   // Start per-network cooldown timer
   const startCooldown = useCallback((networkKey) => {
@@ -437,7 +437,6 @@ export default function Ads() {
     { key: 'adsgram', enabled: adsgramEnabled, icon: '🎬', name: 'Adsgram', badge: remaining },
     { key: 'monetag', enabled: monetagEnabled, icon: '📺', name: 'Monetag', badge: monetagRemaining },
     { key: 'onclicka', enabled: onclickaEnabled, icon: '🔵', name: 'OnClickA', badge: onclickaRemaining },
-    { key: 'richads', enabled: richadsEnabled, icon: '💚', name: 'RichAds', badge: richadsRemaining },
     { key: 'tads', enabled: tadsEnabled, icon: '🟠', name: 'Tads', badge: tadsRemaining },
   ]
   const visibleTabs = tabs.filter(t => t.enabled)
@@ -503,15 +502,6 @@ export default function Ads() {
         onClick: showOnClickA, disabled: !onclickaReady, hasId: !!onclickaSpotId,
       })}
 
-      {activeTab === 'richads' && richadsEnabled && renderNetworkContent({
-        networkKey: 'richads', cls: 'richads', iconCls: 'richads-icon', icon: '💚', name: 'RICHADS', valCls: 'richads-val', countCls: 'richads-count',
-        fillCls: 'richads-fill', btnCls: 'richads-btn', glowCls: 'richads-glow', btnIcon: '💚',
-        earningsCls: 'richads-earnings', earningsGradient: 'richads-earnings-gradient',
-        reward: richadsReward, todayCount: richadsTodayCount, dailyLimit: richadsDailyLimit, remaining: richadsRemaining,
-        limitPercent: richadsLimitPercent, loading: richadsLoading, totalEarned: richadsTotalEarned,
-        onClick: showRichAds, disabled: !richadsReady, hasId: !!richadsWidgetId,
-      })}
-
       {activeTab === 'tads' && tadsEnabled && renderNetworkContent({
         networkKey: 'tads', cls: 'tads', iconCls: 'tads-icon', icon: '🟠', name: 'TADS', valCls: 'tads-val', countCls: 'tads-count',
         fillCls: 'tads-fill', btnCls: 'tads-btn', glowCls: 'tads-glow', btnIcon: '🟠',
@@ -541,7 +531,6 @@ export default function Ads() {
             adsgramEnabled && `Adsgram: ${totalEarned.toFixed(4)}`,
             monetagEnabled && `Monetag: ${monetagTotalEarned.toFixed(4)}`,
             onclickaEnabled && `OnClickA: ${onclickaTotalEarned.toFixed(4)}`,
-            richadsEnabled && `RichAds: ${richadsTotalEarned.toFixed(4)}`,
             tadsEnabled && `Tads: ${tadsTotalEarned.toFixed(4)}`,
           ].filter(Boolean).join(' · ')}
         </div>
