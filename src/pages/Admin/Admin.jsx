@@ -1676,6 +1676,38 @@ function PartnershipAdmin() {
               onChange={e => setPSettings(p => ({...p, partnership_default_post: e.target.value.replace(/\n/g, '\\n')}))}
               placeholder="🚀 Зарабатывай TON каждый день!\n..."
             />
+
+            {/* PHOTO */}
+            <div style={{marginBottom:8}}>
+              <div style={{fontFamily:'Orbitron',fontSize:8,fontWeight:700,color:'rgba(232,242,255,0.35)',letterSpacing:'.06em',marginBottom:4}}>📷 ФОТО (НЕОБЯЗАТЕЛЬНО)</div>
+              {pSettings['partnership_default_post_photo'] ? (
+                <div style={{position:'relative',marginBottom:6}}>
+                  <img src={pSettings['partnership_default_post_photo']} style={{width:'100%',borderRadius:10,maxHeight:160,objectFit:'cover'}}/>
+                  <button onClick={async()=>{
+                    setPSettings(p => ({...p, partnership_default_post_photo: ''}))
+                    await api.post('/api/admin/settings', { key: 'partnership_default_post_photo', value: '' })
+                    showToast('🗑 Фото удалено')
+                  }} style={{position:'absolute',top:6,right:6,padding:'4px 10px',border:'none',borderRadius:8,background:'rgba(255,77,106,0.85)',color:'#fff',fontFamily:'Orbitron',fontSize:9,fontWeight:700,cursor:'pointer'}}>✕ УДАЛИТЬ</button>
+                </div>
+              ) : (
+                <label style={{display:'block',width:'100%',padding:'12px',border:'1px dashed rgba(168,85,247,0.3)',borderRadius:10,textAlign:'center',cursor:'pointer',color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans',fontSize:12,boxSizing:'border-box'}}>
+                  📷 Выбрать фото
+                  <input type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{
+                    const file = e.target.files[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = async ev => {
+                      const base64 = ev.target.result
+                      setPSettings(p => ({...p, partnership_default_post_photo: base64}))
+                      await api.post('/api/admin/settings', { key: 'partnership_default_post_photo', value: base64 })
+                      showToast('✅ Фото загружено')
+                    }
+                    reader.readAsDataURL(file)
+                  }}/>
+                </label>
+              )}
+            </div>
+
             <button onClick={()=>savePSetting('partnership_default_post')} style={{width:'100%',padding:'9px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:9,fontWeight:700,cursor:'pointer',background:'rgba(168,85,247,0.2)',color:'#a855f7'}}>
               {pSaving === 'partnership_default_post' ? '...' : '💾 СОХРАНИТЬ ПОСТ'}
             </button>
