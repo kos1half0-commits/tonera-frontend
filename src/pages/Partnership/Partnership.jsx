@@ -330,6 +330,14 @@ export default function Partnership({ onBack }) {
             )}
           </div>
 
+          {/* AUTOPOST TIMER */}
+          {info?.autopost?.enabled && (
+            <div style={{background:'#0e1c3a',border:'1px solid rgba(0,230,118,0.15)',borderRadius:12,padding:14,marginBottom:12}}>
+              <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00e676',marginBottom:10,letterSpacing:'.08em'}}>📢 АВТО-ПОСТИНГ</div>
+              <AutopostTimer next={info.autopost.next} last={info.autopost.last} intervalHours={info.autopost.interval_hours}/>
+            </div>
+          )}
+
           {/* Partner Banner */}
           <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:14,marginBottom:12}}>
             <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff',marginBottom:10,letterSpacing:'.08em'}}>{'\uD83D\uDCE2 \u0411\u0415\u0421\u041F\u041B\u0410\u0422\u041D\u042B\u0419 \u0411\u0410\u041D\u041D\u0415\u0420'}</div>
@@ -897,6 +905,50 @@ export default function Partnership({ onBack }) {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+function AutopostTimer({ next, last, intervalHours }) {
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+
+  const nextDate = next ? new Date(next) : null
+  const diff = nextDate ? nextDate.getTime() - now : 0
+
+  if (!nextDate || diff <= 0) {
+    return (
+      <div>
+        <div style={{fontSize:12,color:'#00e676',fontWeight:700,marginBottom:6}}>⏳ Постинг скоро...</div>
+        {last && <div style={{fontSize:9,color:'rgba(232,242,255,0.3)'}}>Последний: {new Date(last).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>}
+      </div>
+    )
+  }
+
+  const hours = Math.floor(diff / 3600000)
+  const mins = Math.floor((diff % 3600000) / 60000)
+  const secs = Math.floor((diff % 60000) / 1000)
+  const progress = last ? Math.max(0, Math.min(100, (1 - diff / (intervalHours * 3600000)) * 100)) : 0
+
+  return (
+    <div>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}}>
+        <div style={{fontSize:11,color:'rgba(232,242,255,0.5)'}}>Следующий пост через:</div>
+        <div style={{fontFamily:'Orbitron',fontSize:16,fontWeight:900,color:'#00e676',letterSpacing:2}}>
+          {String(hours).padStart(2,'0')}:{String(mins).padStart(2,'0')}:{String(secs).padStart(2,'0')}
+        </div>
+      </div>
+      <div style={{height:4,background:'rgba(0,230,118,0.08)',borderRadius:2,overflow:'hidden',marginBottom:6}}>
+        <div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,#00e676,#00d4ff)',width:`${progress}%`,transition:'width 1s linear'}}/>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'rgba(232,242,255,0.3)'}}>
+        {last && <span>Последний: {new Date(last).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>}
+        <span>Каждые {intervalHours}ч</span>
+      </div>
     </div>
   )
 }
