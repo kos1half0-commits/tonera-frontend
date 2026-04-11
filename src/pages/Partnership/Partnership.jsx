@@ -52,7 +52,7 @@ export default function Partnership({ onBack }) {
   const [promoLoading, setPromoLoading] = useState(false)
 
   const makeDefaultPost = (code) => {
-    const promoLine = code ? `\n\n🎁 Промокод: ${code.code}\n💰 Награда: ${code.amount} TON (${code.max_uses} активаций)` : ''
+    const promoLine = code ? `\n\n🎁 Промокод: ${code.code}` : ''
     const defaultTemplate = `🚀 Зарабатывай TON каждый день!\n\n💎 TonEra — платформа для заработка TON:\n📈 Стейкинг — 1% в день\n🎰 Игры — крути и выигрывай\n✅ Задания — выполняй и получай TON{PROMO}\n\n👇 Заходи прямо сейчас:\n{REF_LINK}`
     const template = info?.default_post || defaultTemplate
     return template
@@ -824,8 +824,6 @@ export default function Partnership({ onBack }) {
                         <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#e8f2ff',letterSpacing:2,background:'rgba(168,85,247,0.15)',padding:'4px 12px',borderRadius:6}}>{promoCode.code}</div>
                       </div>
                       <div style={{display:'flex',gap:14,fontSize:10,color:'rgba(232,242,255,0.5)'}}>
-                        <span>💰 {promoCode.amount} TON</span>
-                        <span>👥 {promoCode.max_uses} активаций</span>
                         <span>⏰ {new Date(promoCode.expires_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
                       </div>
                     </div>
