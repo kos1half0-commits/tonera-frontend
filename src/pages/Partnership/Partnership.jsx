@@ -347,7 +347,7 @@ export default function Partnership({ onBack }) {
                 <div style={{fontFamily:'DM Sans',fontSize:12,fontWeight:700,color:'#e8f2ff',marginBottom:4}}>{banner.title}</div>
                 {banner.text && <div style={{fontFamily:'DM Sans',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:6}}>{banner.text}</div>}
                 <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'rgba(232,242,255,0.3)'}}>
-                  <span>{banner.active ? '\u2705 \u0410\u043A\u0442\u0438\u0432\u0435\u043D' : '\u23F8 \u041D\u0435\u0430\u043A\u0442\u0438\u0432\u0435\u043D'}</span>
+                  <span>{banner.active ? '\u2705 Активен' : (!banner.expires_at ? '\u23f3 На модерации' : '\u23f8 Неактивен')}</span>
                   {banner.expires_at && <span>{'\u23F0 \u0414\u043E: '+new Date(banner.expires_at).toLocaleDateString('ru',{day:'numeric',month:'short'})}</span>}
                 </div>
                 {banner.expires_at && (

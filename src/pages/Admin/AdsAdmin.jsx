@@ -42,6 +42,8 @@ export default function AdsAdmin() {
   // Settings
   const [settings, setSettings] = useState({})
   const [saving, setSaving] = useState(null)
+  // Pending banners
+  const [pendingBanners, setPendingBanners] = useState([])
 
   const showToast = m => { setAdsToast(m); setTimeout(()=>setAdsToast(''),3000) }
   const load = () => api.get('/api/ads/all').then(r=>setAds(r.data||[])).catch(()=>{})
@@ -49,6 +51,7 @@ export default function AdsAdmin() {
     load()
     api.get('/api/ads/admin-stats').then(r => { setNetStats(r.data); setStatsLoading(false) }).catch(() => setStatsLoading(false))
     api.get('/api/admin/settings').then(r => setSettings(r.data || {})).catch(()=>{})
+    api.get('/api/ads/pending-banners').then(r => setPendingBanners(r.data || [])).catch(()=>{})
   },[])
 
   const saveSetting = async (key) => {
@@ -168,6 +171,7 @@ export default function AdsAdmin() {
         <button style={S.ptab(adsTab==='settings')} onClick={()=>setAdsTab('settings')}>⚙️ Настройки сетей</button>
         <button style={S.ptab(adsTab==='manual')} onClick={()=>setAdsTab('manual')}>🎯 Баннеры ({manualAds.length})</button>
         <button style={S.ptab(adsTab==='partner')} onClick={()=>setAdsTab('partner')}>🤝 Партнёрские ({partnerAds.length})</button>
+        <button style={{...S.ptab(adsTab==='pending'),position:'relative'}} onClick={()=>setAdsTab('pending')}>⏳ Модерация{pendingBanners.length > 0 && <span style={{position:'absolute',top:-4,right:-4,background:'#ff4d6a',color:'#fff',borderRadius:'50%',width:16,height:16,fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Orbitron'}}>{pendingBanners.length}</span>}</button>
       </div>
 
       {/* === STATS TAB === */}
@@ -421,6 +425,47 @@ export default function AdsAdmin() {
         )}
         {(adsTab === 'manual' ? manualAds : partnerAds).map(ad => renderAd(ad))}
       </>)}
+
+      {/* === PENDING MODERATION === */}
+      {adsTab === 'pending' && (
+        <div>
+          {pendingBanners.length === 0 ? (
+            <div style={{textAlign:'center',color:'rgba(232,242,255,0.25)',padding:'30px 20px',fontFamily:'DM Sans',fontSize:13}}>✅ Нет баннеров на модерации</div>
+          ) : pendingBanners.map(b => (
+            <div key={b.id} style={{background:'#0e1c3a',border:'1px solid rgba(255,179,0,0.2)',borderRadius:12,padding:12,marginBottom:8}}>
+              {b.image_url && <img src={b.image_url} style={{width:'100%',borderRadius:8,maxHeight:120,objectFit:'cover',marginBottom:8}} onError={e=>e.target.style.display='none'}/>}
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{b.title}</div>
+                <span style={{fontSize:8,fontFamily:'Orbitron',fontWeight:700,color:'#ffb300',background:'rgba(255,179,0,0.15)',padding:'3px 8px',borderRadius:5}}>ОЖИДАЕТ</span>
+              </div>
+              {b.text && <div style={{fontFamily:'DM Sans',fontSize:11,color:'rgba(232,242,255,0.5)',marginBottom:4}}>{b.text}</div>}
+              <div style={{fontFamily:'DM Sans',fontSize:10,color:'rgba(232,242,255,0.3)',marginBottom:4}}>
+                👤 {b.username ? '@'+b.username : b.first_name} · 📢 {b.channel_url || '—'}
+              </div>
+              {b.link && <div style={{fontFamily:'DM Sans',fontSize:9,color:'#00d4ff',marginBottom:6}}>🔗 {b.link}</div>}
+              <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginBottom:8}}>📅 {new Date(b.created_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+              <div style={{display:'flex',gap:6}}>
+                <button style={S.btn({flex:1,background:'rgba(0,230,118,0.15)',color:'#00e676'})} onClick={async()=>{
+                  try {
+                    await api.post(`/api/ads/approve-banner/${b.id}`)
+                    setPendingBanners(prev => prev.filter(x => x.id !== b.id))
+                    load()
+                    showToast('✅ Баннер одобрен')
+                  } catch { showToast('❌ Ошибка') }
+                }}>✅ ОДОБРИТЬ</button>
+                <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={async()=>{
+                  const reason = prompt('Причина отклонения (необязательно):')
+                  try {
+                    await api.post(`/api/ads/reject-banner/${b.id}`, { reason })
+                    setPendingBanners(prev => prev.filter(x => x.id !== b.id))
+                    showToast('❌ Баннер отклонён')
+                  } catch { showToast('❌ Ошибка') }
+                }}>❌ ОТКЛОНИТЬ</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
