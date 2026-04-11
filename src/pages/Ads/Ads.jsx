@@ -191,31 +191,32 @@ export default function Ads() {
     return () => clearInterval(interval)
   }, [onclickaSpotId])
 
-  // Init RichAds — TelegramAdsController SDK
+  // Init RichAds — SDK loaded in index.html head
   useEffect(() => {
     if (!richadsWidgetId) return
     const parts = richadsWidgetId.split('-')
     const pubId = parts[0]; const appId = parts[1] || ''
     if (!pubId) return
-    if (document.querySelector('script[data-richads]')) { setRichadsReady(true); return }
 
-    const s = document.createElement('script')
-    s.src = 'https://richinfo.co/richpartners/telegram/js/tg-ob.js'
-    s.setAttribute('data-richads', '1')
-    s.onload = () => {
-      // Run init in global scope via inline script, exactly as RichAds docs
-      const initScript = document.createElement('script')
-      initScript.textContent = `
+    let attempts = 0
+    const interval = setInterval(() => {
+      attempts++
+      if (typeof TelegramAdsController !== 'undefined' || window.TelegramAdsController) {
+        clearInterval(interval)
         try {
-          window._richAdsCtrl = new TelegramAdsController();
-          window._richAdsCtrl.initialize({ pubId: "${pubId}", appId: "${appId}" });
-        } catch(e) { console.warn('RichAds init:', e); }
-      `
-      document.head.appendChild(initScript)
-      setRichadsReady(true)
-    }
-    s.onerror = () => { setRichadsReady(true) }
-    document.head.appendChild(s)
+          window._richAdsCtrl = new TelegramAdsController()
+          window._richAdsCtrl.initialize({ pubId, appId })
+          setRichadsReady(true)
+          console.log('RichAds ready')
+        } catch (e) {
+          console.warn('RichAds init error:', e)
+          setRichadsError('RichAds не удалось инициализировать')
+          setTimeout(() => setRichadsError(''), 5000)
+        }
+      }
+      if (attempts >= 30) { clearInterval(interval); console.warn('RichAds: TelegramAdsController not found after 15s') }
+    }, 500)
+    return () => clearInterval(interval)
   }, [richadsWidgetId])
 
   // Init Tads — React widget
