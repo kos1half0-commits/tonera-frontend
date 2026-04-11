@@ -233,6 +233,24 @@ export default function Partnership({ onBack }) {
             </div>
           )}
 
+          {info?.renewsAt && (
+            <div style={{...S.card, borderColor:'rgba(0,212,255,0.15)', textAlign:'center'}}>
+              <div style={{fontFamily:'Orbitron',fontSize:9,fontWeight:700,color:'#00d4ff',letterSpacing:'.08em',marginBottom:8}}>🔄 ОБНОВЛЕНИЕ ЗАДАНИЯ</div>
+              <div style={{display:'flex',justifyContent:'center',gap:16,marginBottom:8}}>
+                <div>
+                  <div style={{fontFamily:'Orbitron',fontSize:18,fontWeight:900,color:'#e8f2ff'}}>{Math.max(0, Math.ceil((new Date(info.renewsAt) - new Date()) / (24*60*60*1000)))}</div>
+                  <div style={{fontSize:9,color:'rgba(232,242,255,0.3)'}}>дней</div>
+                </div>
+              </div>
+              <div style={{fontSize:10,color:'rgba(232,242,255,0.35)'}}>
+                Следующее обновление: {new Date(info.renewsAt).toLocaleDateString('ru',{day:'numeric',month:'long'})}
+              </div>
+              <div style={{height:4,background:'rgba(26,95,255,0.1)',borderRadius:2,overflow:'hidden',marginTop:8}}>
+                <div style={{height:'100%',borderRadius:2,background:'linear-gradient(90deg,#00d4ff,#1a5fff)',width:Math.max(0, Math.min(100, (1 - (new Date(info.renewsAt) - new Date()) / (30*24*60*60*1000)) * 100))+'%',transition:'width .5s'}}/>
+              </div>
+            </div>
+          )}
+
           {task && (
             <div className="p-task-block">
               <div className="ptb-title">📋 ВАШЕ ЗАДАНИЕ</div>
@@ -507,7 +525,7 @@ export default function Partnership({ onBack }) {
                   УРОВНИ ПАРТНЁРСТВА
                 </div>
                 <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:12,lineHeight:1.5}}>
-                  Уровень определяется количеством подписчиков вашего канала. Чем выше уровень — тем больше выполнений задания и выше награды промокодов.
+                  Уровень определяется количеством подписчиков вашего канала. Задание обновляется каждый месяц — лимит выполнений сбрасывается.
                 </div>
                 <div className="p-landing-levels">
                   {(info?.levels || [
@@ -525,7 +543,7 @@ export default function Partnership({ onBack }) {
                         </div>
                       </div>
                       <div className="p-landing-level-right">
-                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Задание: <b style={{color:'#00d4ff'}}>{l.maxExecs.toLocaleString()}</b> вып.</div>
+                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Задание: <b style={{color:'#00d4ff'}}>{l.maxExecs.toLocaleString()}</b> вып./мес</div>
                         <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Промо: <b style={{color:'#a855f7'}}>{l.promoReward} TON</b></div>
                       </div>
                     </div>
