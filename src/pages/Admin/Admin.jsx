@@ -1820,14 +1820,28 @@ function PartnershipAdmin() {
         {filtered.map(p => {
           const b = statusBadge(p.status)
           return (
-            <div key={p.id} style={{...S.card,borderColor:p.status==='suspended'?'rgba(255,77,106,0.2)':'rgba(26,95,255,0.15)'}} onClick={() => openPartner(p)}>
-              <div style={S.row}>
+            <div key={p.id} style={{...S.card,borderColor:p.status==='suspended'?'rgba(255,77,106,0.2)':'rgba(26,95,255,0.15)'}}>
+              <div style={S.row} onClick={() => openPartner(p)}>
                 <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>#{p.id}</span>
                 <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{p.username ? '@'+p.username : p.first_name}</span>
                 <span style={{background:b.background,color:b.color,fontFamily:b.fontFamily,fontSize:b.fontSize,fontWeight:b.fontWeight,padding:b.padding,borderRadius:b.borderRadius}}>{b.text}</span>
                 <span style={{color:'rgba(232,242,255,0.3)',fontSize:14}}>›</span>
               </div>
-              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{p.channel_url}</div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{p.channel_url}</div>
+                {p.status === 'approved' && (
+                  <button onClick={async(e)=>{
+                    e.stopPropagation()
+                    try {
+                      const r = await api.post(`/api/partnership/toggle-autopost/${p.id}`)
+                      showToast(r.data.autopost_enabled ? '📢 Авто-пост ВКЛ' : '🔇 Авто-пост ВЫКЛ')
+                      load()
+                    } catch(err) { showToast('❌ Ошибка') }
+                  }} style={{padding:'3px 8px',border:'none',borderRadius:6,fontFamily:'Orbitron',fontSize:8,fontWeight:700,cursor:'pointer',background:p.autopost_enabled!==false?'rgba(0,230,118,0.15)':'rgba(255,77,106,0.1)',color:p.autopost_enabled!==false?'#00e676':'#ff4d6a',flexShrink:0}} title={p.autopost_enabled!==false?'Авто-пост ВКЛ':'Авто-пост ВЫКЛ'}>
+                    {p.autopost_enabled!==false ? '📢 ON' : '🔇 OFF'}
+                  </button>
+                )}
+              </div>
               {p.status === 'suspended' && p.suspended_reason && (
                 <div style={{fontFamily:'DM Sans',fontSize:9,color:'#ff4d6a',marginTop:4,opacity:0.7}}>{p.suspended_reason.split('; ')[0]}</div>
               )}
