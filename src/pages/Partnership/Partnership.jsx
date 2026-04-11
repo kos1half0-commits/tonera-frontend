@@ -27,6 +27,8 @@ export default function Partnership({ onBack }) {
   const [bannerForm, setBannerForm]   = useState({title:'',text:'',image_url:'',link:''})
   const [showBannerForm, setShowBannerForm] = useState(false)
   const [bannerSaving, setBannerSaving] = useState(false)
+  const [editPost, setEditPost] = useState(false)
+  const [customPostText, setCustomPostText] = useState('')
 
   useEffect(() => {
     api.get('/api/partnership/my').then(r => {
@@ -153,7 +155,7 @@ export default function Partnership({ onBack }) {
   const submitApplication = async () => {
     setLoading(true)
     try {
-      await api.post('/api/partnership/apply', { channel_url: channelUrl, post_url: postUrl })
+      await api.post('/api/partnership/apply', { channel_url: channelUrl, post_url: postUrl, custom_post: postText })
       showToast('✅ Заявка отправлена!')
       const r = await api.get('/api/partnership/my')
       setInfo(r.data)
@@ -288,6 +290,45 @@ export default function Partnership({ onBack }) {
             </div>
           )}
 
+
+          {/* MY POST */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(168,85,247,0.15)',borderRadius:12,padding:14,marginBottom:12}}>
+            <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#a855f7',marginBottom:10,letterSpacing:'.08em'}}>📝 МОЙ ПОСТ</div>
+            {editPost ? (
+              <>
+                <textarea
+                  value={customPostText}
+                  onChange={e => setCustomPostText(e.target.value)}
+                  rows={8}
+                  style={{...S.input,resize:'vertical',lineHeight:1.5,minHeight:120,marginBottom:8}}
+                />
+                <div style={{display:'flex',gap:6}}>
+                  <button style={{...S.btnSm('rgba(0,230,118,0.15)','#00e676'),flex:1}} onClick={async()=>{
+                    try {
+                      await api.post('/api/partnership/update-post', { custom_post: customPostText })
+                      showToast('✅ Пост сохранён')
+                      setEditPost(false)
+                      const r = await api.get('/api/partnership/my')
+                      setInfo(r.data)
+                    } catch(e) { showToast(e?.response?.data?.error||'Ошибка', true) }
+                  }}>💾 СОХРАНИТЬ</button>
+                  <button style={S.btnSm('rgba(255,77,106,0.1)','#ff4d6a')} onClick={()=>setEditPost(false)}>✕</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{background:'#0b1630',border:'1px solid rgba(26,95,255,0.15)',borderRadius:8,padding:10,marginBottom:8,fontFamily:'DM Sans',fontSize:11,color:'rgba(232,242,255,0.55)',whiteSpace:'pre-wrap',lineHeight:1.6,maxHeight:120,overflowY:'auto'}}>
+                  {p.custom_post || makeDefaultPost(null)}
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <button style={{...S.btnSm('rgba(168,85,247,0.12)','#a855f7'),flex:1}} onClick={()=>{setCustomPostText(p.custom_post || makeDefaultPost(null)); setEditPost(true)}}>✏️ РЕДАКТИРОВАТЬ ПОСТ</button>
+                </div>
+                <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:6}}>
+                  💡 Этот текст будет использоваться при автоматическом постинге в ваш канал
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Partner Banner */}
           <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:14,marginBottom:12}}>
@@ -778,6 +819,10 @@ export default function Partnership({ onBack }) {
                   </div>
 
                   <button style={S.btnSm('rgba(168,85,247,0.12)','#a855f7')} onClick={() => setPostText(makeDefaultPost(promoCode))}>↺ СБРОСИТЬ ТЕКСТ</button>
+
+                  <div style={{fontSize:9,color:'rgba(232,242,255,0.3)',marginTop:8,background:'rgba(168,85,247,0.04)',border:'1px solid rgba(168,85,247,0.1)',borderRadius:8,padding:'8px 10px',lineHeight:1.6}}>
+                    💾 Ваш текст будет сохранён и использован при автоматическом постинге
+                  </div>
 
                   <div style={{marginTop:12}}/>
                   <button style={{...S.btn('linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2))','#00e676'),opacity:checking?0.5:1}} onClick={publishPromo} disabled={checking}>
