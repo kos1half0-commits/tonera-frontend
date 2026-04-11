@@ -87,7 +87,6 @@ const SETTING_GROUPS = [
       { key: 'partner_promo_gold_uses',       label: '🥇 Промо Gold: макс. использований' },
       { key: 'partner_promo_diamond_reward',  label: '💎 Промо Diamond: награда TON' },
       { key: 'partner_promo_diamond_uses',    label: '💎 Промо Diamond: макс. использований' },
-      { key: 'partnership_default_post', label: '📝 Стандартный пост ({REF_LINK}, {PROMO})', type: 'textarea' },
     ]
   },
   {
@@ -1311,10 +1310,42 @@ function PartnershipAdmin() {
   const [postPhoto, setPostPhoto] = useState(null)
   const [postPhotoPreview, setPostPhotoPreview] = useState(null)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [partnerTab, setPartnerTab] = useState('list') // list | settings
+  const [pSettings, setPSettings] = useState({})
+  const [pSaving, setPSaving] = useState(null)
 
   const showToast = (msg) => { setPartToast(msg); setTimeout(() => setPartToast(''), 3000) }
   const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
-  useEffect(() => { load() }, [])
+  const loadSettings = () => api.get('/api/admin/settings').then(r => setPSettings(r.data || {})).catch(() => {})
+  useEffect(() => { load(); loadSettings() }, [])
+
+  const savePSetting = async (key) => {
+    setPSaving(key)
+    try {
+      await api.post('/api/admin/settings', { key, value: pSettings[key] })
+      showToast('✅ Сохранено')
+    } catch { showToast('❌ Ошибка') }
+    setPSaving(null)
+  }
+
+  const PARTNER_SETTINGS = [
+    { key: 'partnership_enabled', label: 'Статус (0=откл, 1=вкл, 2=админ, 3=тест)' },
+    { key: 'partnership_min_subs', label: 'Мин. подписчиков канала' },
+    { key: 'partnership_task_execs', label: 'Макс. выполнений (по умолч.)' },
+    { key: 'partnership_lvl_bronze_execs', label: '🥉 Bronze: вып./мес' },
+    { key: 'partnership_lvl_silver_execs', label: '🥈 Silver (5K+): вып./мес' },
+    { key: 'partnership_lvl_gold_execs', label: '🥇 Gold (20K+): вып./мес' },
+    { key: 'partnership_lvl_diamond_execs', label: '💎 Diamond (50K+): вып./мес' },
+    { key: 'partner_promo_expiry_hours', label: '⏰ Промо: срок (часов)' },
+    { key: 'partner_promo_bronze_reward', label: '🥉 Промо: награда TON' },
+    { key: 'partner_promo_bronze_uses', label: '🥉 Промо: макс. исп.' },
+    { key: 'partner_promo_silver_reward', label: '🥈 Промо: награда TON' },
+    { key: 'partner_promo_silver_uses', label: '🥈 Промо: макс. исп.' },
+    { key: 'partner_promo_gold_reward', label: '🥇 Промо: награда TON' },
+    { key: 'partner_promo_gold_uses', label: '🥇 Промо: макс. исп.' },
+    { key: 'partner_promo_diamond_reward', label: '💎 Промо: награда TON' },
+    { key: 'partner_promo_diamond_uses', label: '💎 Промо: макс. исп.' },
+  ]
 
   const statusBadge = (status) => {
     const map = {
@@ -1623,47 +1654,99 @@ function PartnershipAdmin() {
     <div style={{display:'flex',flexDirection:'column',gap:8}}>
       {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:4}}>{toast}</div>}
 
-      {/* STATS ROW */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6,marginBottom:4}}>
-        {[
-          {k:'all',label:'ВСЕ',count:counts.all,color:'#00d4ff'},
-          {k:'pending',label:'ОЖИД.',count:counts.pending,color:'#ffb300'},
-          {k:'approved',label:'АКТИВ.',count:counts.approved,color:'#00e676'},
-          {k:'suspended',label:'БЛОК',count:counts.suspended,color:'#ff4d6a'},
-        ].map(f => (
-          <div key={f.k} onClick={()=>setFilterStatus(f.k)} style={{cursor:'pointer',textAlign:'center',padding:'6px 4px',borderRadius:8,background:filterStatus===f.k?f.color+'15':'rgba(26,95,255,0.04)',border:`1px solid ${filterStatus===f.k?f.color+'30':'rgba(26,95,255,0.08)'}`,transition:'all .2s'}}>
-            <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:filterStatus===f.k?f.color:'rgba(232,242,255,0.5)'}}>{f.count}</div>
-            <div style={{fontFamily:'Orbitron',fontSize:7,color:'rgba(232,242,255,0.3)',letterSpacing:'.06em'}}>{f.label}</div>
-          </div>
-        ))}
+      {/* TABS */}
+      <div style={{display:'flex',gap:6,marginBottom:4}}>
+        <button onClick={()=>setPartnerTab('list')} style={{flex:1,padding:'8px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:9,fontWeight:700,cursor:'pointer',background:partnerTab==='list'?'rgba(0,212,255,0.15)':'rgba(26,95,255,0.06)',color:partnerTab==='list'?'#00d4ff':'rgba(232,242,255,0.35)',borderBottom:partnerTab==='list'?'2px solid #00d4ff':'2px solid transparent'}}>📋 СПИСОК</button>
+        <button onClick={()=>setPartnerTab('settings')} style={{flex:1,padding:'8px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:9,fontWeight:700,cursor:'pointer',background:partnerTab==='settings'?'rgba(168,85,247,0.15)':'rgba(26,95,255,0.06)',color:partnerTab==='settings'?'#a855f7':'rgba(232,242,255,0.35)',borderBottom:partnerTab==='settings'?'2px solid #a855f7':'2px solid transparent'}}>⚙️ НАСТРОЙКИ</button>
       </div>
 
-      {!filtered.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
-      {filtered.map(p => {
-        const b = statusBadge(p.status)
-        return (
-          <div key={p.id} style={{...S.card,borderColor:p.status==='suspended'?'rgba(255,77,106,0.2)':'rgba(26,95,255,0.15)'}} onClick={() => openPartner(p)}>
-            <div style={S.row}>
-              <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>#{p.id}</span>
-              <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{p.username ? '@'+p.username : p.first_name}</span>
-              <span style={{background:b.background,color:b.color,fontFamily:b.fontFamily,fontSize:b.fontSize,fontWeight:b.fontWeight,padding:b.padding,borderRadius:b.borderRadius}}>{b.text}</span>
-              <span style={{color:'rgba(232,242,255,0.3)',fontSize:14}}>›</span>
+      {/* SETTINGS TAB */}
+      {partnerTab === 'settings' && (
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {/* DEFAULT POST */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(168,85,247,0.2)',borderRadius:12,padding:14}}>
+            <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:'#a855f7',marginBottom:10}}>📝 СТАНДАРТНЫЙ ПОСТ</div>
+            <div style={{fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.3)',marginBottom:8,lineHeight:1.5}}>
+              Подстановки: <span style={{color:'#00d4ff'}}>{'{REF_LINK}'}</span> — реф. ссылка, <span style={{color:'#a855f7'}}>{'{PROMO}'}</span> — блок промокода
             </div>
-            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{p.channel_url}</div>
-            {p.status === 'suspended' && p.suspended_reason && (
-              <div style={{fontFamily:'DM Sans',fontSize:9,color:'#ff4d6a',marginTop:4,opacity:0.7}}>{p.suspended_reason.split('; ')[0]}</div>
-            )}
-            {p.status === 'pending' && (
-              <div style={{display:'flex',gap:6,marginTop:8}} onClick={e=>e.stopPropagation()}>
-                <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={()=>approve(p.id)}>✅ ОДОБРИТЬ</button>
-                <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>reject(p.id)}>❌ ОТКЛОНИТЬ</button>
-              </div>
-            )}
+            <textarea
+              rows={8}
+              style={{width:'100%',background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:10,padding:'10px 12px',color:'#e8f2ff',fontFamily:'DM Sans',fontSize:12,outline:'none',resize:'vertical',lineHeight:1.5,whiteSpace:'pre-wrap',marginBottom:8,boxSizing:'border-box'}}
+              value={(pSettings['partnership_default_post'] ?? '').replace(/\\n/g, '\n')}
+              onChange={e => setPSettings(p => ({...p, partnership_default_post: e.target.value.replace(/\n/g, '\\n')}))}
+              placeholder="🚀 Зарабатывай TON каждый день!\n..."
+            />
+            <button onClick={()=>savePSetting('partnership_default_post')} style={{width:'100%',padding:'9px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:9,fontWeight:700,cursor:'pointer',background:'rgba(168,85,247,0.2)',color:'#a855f7'}}>
+              {pSaving === 'partnership_default_post' ? '...' : '💾 СОХРАНИТЬ ПОСТ'}
+            </button>
           </div>
-        )
-      })}
 
-      <button style={{width:'100%',padding:'10px',border:'1px solid rgba(26,95,255,0.2)',borderRadius:10,background:'rgba(26,95,255,0.06)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',marginTop:4}} onClick={load}>↻ ОБНОВИТЬ</button>
+          {/* OTHER SETTINGS */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(26,95,255,0.15)',borderRadius:12,padding:14}}>
+            <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:'#e8f2ff',marginBottom:10}}>⚙️ ПАРАМЕТРЫ</div>
+            {PARTNER_SETTINGS.map(s => (
+              <div key={s.key} style={{marginBottom:8}}>
+                <div style={{fontFamily:'Orbitron',fontSize:8,fontWeight:700,color:'rgba(232,242,255,0.35)',letterSpacing:'.06em',marginBottom:3}}>{s.label}</div>
+                <div style={{display:'flex',gap:6}}>
+                  <input
+                    style={{flex:1,background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'7px 10px',color:'#e8f2ff',fontFamily:'DM Sans',fontSize:12,outline:'none'}}
+                    value={pSettings[s.key] ?? ''}
+                    onChange={e => setPSettings(p => ({...p, [s.key]: e.target.value}))}
+                  />
+                  <button onClick={()=>savePSetting(s.key)} style={{padding:'7px 12px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:8,fontWeight:700,cursor:'pointer',background:'rgba(0,212,255,0.12)',color:'#00d4ff',flexShrink:0}}>
+                    {pSaving === s.key ? '...' : 'СОХР'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* LIST TAB */}
+      {partnerTab === 'list' && (<>
+        {/* STATS ROW */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6,marginBottom:4}}>
+          {[
+            {k:'all',label:'ВСЕ',count:counts.all,color:'#00d4ff'},
+            {k:'pending',label:'ОЖИД.',count:counts.pending,color:'#ffb300'},
+            {k:'approved',label:'АКТИВ.',count:counts.approved,color:'#00e676'},
+            {k:'suspended',label:'БЛОК',count:counts.suspended,color:'#ff4d6a'},
+          ].map(f => (
+            <div key={f.k} onClick={()=>setFilterStatus(f.k)} style={{cursor:'pointer',textAlign:'center',padding:'6px 4px',borderRadius:8,background:filterStatus===f.k?f.color+'15':'rgba(26,95,255,0.04)',border:`1px solid ${filterStatus===f.k?f.color+'30':'rgba(26,95,255,0.08)'}`,transition:'all .2s'}}>
+              <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:filterStatus===f.k?f.color:'rgba(232,242,255,0.5)'}}>{f.count}</div>
+              <div style={{fontFamily:'Orbitron',fontSize:7,color:'rgba(232,242,255,0.3)',letterSpacing:'.06em'}}>{f.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {!filtered.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
+        {filtered.map(p => {
+          const b = statusBadge(p.status)
+          return (
+            <div key={p.id} style={{...S.card,borderColor:p.status==='suspended'?'rgba(255,77,106,0.2)':'rgba(26,95,255,0.15)'}} onClick={() => openPartner(p)}>
+              <div style={S.row}>
+                <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>#{p.id}</span>
+                <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{p.username ? '@'+p.username : p.first_name}</span>
+                <span style={{background:b.background,color:b.color,fontFamily:b.fontFamily,fontSize:b.fontSize,fontWeight:b.fontWeight,padding:b.padding,borderRadius:b.borderRadius}}>{b.text}</span>
+                <span style={{color:'rgba(232,242,255,0.3)',fontSize:14}}>›</span>
+              </div>
+              <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{p.channel_url}</div>
+              {p.status === 'suspended' && p.suspended_reason && (
+                <div style={{fontFamily:'DM Sans',fontSize:9,color:'#ff4d6a',marginTop:4,opacity:0.7}}>{p.suspended_reason.split('; ')[0]}</div>
+              )}
+              {p.status === 'pending' && (
+                <div style={{display:'flex',gap:6,marginTop:8}} onClick={e=>e.stopPropagation()}>
+                  <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={()=>approve(p.id)}>✅ ОДОБРИТЬ</button>
+                  <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>reject(p.id)}>❌ ОТКЛОНИТЬ</button>
+                </div>
+              )}
+            </div>
+          )
+        })}
+
+        <button style={{width:'100%',padding:'10px',border:'1px solid rgba(26,95,255,0.2)',borderRadius:10,background:'rgba(26,95,255,0.06)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',marginTop:4}} onClick={load}>↻ ОБНОВИТЬ</button>
+      </>)}
     </div>
   )
 }
