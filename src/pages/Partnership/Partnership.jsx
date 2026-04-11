@@ -777,30 +777,55 @@ export default function Partnership({ onBack }) {
               {/* STEP 3 — EDIT & PUBLISH POST */}
               {wizardStep === 3 && (
                 <div style={S.card}>
-                  <div style={{textAlign:'center',marginBottom:12}}>
-                    <div style={{fontSize:32,marginBottom:6}}>📝</div>
-                    <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:900,color:'#e8f2ff'}}>ШАГ 3: РЕКЛАМНЫЙ ПОСТ</div>
-                    <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginTop:4}}>
-                      Отредактируйте текст и нажмите «Опубликовать» — бот опубликует пост в вашем канале
+                  <div style={{textAlign:'center',marginBottom:14}}>
+                    <div style={{fontSize:36,marginBottom:6}}>📝</div>
+                    <div style={{fontFamily:'Orbitron',fontSize:13,fontWeight:900,color:'#e8f2ff'}}>ШАГ 3: РЕКЛАМНЫЙ ПОСТ</div>
+                    <div style={{fontSize:12,color:'rgba(232,242,255,0.5)',marginTop:6,lineHeight:1.6}}>
+                      Отредактируйте текст и нажмите «Опубликовать» —<br/>бот опубликует пост в вашем канале
                     </div>
                   </div>
 
+                  {/* REQUIREMENTS */}
+                  <div style={{background:'rgba(255,179,0,0.04)',border:'1px solid rgba(255,179,0,0.2)',borderRadius:10,padding:12,marginBottom:14}}>
+                    <div style={{fontFamily:'Orbitron',fontSize:9,fontWeight:700,color:'#ffb300',letterSpacing:'.08em',marginBottom:8}}>⚠️ ОБЯЗАТЕЛЬНЫЕ ТРЕБОВАНИЯ</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                      <span style={{fontSize:16}}>🔗</span>
+                      <div>
+                        <div style={{fontSize:11,fontWeight:700,color:postText.includes('t.me/')?'#00e676':'#ff4d6a'}}>
+                          {postText.includes('t.me/') ? '✅' : '❌'} Реферальная ссылка
+                        </div>
+                        <div style={{fontSize:10,color:'#00d4ff',fontFamily:'monospace',marginTop:2}}>{refLink}</div>
+                      </div>
+                    </div>
+                    {promoCode && (
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span style={{fontSize:16}}>🎁</span>
+                        <div>
+                          <div style={{fontSize:11,fontWeight:700,color:postText.includes(promoCode.code)?'#00e676':'#ff4d6a'}}>
+                            {postText.includes(promoCode.code) ? '✅' : '❌'} Промокод
+                          </div>
+                          <div style={{fontSize:10,color:'#a855f7',fontFamily:'monospace',marginTop:2}}>{promoCode.code}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* LOGO PREVIEW */}
-                  <div style={{textAlign:'center',marginBottom:12}}>
-                    <img src="/logo.png" alt="TonEra" style={{width:120,height:120,borderRadius:12,border:'1px solid rgba(26,95,255,0.15)'}} />
-                    <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:4}}>📷 Логотип (нельзя изменить)</div>
+                  <div style={{textAlign:'center',marginBottom:14}}>
+                    <img src="/logo.png" alt="TonEra" style={{width:100,height:100,borderRadius:12,border:'1px solid rgba(26,95,255,0.15)'}} />
+                    <div style={{fontSize:9,color:'rgba(232,242,255,0.3)',marginTop:4}}>📷 Логотип прикрепляется автоматически</div>
                   </div>
 
                   {/* PROMO CODE INFO */}
                   {promoCode && (
-                    <div style={{background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)',borderRadius:8,padding:10,marginBottom:12}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-                        <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:'#a855f7'}}>🎁 ПРОМОКОД</div>
-                        <div style={{fontFamily:'Orbitron',fontSize:12,fontWeight:900,color:'#e8f2ff',letterSpacing:1}}>{promoCode.code}</div>
+                    <div style={{background:'rgba(168,85,247,0.08)',border:'1px solid rgba(168,85,247,0.25)',borderRadius:10,padding:12,marginBottom:14}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                        <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:'#a855f7'}}>🎁 ВАШ ПРОМОКОД</div>
+                        <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#e8f2ff',letterSpacing:2,background:'rgba(168,85,247,0.15)',padding:'4px 12px',borderRadius:6}}>{promoCode.code}</div>
                       </div>
-                      <div style={{display:'flex',gap:12,fontSize:9,color:'rgba(232,242,255,0.4)'}}>
+                      <div style={{display:'flex',gap:14,fontSize:10,color:'rgba(232,242,255,0.5)'}}>
                         <span>💰 {promoCode.amount} TON</span>
-                        <span>👥 {promoCode.max_uses} использований</span>
+                        <span>👥 {promoCode.max_uses} активаций</span>
                         <span>⏰ {new Date(promoCode.expires_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
                       </div>
                     </div>
@@ -814,18 +839,18 @@ export default function Partnership({ onBack }) {
                     style={{...S.input,resize:'vertical',lineHeight:1.5,minHeight:160}}
                   />
 
-                  <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:4,marginBottom:8}}>
-                    ⚠️ Пост должен содержать ссылку: <b style={{color:'#00d4ff'}}>{refLink}</b>
+                  <div style={{display:'flex',gap:6,marginTop:6,marginBottom:10}}>
+                    <button style={{...S.btnSm('rgba(168,85,247,0.12)','#a855f7'),flex:1}} onClick={() => setPostText(makeDefaultPost(promoCode))}>↺ СБРОСИТЬ ТЕКСТ</button>
                   </div>
 
-                  <button style={S.btnSm('rgba(168,85,247,0.12)','#a855f7')} onClick={() => setPostText(makeDefaultPost(promoCode))}>↺ СБРОСИТЬ ТЕКСТ</button>
-
-                  <div style={{fontSize:9,color:'rgba(232,242,255,0.3)',marginTop:8,background:'rgba(168,85,247,0.04)',border:'1px solid rgba(168,85,247,0.1)',borderRadius:8,padding:'8px 10px',lineHeight:1.6}}>
-                    💾 Ваш текст будет сохранён и использован при автоматическом постинге
+                  {/* SAVE INFO */}
+                  <div style={{background:'rgba(0,212,255,0.04)',border:'1px solid rgba(0,212,255,0.15)',borderRadius:10,padding:12,marginBottom:14}}>
+                    <div style={{fontSize:11,color:'rgba(232,242,255,0.5)',lineHeight:1.6}}>
+                      <span style={{color:'#00d4ff',fontWeight:700}}>💾 Ваш текст сохраняется</span> — при автоматическом постинге в канал всегда будет использоваться именно ваша версия поста
+                    </div>
                   </div>
 
-                  <div style={{marginTop:12}}/>
-                  <button style={{...S.btn('linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2))','#00e676'),opacity:checking?0.5:1}} onClick={publishPromo} disabled={checking}>
+                  <button style={{...S.btn('linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2))','#00e676'),opacity:checking?0.5:1,fontSize:12,padding:'14px'}} onClick={publishPromo} disabled={checking}>
                     {checking ? '⏳ ПУБЛИКУЮ...' : '📢 ОПУБЛИКОВАТЬ В КАНАЛЕ'}
                   </button>
 
