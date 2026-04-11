@@ -418,6 +418,39 @@ export default function Partnership({ onBack }) {
         </div>
       )}
 
+      {/* ======== SUSPENDED (auto-blocked) ======== */}
+      {p?.status === 'suspended' && (
+        <div className="p-status rejected">
+          <div className="ps-icon">🚨</div>
+          <div className="ps-title">ПАРТНЁРСТВО ЗАБЛОКИРОВАНО</div>
+          <div className="ps-desc" style={{marginBottom:12}}>
+            Ваше партнёрство заблокировано из-за нарушения правил. Задание деактивировано.
+          </div>
+          {p.suspended_reason && (
+            <div style={{background:'rgba(255,77,106,0.06)',border:'1px solid rgba(255,77,106,0.15)',borderRadius:10,padding:12,marginBottom:12,textAlign:'left'}}>
+              <div style={{fontFamily:'Orbitron',fontSize:9,fontWeight:700,color:'#ff4d6a',letterSpacing:'.08em',marginBottom:8}}>ПРИЧИНЫ БЛОКИРОВКИ</div>
+              {p.suspended_reason.split('; ').map((r,i) => (
+                <div key={i} style={{fontSize:11,color:'rgba(232,242,255,0.6)',lineHeight:1.6,padding:'3px 0'}}>
+                  {r}
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{...S.card, borderColor:'rgba(0,212,255,0.15)', textAlign:'left'}}>
+            <div style={{fontFamily:'Orbitron',fontSize:9,fontWeight:700,color:'#00d4ff',letterSpacing:'.08em',marginBottom:8}}>КАК РАЗБЛОКИРОВАТЬ</div>
+            {[
+              '1. Убедитесь что бот @' + botUsername + ' является админом канала',
+              '2. Проверьте что у бота есть право "Публикация сообщений"',
+              '3. Убедитесь что подписчиков не менее ' + (info?.min_subs?.toLocaleString() || '1 000'),
+              '4. Обратитесь к администратору для разблокировки'
+            ].map((s,i) => (
+              <div key={i} style={{fontSize:11,color:'rgba(232,242,255,0.45)',lineHeight:1.6,padding:'2px 0'}}>{s}</div>
+            ))}
+          </div>
+          <div className="ps-channel">{p.channel_url}</div>
+        </div>
+      )}
+
 
       {/* ======== CANCELLED (cooldown) ======== */}
       {p?.status === 'cancelled' && info?.cooldown_until && (
@@ -570,6 +603,44 @@ export default function Partnership({ onBack }) {
                       <div className="p-landing-req-text">{r.text}</div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* DAILY CHECKS */}
+              <div style={S.card}>
+                <div className="p-landing-section-title">
+                  <span className="p-landing-section-emoji">🔍</span>
+                  ЕЖЕДНЕВНЫЕ ПРОВЕРКИ
+                </div>
+                <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:12,lineHeight:1.5}}>
+                  Канал автоматически проверяется каждый день. При нарушении правил партнёрство блокируется.
+                </div>
+                <div className="p-landing-reqs">
+                  {[
+                    {icon:'🤖',text:'Бот является администратором канала',color:'#00e676'},
+                    {icon:'✏️',text:'У бота есть право публикации сообщений',color:'#00d4ff'},
+                    {icon:'👥',text:`Подписчиков не менее ${info?.min_subs?.toLocaleString() || '1 000'}`,color:'#a855f7'},
+                    {icon:'📌',text:'Рекламный пост не удалён из канала',color:'#ffb300'},
+                  ].map((r,i) => (
+                    <div key={i} className="p-landing-req">
+                      <div className="p-landing-req-icon" style={{background:`${r.color}12`,borderColor:`${r.color}25`}}>{r.icon}</div>
+                      <div className="p-landing-req-text">{r.text}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* RULES WARNING */}
+              <div style={{...S.card, borderColor:'rgba(255,179,0,0.2)', background:'rgba(255,179,0,0.03)'}}>
+                <div className="p-landing-section-title">
+                  <span className="p-landing-section-emoji">⚠️</span>
+                  ВАЖНО
+                </div>
+                <div style={{fontSize:11,color:'rgba(232,242,255,0.45)',lineHeight:1.7}}>
+                  <div style={{marginBottom:6}}>• Если бот удалён из администраторов — партнёрство <b style={{color:'#ff4d6a'}}>блокируется автоматически</b></div>
+                  <div style={{marginBottom:6}}>• Если количество подписчиков упадёт ниже минимума — партнёрство <b style={{color:'#ff4d6a'}}>блокируется</b></div>
+                  <div style={{marginBottom:6}}>• Удаление рекламного поста приводит к <b style={{color:'#ffb300'}}>приостановке задания</b></div>
+                  <div>• Для разблокировки необходимо устранить нарушения и обратиться к администратору</div>
                 </div>
               </div>
 
