@@ -175,13 +175,27 @@ export default function Ads() {
       try {
         if (!document.querySelector('script[src*="onclckmn"]')) {
           const s = document.createElement('script'); s.src = 'https://js.onclckmn.com/static/onclicka.js'; s.async = true; document.head.appendChild(s)
-          await new Promise((r, j) => { s.onload = r; s.onerror = j; setTimeout(r, 3000) })
+          await new Promise((resolve, reject) => {
+            s.onload = resolve
+            s.onerror = () => reject(new Error('OnClickA script load failed'))
+            setTimeout(() => reject(new Error('OnClickA script load timeout')), 10000)
+          })
         }
-        let a = 0
-        const i = setInterval(async () => {
-          a++
-          if (window.initCdTma) { clearInterval(i); try { onclickaShowRef.current = await window.initCdTma({ id: onclickaSpotId }); setOnclickaReady(true) } catch {} }
-          if (a >= 15) clearInterval(i)
+        let attempts = 0
+        const interval = setInterval(async () => {
+          attempts++
+          if (window.initCdTma) {
+            clearInterval(interval)
+            try {
+              onclickaShowRef.current = await window.initCdTma({ id: onclickaSpotId })
+              setOnclickaReady(true)
+            } catch (e) {
+              console.warn('OnClickA initCdTma error:', e)
+              setOnclickaError('OnClickA не удалось инициализировать')
+              setTimeout(() => setOnclickaError(''), 5000)
+            }
+          }
+          if (attempts >= 20) { clearInterval(interval); console.warn('OnClickA: initCdTma not found after 10s') }
         }, 500)
       } catch (e) { console.warn('OnClickA init:', e) }
     })()
@@ -295,12 +309,26 @@ export default function Ads() {
     if (!onclickaShowRef.current || onclickaLoading || onclickaRemaining <= 0 || cooldowns.onclicka > 0) return
     setOnclickaLoading(true); setOnclickaError('')
     try {
-      await onclickaShowRef.current()
+      const result = await Promise.race([
+        onclickaShowRef.current(),
+        new Promise((_, reject) => setTimeout(() => reject({ message: 'Реклама не загрузилась. Попробуйте позже' }), 30000))
+      ])
+      if (result === false || result === null) {
+        setOnclickaError('Досмотрите до конца для награды')
+        setTimeout(() => setOnclickaError(''), 4000)
+        setOnclickaLoading(false)
+        return
+      }
       const r = await api.post('/api/ads/onclicka-reward')
       setOnclickaRewarded(true); setOnclickaTodayCount(p => p + 1); setOnclickaTotalEarned(p => p + (parseFloat(r.data?.reward) || onclickaReward))
       setTimeout(() => setOnclickaRewarded(false), 5000)
       startCooldown('onclicka')
-    } catch (e) { setOnclickaError(e?.response?.data?.error || 'OnClickA недоступна'); setTimeout(() => setOnclickaError(''), 4000) }
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.message || 'OnClickA недоступна'
+      if (msg.includes('close') || msg.includes('dismiss') || msg.includes('skip')) setOnclickaError('Досмотрите до конца для награды')
+      else setOnclickaError(msg)
+      setTimeout(() => setOnclickaError(''), 4000)
+    }
     setOnclickaLoading(false)
   }, [onclickaLoading, onclickaRemaining, onclickaReward, cooldowns.onclicka, startCooldown])
 
