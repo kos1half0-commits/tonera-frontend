@@ -77,6 +77,11 @@ export default function App() {
     })
   }, [])
 
+  // === PC BLOCK ===
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent) || window.Telegram?.WebApp?.platform === 'android' || window.Telegram?.WebApp?.platform === 'ios'
+  const isTgWebApp = !!window.Telegram?.WebApp?.initData
+  const isPcBlocked = !isMobile && !isTgWebApp
+
   const goCreate = () => { setTasksView('create'); setTab('tasks') }
   const goMyTasks = () => { setTasksView('my'); setTab('tasks') }
   const isAdmin = user?.is_admin === true
@@ -168,6 +173,25 @@ export default function App() {
         {blockMsg.includes('работ') ? 'ТЕХНИЧЕСКИЕ РАБОТЫ' : 'ДОСТУП ОГРАНИЧЕН'}
       </div>
       <div style={{fontFamily:'DM Sans,sans-serif',fontSize:13,color:'rgba(232,242,255,0.5)',lineHeight:1.6}}>{blockMsg}</div>
+    </div>
+  )
+
+  if (isPcBlocked) return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',padding:32,textAlign:'center',background:'linear-gradient(180deg,#050a1a 0%,#0b1630 100%)'}}>
+      <div style={{fontSize:64,marginBottom:20,filter:'drop-shadow(0 0 20px rgba(26,95,255,0.5))'}}>📱</div>
+      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#e8f2ff',marginBottom:10,letterSpacing:'.08em'}}>
+        ТОЛЬКО МОБИЛЬНАЯ ВЕРСИЯ
+      </div>
+      <div style={{fontFamily:'DM Sans,sans-serif',fontSize:13,color:'rgba(232,242,255,0.5)',lineHeight:1.7,maxWidth:320,marginBottom:24}}>
+        TonEra доступен только через мобильное приложение Telegram.<br/><br/>
+        Откройте <b style={{color:'#00d4ff'}}>@TonEraBot</b> на телефоне, чтобы начать.
+      </div>
+      <div style={{padding:'12px 24px',background:'linear-gradient(135deg,#1a5fff,#0930cc)',borderRadius:12,fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#fff',letterSpacing:'.05em'}}>
+        📲 ОТКРОЙТЕ В TELEGRAM
+      </div>
+      <div style={{marginTop:20,fontFamily:'DM Sans',fontSize:10,color:'rgba(232,242,255,0.2)'}}>
+        Доступ с ПК заблокирован для безопасности
+      </div>
     </div>
   )
 
