@@ -437,34 +437,132 @@ export default function Partnership({ onBack }) {
         <>
           {wizardStep === 0 && (
             <>
-              {/* LANDING */}
-              <div style={S.card}>
-                <div style={{textAlign:'center',marginBottom:14}}>
-                  <div style={{fontSize:40,marginBottom:8}}>🤝</div>
-                  <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:'#e8f2ff',marginBottom:6}}>СТАНЬТЕ ПАРТНЁРОМ</div>
-                  <div style={{fontSize:12,color:'rgba(232,242,255,0.5)',lineHeight:1.5}}>
-                    Добавьте ваш канал в задания TonEra — тысячи пользователей будут подписываться на вас бесплатно
-                  </div>
+              {/* HERO */}
+              <div className="p-landing-hero">
+                <div className="p-landing-hero-glow"/>
+                <div style={{fontSize:52,marginBottom:10,filter:'drop-shadow(0 0 20px rgba(168,85,247,0.4))'}}>🤝</div>
+                <div style={{fontFamily:'Orbitron',fontSize:18,fontWeight:900,color:'#e8f2ff',marginBottom:8,letterSpacing:'.04em'}}>СТАНЬТЕ ПАРТНЁРОМ</div>
+                <div style={{fontSize:13,color:'rgba(232,242,255,0.55)',lineHeight:1.6,maxWidth:300,margin:'0 auto'}}>
+                  Добавьте ваш Telegram-канал в задания TonEra — получайте подписчиков бесплатно
                 </div>
               </div>
 
+              {/* WHAT YOU GET */}
               <div style={S.card}>
-                <div style={S.label}>ЧТО ВЫ ПОЛУЧИТЕ</div>
-                {[
-                  {icon:'🎯',title:'Бесплатный трафик',desc:'Ваш канал появится в заданиях — подписчики каждый день'},
-                  {icon:'📣',title:'Публикация постов',desc:'Мы можем публиковать посты в вашем канале по договорённости'},
-                  {icon:'🏅',title:'Уровни партнёрства',desc:'Больше подписчиков = больше выполнений задания'},
-                ].map((b,i) => (
-                  <div key={i} style={{display:'flex',gap:10,alignItems:'flex-start',padding:'8px 0',borderTop:i?'1px solid rgba(26,95,255,0.08)':'none'}}>
-                    <div style={{fontSize:20,flexShrink:0}}>{b.icon}</div>
-                    <div><div style={{fontSize:12,fontWeight:700,color:'#e8f2ff',marginBottom:2}}>{b.title}</div><div style={{fontSize:10,color:'rgba(232,242,255,0.4)'}}>{b.desc}</div></div>
-                  </div>
-                ))}
+                <div className="p-landing-section-title">
+                  <span className="p-landing-section-emoji">🎁</span>
+                  ЧТО ВЫ ПОЛУЧИТЕ
+                </div>
+                <div className="p-landing-benefits">
+                  {[
+                    {icon:'🎯',title:'Бесплатные подписчики',desc:'Ваш канал добавляется в задания — тысячи пользователей будут подписываться каждый день',color:'#00e676'},
+                    {icon:'🎁',title:'Промокод для подписчиков',desc:'Автоматический промокод с вознаграждением TON — подписчики активируют и получают бонус',color:'#a855f7'},
+                    {icon:'📢',title:'Бесплатный баннер',desc:'Рекламный баннер вашего канала на 2 недели — виден всем пользователям TonEra',color:'#00d4ff'},
+                    {icon:'📈',title:'Система уровней',desc:'Чем больше подписчиков — тем больше выполнений задания и выше награды промокодов',color:'#ffb300'},
+                    {icon:'📊',title:'Статистика в реальном времени',desc:'Отслеживайте количество подписок, статус задания и эффективность промокодов',color:'#ff6b6b'},
+                    {icon:'✏️',title:'Управление заданием',desc:'Редактируйте название и описание задания прямо из приложения в любой момент',color:'#4ecdc4'},
+                  ].map((b,i) => (
+                    <div key={i} className="p-landing-benefit">
+                      <div className="p-landing-benefit-icon" style={{background:`${b.color}15`,border:`1px solid ${b.color}25`}}>{b.icon}</div>
+                      <div>
+                        <div style={{fontSize:12,fontWeight:700,color:'#e8f2ff',marginBottom:3,fontFamily:'Orbitron,sans-serif',letterSpacing:'.02em'}}>{b.title}</div>
+                        <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',lineHeight:1.5}}>{b.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <button style={S.btn('linear-gradient(135deg,rgba(168,85,247,0.3),rgba(0,212,255,0.3))','#e8f2ff')} onClick={() => setWizardStep(1)}>
-                🚀 НАЧАТЬ ОФОРМЛЕНИЕ
+              {/* HOW IT WORKS */}
+              <div style={S.card}>
+                <div className="p-landing-section-title">
+                  <span className="p-landing-section-emoji">⚡</span>
+                  КАК ЭТО РАБОТАЕТ
+                </div>
+                <div className="p-landing-steps">
+                  {[
+                    {num:'1',title:'Проверка канала',desc:'Введите ссылку на ваш публичный Telegram-канал. Мы проверим количество подписчиков.',icon:'📢'},
+                    {num:'2',title:'Добавьте бота',desc:`Добавьте @${botUsername} как администратора канала с правом публикации сообщений.`,icon:'🤖'},
+                    {num:'3',title:'Рекламный пост',desc:'Бот опубликует пост с вашей реферальной ссылкой и промокодом в вашем канале.',icon:'📝'},
+                    {num:'4',title:'Получите партнёрство',desc:'После проверки ваш канал появится в заданиях — подписчики пойдут автоматически!',icon:'🚀'},
+                  ].map((s,i) => (
+                    <div key={i} className="p-landing-step">
+                      <div className="p-landing-step-left">
+                        <div className="p-landing-step-num">{s.num}</div>
+                        {i < 3 && <div className="p-landing-step-line"/>}
+                      </div>
+                      <div className="p-landing-step-content">
+                        <div style={{fontSize:12,fontWeight:700,color:'#e8f2ff',marginBottom:3,fontFamily:'Orbitron,sans-serif'}}>{s.icon} {s.title}</div>
+                        <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',lineHeight:1.5}}>{s.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* LEVELS */}
+              <div style={S.card}>
+                <div className="p-landing-section-title">
+                  <span className="p-landing-section-emoji">🏆</span>
+                  УРОВНИ ПАРТНЁРСТВА
+                </div>
+                <div style={{fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:12,lineHeight:1.5}}>
+                  Уровень определяется количеством подписчиков вашего канала. Чем выше уровень — тем больше выполнений задания и выше награды промокодов.
+                </div>
+                <div className="p-landing-levels">
+                  {[
+                    {emoji:'🥉',name:'BRONZE',min:'0',execs:'100',promo:'0.01 TON',color:'#cd7f32'},
+                    {emoji:'🥈',name:'SILVER',min:'5 000',execs:'500',promo:'0.02 TON',color:'#c0c0c0'},
+                    {emoji:'🥇',name:'GOLD',min:'20 000',execs:'2 000',promo:'0.05 TON',color:'#ffd700'},
+                    {emoji:'💎',name:'DIAMOND',min:'50 000',execs:'10 000',promo:'0.1 TON',color:'#b9f2ff'},
+                  ].map((l,i) => (
+                    <div key={i} className="p-landing-level" style={{borderColor:`${l.color}25`}}>
+                      <div className="p-landing-level-left">
+                        <div style={{fontSize:22}}>{l.emoji}</div>
+                        <div>
+                          <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:900,color:l.color,letterSpacing:'.05em'}}>{l.name}</div>
+                          <div style={{fontSize:9,color:'rgba(232,242,255,0.3)'}}>от {l.min} подп.</div>
+                        </div>
+                      </div>
+                      <div className="p-landing-level-right">
+                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Задание: <b style={{color:'#00d4ff'}}>{l.execs}</b> вып.</div>
+                        <div style={{fontSize:9,color:'rgba(232,242,255,0.35)'}}>Промо: <b style={{color:'#a855f7'}}>{l.promo}</b></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* REQUIREMENTS */}
+              <div style={S.card}>
+                <div className="p-landing-section-title">
+                  <span className="p-landing-section-emoji">📋</span>
+                  ТРЕБОВАНИЯ
+                </div>
+                <div className="p-landing-reqs">
+                  {[
+                    {icon:'👥',text:`Минимум ${info?.min_subs?.toLocaleString() || '1 000'} подписчиков на канале`},
+                    {icon:'🔓',text:'Канал должен быть публичным (не приватным)'},
+                    {icon:'🤖',text:`Добавить бота @${botUsername} как администратора`},
+                    {icon:'📝',text:'Опубликовать рекламный пост с реферальной ссылкой'},
+                    {icon:'🚫',text:'Канал не должен нарушать правила Telegram'},
+                  ].map((r,i) => (
+                    <div key={i} className="p-landing-req">
+                      <div className="p-landing-req-icon">{r.icon}</div>
+                      <div className="p-landing-req-text">{r.text}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <button className="p-landing-cta" onClick={() => setWizardStep(1)}>
+                <span className="p-landing-cta-glow"/>
+                <span style={{position:'relative',zIndex:1}}>🚀 НАЧАТЬ ОФОРМЛЕНИЕ</span>
               </button>
+              <div style={{textAlign:'center',fontSize:10,color:'rgba(232,242,255,0.2)',marginTop:8,fontFamily:'DM Sans'}}>
+                Оформление займёт около 2 минут
+              </div>
             </>
           )}
 

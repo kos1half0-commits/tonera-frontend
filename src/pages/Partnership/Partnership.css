@@ -101,3 +101,112 @@
 .ptb-info-block{display:flex;flex-direction:column;gap:4px;}
 .ptb-name-row{display:flex;align-items:center;gap:8px;}
 .ptb-name-row .ptb-name{flex:1;}
+
+/* ===== LANDING PAGE ===== */
+.p-landing-hero{
+  text-align:center;padding:28px 20px 24px;margin-bottom:12px;
+  background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(0,212,255,0.06),rgba(26,95,255,0.08));
+  border:1px solid rgba(168,85,247,0.15);border-radius:20px;
+  position:relative;overflow:hidden;
+}
+.p-landing-hero-glow{
+  position:absolute;top:-40%;left:-20%;width:140%;height:140%;
+  background:radial-gradient(ellipse at 50% 30%, rgba(168,85,247,0.12) 0%, transparent 60%);
+  pointer-events:none;animation:hero-glow-pulse 4s ease-in-out infinite alternate;
+}
+@keyframes hero-glow-pulse{
+  0%{opacity:0.5;transform:scale(1)} 100%{opacity:1;transform:scale(1.05)}
+}
+
+.p-landing-section-title{
+  font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;
+  color:rgba(232,242,255,0.5);letter-spacing:.1em;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.p-landing-section-emoji{font-size:16px;}
+
+/* Benefits */
+.p-landing-benefits{display:flex;flex-direction:column;gap:0;}
+.p-landing-benefit{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:10px 0;border-top:1px solid rgba(26,95,255,0.06);
+}
+.p-landing-benefit:first-child{border-top:none;padding-top:0;}
+.p-landing-benefit-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+
+/* Steps */
+.p-landing-steps{display:flex;flex-direction:column;gap:0;}
+.p-landing-step{display:flex;gap:14px;min-height:56px;}
+.p-landing-step-left{
+  display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:28px;
+}
+.p-landing-step-num{
+  width:28px;height:28px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(0,230,118,0.2),rgba(0,212,255,0.2));
+  border:2px solid rgba(0,230,118,0.3);
+  color:#00e676;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.p-landing-step-line{
+  width:2px;flex:1;min-height:16px;
+  background:linear-gradient(180deg,rgba(0,230,118,0.25),rgba(0,212,255,0.1));
+  margin:4px 0;border-radius:1px;
+}
+.p-landing-step-content{padding:2px 0 14px;}
+
+/* Levels */
+.p-landing-levels{display:flex;flex-direction:column;gap:6px;}
+.p-landing-level{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border-radius:10px;background:rgba(26,95,255,0.04);
+  border:1px solid rgba(26,95,255,0.1);transition:all .2s;
+}
+.p-landing-level:active{transform:scale(0.98);}
+.p-landing-level-left{display:flex;align-items:center;gap:10px;}
+.p-landing-level-right{text-align:right;display:flex;flex-direction:column;gap:2px;}
+
+/* Requirements */
+.p-landing-reqs{display:flex;flex-direction:column;gap:0;}
+.p-landing-req{
+  display:flex;gap:10px;align-items:center;
+  padding:8px 0;border-top:1px solid rgba(26,95,255,0.06);
+}
+.p-landing-req:first-child{border-top:none;padding-top:0;}
+.p-landing-req-icon{
+  width:28px;height:28px;border-radius:8px;
+  background:rgba(26,95,255,0.06);border:1px solid rgba(26,95,255,0.1);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.p-landing-req-text{
+  font-family:'DM Sans',sans-serif;font-size:12px;
+  color:rgba(232,242,255,0.55);line-height:1.4;
+}
+
+/* CTA */
+.p-landing-cta{
+  width:100%;padding:16px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#1a5fff,#7c3aed,#0930cc);background-size:200% 200%;
+  color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;letter-spacing:.06em;
+  position:relative;overflow:hidden;
+  animation:cta-gradient 3s ease infinite;
+  box-shadow:0 4px 24px rgba(26,95,255,0.3),0 0 40px rgba(168,85,247,0.15);
+  transition:transform .15s,box-shadow .15s;
+}
+.p-landing-cta:active{transform:scale(0.97);box-shadow:0 2px 12px rgba(26,95,255,0.4);}
+.p-landing-cta-glow{
+  position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,0.12) 0%,transparent 60%);
+  animation:cta-glow-move 3s ease-in-out infinite;pointer-events:none;
+}
+@keyframes cta-gradient{
+  0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%}
+}
+@keyframes cta-glow-move{
+  0%{transform:translate(-30%,-30%)} 50%{transform:translate(30%,30%)} 100%{transform:translate(-30%,-30%)}
+}
