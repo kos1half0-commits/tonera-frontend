@@ -298,12 +298,22 @@ export default function Ads() {
     }
     setOnclickaLoading(true); setOnclickaError('')
     try {
-      // Init and get show function each time (ensures fresh state)
-      const showFn = await Promise.race([
-        window.initCdTma({ id: onclickaSpotId }),
-        new Promise((_, reject) => setTimeout(() => reject({ message: 'Инициализация OnClickA истекла' }), 15000))
-      ])
-      if (typeof showFn !== 'function') throw { message: 'OnClickA: SDK не вернул функцию показа' }
+      // Try up to 2 times — SDK returns null when no ads or internal error
+      let showFn = null
+      for (let attempt = 0; attempt < 2; attempt++) {
+        showFn = await Promise.race([
+          window.initCdTma({ id: onclickaSpotId }),
+          new Promise((_, reject) => setTimeout(() => reject({ message: 'Время ожидания истекло' }), 15000))
+        ])
+        if (typeof showFn === 'function') break
+        if (attempt === 0) await new Promise(r => setTimeout(r, 1000)) // wait 1s before retry
+      }
+      if (typeof showFn !== 'function') {
+        setOnclickaError('Нет доступной рекламы OnClickA. Попробуйте позже')
+        setTimeout(() => setOnclickaError(''), 4000)
+        setOnclickaLoading(false)
+        return
+      }
       // Show the ad
       const result = await Promise.race([
         showFn(),
