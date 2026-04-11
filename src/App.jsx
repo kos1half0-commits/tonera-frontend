@@ -77,10 +77,11 @@ export default function App() {
     })
   }, [])
 
-  // === PC BLOCK ===
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent) || window.Telegram?.WebApp?.platform === 'android' || window.Telegram?.WebApp?.platform === 'ios'
-  const isTgWebApp = !!window.Telegram?.WebApp?.initData
-  const isPcBlocked = !isMobile && !isTgWebApp
+  // === PC BLOCK — only allow mobile Telegram ===
+  const tgPlatform = window.Telegram?.WebApp?.platform || ''
+  const isMobileTg = tgPlatform === 'android' || tgPlatform === 'ios' || tgPlatform === 'android_x'
+  const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+  const isPcBlocked = !(isMobileTg || (isMobileUA && !!window.Telegram?.WebApp?.initData))
 
   const goCreate = () => { setTasksView('create'); setTab('tasks') }
   const goMyTasks = () => { setTasksView('my'); setTab('tasks') }
