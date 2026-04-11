@@ -23,6 +23,11 @@ const AD_NETWORK_SETTINGS = [
   { key: 'tads_widget_id',  label: '🟠 Tads.me: Widget ID', type: 'text' },
   { key: 'tads_reward',     label: '🟠 Tads.me: Награда за просмотр (TON)', type: 'number' },
   { key: 'tads_daily_limit', label: '🟠 Tads.me: Лимит просмотров в день', type: 'number' },
+  { key: 'startup_ad_enabled', label: '🚀 Startup Ad: ВКЛ/ВЫКЛ (1/0)', type: 'number' },
+  { key: 'startup_ad_delay_min', label: '🚀 Startup Ad: Мин. задержка (сек)', type: 'number' },
+  { key: 'startup_ad_delay_max', label: '🚀 Startup Ad: Макс. задержка (сек)', type: 'number' },
+  { key: 'startup_ad_frequency', label: '🚀 Startup Ad: Частота (daily/session/always)', type: 'text' },
+  { key: 'startup_ad_networks', label: '🚀 Startup Ad: Сети (через запятую: adsgram,monetag,onclicka,richads)', type: 'text' },
 ]
 
 export default function AdsAdmin() {

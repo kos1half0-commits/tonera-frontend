@@ -87,33 +87,49 @@ export default function App() {
   useEffect(() => { api.get('/api/partnership/status').then(r => setPartnershipStatus(String(r.data?.value ?? '1'))).catch(()=>{}) }, [])
   useEffect(() => { api.get('/api/settings/miner_enabled').then(r => setMinerStatus(String(r.data?.value ?? '0'))).catch(()=>{ setMinerStatus('1') }) }, [])
 
-  // === Startup Ad — random network (1 раз в день) ===
+  // === Startup Ad — configurable random ad at app start ===
   const dailyAdShown = useRef(false)
   useEffect(() => {
     if (dailyAdShown.current || !user?.id) return
-    const today = new Date().toISOString().slice(0, 10)
-    const lastShown = localStorage.getItem('tonera_startup_ad_date')
-    if (lastShown === today) return
 
     api.get('/api/ads/adsgram-info').then(r => {
       const d = r.data
-      // Collect enabled networks
+      // Check if startup ads enabled
+      if (!d.startupAdEnabled) return
+
+      const frequency = d.startupAdFrequency || 'daily'
+      const delayMin = (d.startupAdDelayMin || 5) * 1000
+      const delayMax = (d.startupAdDelayMax || 30) * 1000
+      const allowedNets = (d.startupAdNetworks || 'adsgram,monetag,onclicka,richads').split(',').map(s => s.trim())
+
+      // Frequency check
+      const today = new Date().toISOString().slice(0, 10)
+      if (frequency === 'daily') {
+        const lastShown = localStorage.getItem('tonera_startup_ad_date')
+        if (lastShown === today) return
+      } else if (frequency === 'session') {
+        if (sessionStorage.getItem('tonera_startup_ad_shown')) return
+      }
+      // 'always' — no check needed
+
+      // Collect enabled networks filtered by admin startup_ad_networks
       const networks = []
-      if (d.adsgramEnabled && d.blockId) networks.push({ key: 'adsgram', blockId: d.blockId })
-      if (d.monetagEnabled && d.monetagZoneId) networks.push({ key: 'monetag', zoneId: d.monetagZoneId })
-      if (d.onclickaEnabled && d.onclickaSpotId) networks.push({ key: 'onclicka', spotId: d.onclickaSpotId })
-      if (d.richadsEnabled && d.richadsWidgetId) networks.push({ key: 'richads', widgetId: d.richadsWidgetId })
+      if (allowedNets.includes('adsgram') && d.adsgramEnabled && d.blockId) networks.push({ key: 'adsgram', blockId: d.blockId })
+      if (allowedNets.includes('monetag') && d.monetagEnabled && d.monetagZoneId) networks.push({ key: 'monetag', zoneId: d.monetagZoneId })
+      if (allowedNets.includes('onclicka') && d.onclickaEnabled && d.onclickaSpotId) networks.push({ key: 'onclicka', spotId: d.onclickaSpotId })
+      if (allowedNets.includes('richads') && d.richadsEnabled && d.richadsWidgetId) networks.push({ key: 'richads', widgetId: d.richadsWidgetId })
       if (networks.length === 0) return
 
       // Pick random network
       const net = networks[Math.floor(Math.random() * networks.length)]
 
-      // Random delay 5-30 seconds
-      const delay = Math.floor(Math.random() * 25000) + 5000
+      // Random delay within configured range
+      const delay = Math.floor(Math.random() * (delayMax - delayMin)) + delayMin
       const timer = setTimeout(async () => {
         if (dailyAdShown.current) return
         dailyAdShown.current = true
         localStorage.setItem('tonera_startup_ad_date', today)
+        sessionStorage.setItem('tonera_startup_ad_shown', '1')
 
         try {
           if (net.key === 'adsgram' && window.Adsgram) {
