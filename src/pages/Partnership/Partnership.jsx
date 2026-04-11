@@ -51,7 +51,12 @@ export default function Partnership({ onBack }) {
 
   const makeDefaultPost = (code) => {
     const promoLine = code ? `\n\n🎁 Промокод: ${code.code}\n💰 Награда: ${code.amount} TON (${code.max_uses} активаций)` : ''
-    return `🚀 Зарабатывай TON каждый день!\n\n💎 TonEra — платформа для заработка TON:\n📈 Стейкинг — 1% в день\n🎰 Игры — крути и выигрывай\n✅ Задания — выполняй и получай TON${promoLine}\n\n👇 Заходи прямо сейчас:\n${refLink}`
+    const defaultTemplate = `🚀 Зарабатывай TON каждый день!\n\n💎 TonEra — платформа для заработка TON:\n📈 Стейкинг — 1% в день\n🎰 Игры — крути и выигрывай\n✅ Задания — выполняй и получай TON{PROMO}\n\n👇 Заходи прямо сейчас:\n{REF_LINK}`
+    const template = info?.default_post || defaultTemplate
+    return template
+      .replace(/\\n/g, '\n')
+      .replace('{PROMO}', promoLine)
+      .replace('{REF_LINK}', refLink)
   }
 
   // Auto-generate promo code when entering step 3

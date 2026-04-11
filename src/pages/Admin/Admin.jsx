@@ -87,6 +87,7 @@ const SETTING_GROUPS = [
       { key: 'partner_promo_gold_uses',       label: '🥇 Промо Gold: макс. использований' },
       { key: 'partner_promo_diamond_reward',  label: '💎 Промо Diamond: награда TON' },
       { key: 'partner_promo_diamond_uses',    label: '💎 Промо Diamond: макс. использований' },
+      { key: 'partnership_default_post', label: '📝 Стандартный пост ({REF_LINK}, {PROMO})', type: 'textarea' },
     ]
   },
   {
@@ -2822,6 +2823,15 @@ export default function Admin() {
                           ✏️ ИЗМЕНИТЬ АДРЕС
                         </button>
                       </div>
+                    ) : s.type === 'textarea' ? (
+                      <textarea
+                        className="setting-input"
+                        rows={6}
+                        style={{resize:'vertical',minHeight:80,fontFamily:'DM Sans,sans-serif',lineHeight:1.5,whiteSpace:'pre-wrap'}}
+                        value={(settings[s.key] ?? '').replace(/\\n/g, '\n')}
+                        onChange={e => setSettings(p => ({...p, [s.key]: e.target.value.replace(/\n/g, '\\n')}))}
+                        placeholder="Используйте {REF_LINK} и {PROMO} для подстановки"
+                      />
                     ) : (
                       <input
                         className="setting-input"
