@@ -168,23 +168,16 @@ export default function Ads() {
     })()
   }, [monetagZoneId])
 
-  // Init OnClickA — SDK loaded in index.html head
+  // Init OnClickA — just detect SDK availability, actual init on click
   useEffect(() => {
     if (!onclickaSpotId) return
     let attempts = 0
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       attempts++
       if (window.initCdTma) {
         clearInterval(interval)
-        try {
-          onclickaShowRef.current = await window.initCdTma({ id: onclickaSpotId })
-          setOnclickaReady(true)
-          console.log('OnClickA ready')
-        } catch (e) {
-          console.warn('OnClickA initCdTma error:', e)
-          setOnclickaError('OnClickA не удалось инициализировать')
-          setTimeout(() => setOnclickaError(''), 5000)
-        }
+        setOnclickaReady(true)
+        console.log('OnClickA SDK detected')
       }
       if (attempts >= 30) { clearInterval(interval); console.warn('OnClickA: initCdTma not found after 15s') }
     }, 500)
@@ -297,11 +290,23 @@ export default function Ads() {
   }, [monetagLoading, monetagRemaining, monetagReward, cooldowns.monetag, startCooldown])
 
   const showOnClickA = useCallback(async () => {
-    if (!onclickaShowRef.current || onclickaLoading || onclickaRemaining <= 0 || cooldowns.onclicka > 0) return
+    if (onclickaLoading || onclickaRemaining <= 0 || cooldowns.onclicka > 0) return
+    if (!window.initCdTma) {
+      setOnclickaError('OnClickA SDK не загружен. Обновите страницу')
+      setTimeout(() => setOnclickaError(''), 4000)
+      return
+    }
     setOnclickaLoading(true); setOnclickaError('')
     try {
+      // Init and get show function each time (ensures fresh state)
+      const showFn = await Promise.race([
+        window.initCdTma({ id: onclickaSpotId }),
+        new Promise((_, reject) => setTimeout(() => reject({ message: 'Инициализация OnClickA истекла' }), 15000))
+      ])
+      if (typeof showFn !== 'function') throw { message: 'OnClickA: SDK не вернул функцию показа' }
+      // Show the ad
       const result = await Promise.race([
-        onclickaShowRef.current(),
+        showFn(),
         new Promise((_, reject) => setTimeout(() => reject({ message: 'Реклама не загрузилась. Попробуйте позже' }), 30000))
       ])
       if (result === false || result === null) {
@@ -321,7 +326,7 @@ export default function Ads() {
       setTimeout(() => setOnclickaError(''), 4000)
     }
     setOnclickaLoading(false)
-  }, [onclickaLoading, onclickaRemaining, onclickaReward, cooldowns.onclicka, startCooldown])
+  }, [onclickaLoading, onclickaRemaining, onclickaReward, onclickaSpotId, cooldowns.onclicka, startCooldown])
 
   const showRichAds = useCallback(async () => {
     if (richadsLoading || richadsRemaining <= 0 || cooldowns.richads > 0) return
