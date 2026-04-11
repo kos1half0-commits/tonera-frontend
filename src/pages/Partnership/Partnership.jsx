@@ -373,24 +373,48 @@ export default function Partnership({ onBack }) {
             {showBannerForm && (
               <div style={{marginTop:10}}>
                 <div style={{marginBottom:6}}>
-                  <span style={S.label}>{'\u0417\u0430\u0433\u043E\u043B\u043E\u0432\u043E\u043A'}</span>
-                  <input style={S.input} value={bannerForm.title} onChange={e=>setBannerForm(f=>({...f,title:e.target.value}))} placeholder={'\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u043A\u0430\u043D\u0430\u043B\u0430'}/>
+                  <span style={S.label}>{'Заголовок'}</span>
+                  <input style={S.input} value={bannerForm.title} onChange={e=>setBannerForm(f=>({...f,title:e.target.value}))} placeholder={'Название канала'}/>
                 </div>
                 <div style={{marginBottom:6}}>
-                  <span style={S.label}>{'\u041E\u043F\u0438\u0441\u0430\u043D\u0438\u0435'}</span>
-                  <textarea style={{...S.input,resize:'none'}} rows={2} value={bannerForm.text} onChange={e=>setBannerForm(f=>({...f,text:e.target.value}))} placeholder={'\u041A\u0440\u0430\u0442\u043A\u043E\u0435 \u043E\u043F\u0438\u0441\u0430\u043D\u0438\u0435...'}/>
+                  <span style={S.label}>{'Описание'}</span>
+                  <textarea style={{...S.input,resize:'none'}} rows={2} value={bannerForm.text} onChange={e=>setBannerForm(f=>({...f,text:e.target.value}))} placeholder={'Краткое описание...'}/>
                 </div>
                 <div style={{marginBottom:6}}>
-                  <span style={S.label}>{'\u0421\u0441\u044B\u043B\u043A\u0430 (\u043E\u043F\u0446.)'}</span>
+                  <span style={S.label}>{'Ссылка (опц.)'}</span>
                   <input style={S.input} value={bannerForm.link} onChange={e=>setBannerForm(f=>({...f,link:e.target.value}))} placeholder={'https://t.me/...'}/>
                 </div>
+                {/* IMAGE UPLOAD */}
+                <div style={{marginBottom:8}}>
+                  <span style={{...S.label,color:bannerForm.image_url?'#00e676':'#ff4d6a'}}>📷 Изображение баннера {bannerForm.image_url ? '✅' : '(обязательно)'}</span>
+                  {bannerForm.image_url ? (
+                    <div style={{position:'relative',marginTop:6}}>
+                      <img src={bannerForm.image_url} style={{width:'100%',borderRadius:8,maxHeight:120,objectFit:'cover'}} alt="banner"/>
+                      <button onClick={()=>setBannerForm(f=>({...f,image_url:''}))} style={{position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.6)',border:'none',borderRadius:'50%',width:24,height:24,color:'#ff4d6a',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+                    </div>
+                  ) : (
+                    <label style={{display:'block',marginTop:6,padding:'14px',border:'2px dashed rgba(255,77,106,0.3)',borderRadius:10,textAlign:'center',cursor:'pointer',background:'rgba(255,77,106,0.04)',transition:'all .2s'}}>
+                      <div style={{fontSize:24,marginBottom:4}}>📤</div>
+                      <div style={{fontFamily:'DM Sans',fontSize:11,color:'rgba(232,242,255,0.5)'}}>Нажмите чтобы загрузить</div>
+                      <div style={{fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.25)',marginTop:2}}>JPG, PNG · макс. 500 КБ</div>
+                      <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>{
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        if (file.size > 512000) { showToast('❌ Файл больше 500 КБ', true); return }
+                        const reader = new FileReader()
+                        reader.onload = ev => setBannerForm(f=>({...f, image_url: ev.target.result}))
+                        reader.readAsDataURL(file)
+                      }}/>
+                    </label>
+                  )}
+                </div>
                 <div style={{display:'flex',gap:6}}>
-                  <button style={S.btn('linear-gradient(135deg,#1a5fff,#0930cc)','#fff')} disabled={bannerSaving || !bannerForm.title.trim()}
+                  <button style={{...S.btn('linear-gradient(135deg,#1a5fff,#0930cc)','#fff'),opacity:(!bannerForm.title.trim()||!bannerForm.image_url||bannerSaving)?0.4:1}} disabled={bannerSaving || !bannerForm.title.trim() || !bannerForm.image_url}
                     onClick={async()=>{
                       setBannerSaving(true)
                       try {
                         await api.post('/api/ads/partner-banner', bannerForm)
-                        showToast('\u2705 \u0411\u0430\u043D\u043D\u0435\u0440 \u0441\u043E\u0437\u0434\u0430\u043D!')
+                        showToast('\u2705 Баннер создан!')
                         setShowBannerForm(false)
                         const r = await api.get('/api/ads/my-banner')
                         setBanner(r.data?.banner||null); setCanCreateBanner(r.data?.can_create||false)
