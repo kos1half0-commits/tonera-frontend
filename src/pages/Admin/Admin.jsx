@@ -1309,10 +1309,23 @@ function PartnershipAdmin() {
   const [savingTpl, setSavingTpl] = useState(false)
   const [postPhoto, setPostPhoto] = useState(null)
   const [postPhotoPreview, setPostPhotoPreview] = useState(null)
+  const [filterStatus, setFilterStatus] = useState('all')
 
   const showToast = (msg) => { setPartToast(msg); setTimeout(() => setPartToast(''), 3000) }
   const load = () => api.get('/api/partnership/all').then(r => { setItems(r.data||[]); setLoading(false) }).catch(() => setLoading(false))
   useEffect(() => { load() }, [])
+
+  const statusBadge = (status) => {
+    const map = {
+      approved:  { bg:'rgba(0,230,118,0.15)', color:'#00e676', text:'ОДОБРЕН' },
+      pending:   { bg:'rgba(255,179,0,0.15)', color:'#ffb300', text:'ОЖИДАЕТ' },
+      rejected:  { bg:'rgba(255,77,106,0.15)', color:'#ff4d6a', text:'ОТКЛ' },
+      suspended: { bg:'rgba(255,77,106,0.25)', color:'#ff4d6a', text:'🚨 БЛОК' },
+      cancelled: { bg:'rgba(232,242,255,0.08)', color:'rgba(232,242,255,0.4)', text:'ОТМЕНЁН' },
+    }
+    const s = map[status] || map.pending
+    return { background: s.bg, color: s.color, fontFamily:'Orbitron,sans-serif', fontSize:8, fontWeight:700, padding:'3px 8px', borderRadius:6, text: s.text }
+  }
 
   const approve = async (id) => { await api.post(`/api/partnership/approve/${id}`); load(); showToast('✅ Одобрено — задание создано') }
   const reject  = async (id) => { await api.post(`/api/partnership/reject/${id}`);  load(); showToast('❌ Отклонено') }
@@ -1392,14 +1405,38 @@ function PartnershipAdmin() {
         <div style={S.row}>
           <span style={{fontFamily:'Orbitron,sans-serif',fontSize:11,fontWeight:700,color:'#00d4ff'}}>#{selected.id}</span>
           <span style={{fontFamily:'DM Sans,sans-serif',fontSize:13,fontWeight:700,color:'#e8f2ff',flex:1}}>{selected.username ? '@'+selected.username : selected.first_name}</span>
-          <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,padding:'3px 8px',borderRadius:6,fontWeight:700,
-            background:selected.status==='approved'?'rgba(0,230,118,0.15)':'rgba(255,179,0,0.15)',
-            color:selected.status==='approved'?'#00e676':'#ffb300'
-          }}>{selected.status==='approved'?'ОДОБРЕН':'ОЖИДАЕТ'}</span>
+          {(() => { const b = statusBadge(selected.status); return <span style={{background:b.background,color:b.color,fontFamily:b.fontFamily,fontSize:b.fontSize,fontWeight:b.fontWeight,padding:b.padding,borderRadius:b.borderRadius}}>{b.text}</span> })()}
         </div>
         <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)',marginBottom:3}}>📢 {selected.channel_url}</div>
-        {selected.post_url && <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.3)'}}>🔗 {selected.post_url}</div>}
+        {selected.post_url && <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.3)',marginBottom:3}}>🔗 {selected.post_url}</div>}
+        <div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:4}}>
+          {selected.last_checked_at && <span style={{fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.25)'}}>🔍 Проверка: {new Date(selected.last_checked_at).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>}
+          {selected.last_renewed_at && <span style={{fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.25)'}}>🔄 Обновление: {new Date(selected.last_renewed_at).toLocaleString('ru',{day:'numeric',month:'short'})}</span>}
+          <span style={{fontFamily:'DM Sans',fontSize:9,color:'rgba(232,242,255,0.25)'}}>📅 Создан: {new Date(selected.created_at).toLocaleDateString('ru',{day:'numeric',month:'short',year:'numeric'})}</span>
+        </div>
       </div>
+
+      {/* SUSPENDED REASON */}
+      {selected.status === 'suspended' && (
+        <div style={{...S.card,cursor:'default',marginBottom:10,borderColor:'rgba(255,77,106,0.25)',background:'rgba(255,77,106,0.04)'}}>
+          <div style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#ff4d6a',marginBottom:8}}>🚨 ПАРТНЁРСТВО ЗАБЛОКИРОВАНО</div>
+          {selected.suspended_reason && (
+            <div style={{fontFamily:'DM Sans',fontSize:11,color:'rgba(232,242,255,0.55)',lineHeight:1.6,marginBottom:10,padding:'8px 10px',background:'rgba(255,77,106,0.06)',borderRadius:8}}>
+              {selected.suspended_reason.split('; ').map((r,i) => <div key={i}>{r}</div>)}
+            </div>
+          )}
+          <button style={S.btn({width:'100%',background:'rgba(0,230,118,0.15)',color:'#00e676',border:'1px solid rgba(0,230,118,0.2)'})} onClick={async()=>{
+            try {
+              await api.post(`/api/partnership/unsuspend/${selected.id}`)
+              showToast('✅ Партнёрство разблокировано')
+              load()
+              const r = await api.get('/api/partnership/all')
+              const updated = (r.data||[]).find(p => p.id === selected.id)
+              if (updated) setSelected(updated)
+            } catch(e) { showToast('❌ '+(e?.response?.data?.error||'Ошибка')) }
+          }}>✅ РАЗБЛОКИРОВАТЬ ПАРТНЁРА</button>
+        </div>
+      )}
 
       {/* ЗАДАНИЕ */}
       {selected.task_id && (
@@ -1573,30 +1610,59 @@ function PartnershipAdmin() {
   )
 
   // СПИСОК
+  const counts = {
+    all: items.length,
+    pending: items.filter(p => p.status === 'pending').length,
+    approved: items.filter(p => p.status === 'approved').length,
+    suspended: items.filter(p => p.status === 'suspended').length,
+  }
+  const filtered = filterStatus === 'all' ? items : items.filter(p => p.status === filterStatus)
+
   return (
     <div style={{display:'flex',flexDirection:'column',gap:8}}>
       {toast && <div style={{background:'rgba(0,230,118,0.1)',border:'1px solid rgba(0,230,118,0.3)',borderRadius:8,padding:'8px 12px',fontFamily:'Orbitron,sans-serif',fontSize:9,color:'#00e676',marginBottom:4}}>{toast}</div>}
-      {!items.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
-      {items.map(p => (
-        <div key={p.id} style={S.card} onClick={() => openPartner(p)}>
-          <div style={S.row}>
-            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>#{p.id}</span>
-            <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{p.username ? '@'+p.username : p.first_name}</span>
-            <span style={{fontFamily:'Orbitron,sans-serif',fontSize:8,fontWeight:700,padding:'3px 8px',borderRadius:6,
-              background:p.status==='approved'?'rgba(0,230,118,0.15)':p.status==='rejected'?'rgba(255,77,106,0.15)':'rgba(255,179,0,0.15)',
-              color:p.status==='approved'?'#00e676':p.status==='rejected'?'#ff4d6a':'#ffb300'
-            }}>{p.status==='approved'?'ОДОБРЕН':p.status==='rejected'?'ОТКЛ':'ОЖИДАЕТ'}</span>
-            <span style={{color:'rgba(232,242,255,0.3)',fontSize:14}}>›</span>
+
+      {/* STATS ROW */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:6,marginBottom:4}}>
+        {[
+          {k:'all',label:'ВСЕ',count:counts.all,color:'#00d4ff'},
+          {k:'pending',label:'ОЖИД.',count:counts.pending,color:'#ffb300'},
+          {k:'approved',label:'АКТИВ.',count:counts.approved,color:'#00e676'},
+          {k:'suspended',label:'БЛОК',count:counts.suspended,color:'#ff4d6a'},
+        ].map(f => (
+          <div key={f.k} onClick={()=>setFilterStatus(f.k)} style={{cursor:'pointer',textAlign:'center',padding:'6px 4px',borderRadius:8,background:filterStatus===f.k?f.color+'15':'rgba(26,95,255,0.04)',border:`1px solid ${filterStatus===f.k?f.color+'30':'rgba(26,95,255,0.08)'}`,transition:'all .2s'}}>
+            <div style={{fontFamily:'Orbitron',fontSize:14,fontWeight:900,color:filterStatus===f.k?f.color:'rgba(232,242,255,0.5)'}}>{f.count}</div>
+            <div style={{fontFamily:'Orbitron',fontSize:7,color:'rgba(232,242,255,0.3)',letterSpacing:'.06em'}}>{f.label}</div>
           </div>
-          <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{p.channel_url}</div>
-          {p.status === 'pending' && (
-            <div style={{display:'flex',gap:6,marginTop:8}} onClick={e=>e.stopPropagation()}>
-              <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={()=>approve(p.id)}>✅ ОДОБРИТЬ</button>
-              <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>reject(p.id)}>❌ ОТКЛОНИТЬ</button>
+        ))}
+      </div>
+
+      {!filtered.length && <div style={{textAlign:'center',padding:20,color:'rgba(232,242,255,0.3)',fontFamily:'DM Sans'}}>Нет заявок</div>}
+      {filtered.map(p => {
+        const b = statusBadge(p.status)
+        return (
+          <div key={p.id} style={{...S.card,borderColor:p.status==='suspended'?'rgba(255,77,106,0.2)':'rgba(26,95,255,0.15)'}} onClick={() => openPartner(p)}>
+            <div style={S.row}>
+              <span style={{fontFamily:'Orbitron,sans-serif',fontSize:10,fontWeight:700,color:'#00d4ff'}}>#{p.id}</span>
+              <span style={{fontFamily:'DM Sans,sans-serif',fontSize:12,fontWeight:700,color:'#e8f2ff',flex:1}}>{p.username ? '@'+p.username : p.first_name}</span>
+              <span style={{background:b.background,color:b.color,fontFamily:b.fontFamily,fontSize:b.fontSize,fontWeight:b.fontWeight,padding:b.padding,borderRadius:b.borderRadius}}>{b.text}</span>
+              <span style={{color:'rgba(232,242,255,0.3)',fontSize:14}}>›</span>
             </div>
-          )}
-        </div>
-      ))}
+            <div style={{fontFamily:'DM Sans,sans-serif',fontSize:11,color:'rgba(232,242,255,0.4)'}}>{p.channel_url}</div>
+            {p.status === 'suspended' && p.suspended_reason && (
+              <div style={{fontFamily:'DM Sans',fontSize:9,color:'#ff4d6a',marginTop:4,opacity:0.7}}>{p.suspended_reason.split('; ')[0]}</div>
+            )}
+            {p.status === 'pending' && (
+              <div style={{display:'flex',gap:6,marginTop:8}} onClick={e=>e.stopPropagation()}>
+                <button style={S.btn({flex:1,background:'rgba(0,230,118,0.2)',color:'#00e676'})} onClick={()=>approve(p.id)}>✅ ОДОБРИТЬ</button>
+                <button style={S.btn({flex:1,background:'rgba(255,77,106,0.15)',color:'#ff4d6a'})} onClick={()=>reject(p.id)}>❌ ОТКЛОНИТЬ</button>
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      <button style={{width:'100%',padding:'10px',border:'1px solid rgba(26,95,255,0.2)',borderRadius:10,background:'rgba(26,95,255,0.06)',color:'#00d4ff',fontFamily:'Orbitron,sans-serif',fontSize:9,fontWeight:700,cursor:'pointer',marginTop:4}} onClick={load}>↻ ОБНОВИТЬ</button>
     </div>
   )
 }
