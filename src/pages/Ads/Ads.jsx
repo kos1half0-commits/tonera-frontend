@@ -168,37 +168,27 @@ export default function Ads() {
     })()
   }, [monetagZoneId])
 
-  // Init OnClickA
+  // Init OnClickA — SDK loaded in index.html head
   useEffect(() => {
     if (!onclickaSpotId) return
-    ;(async () => {
-      try {
-        if (!document.querySelector('script[src*="onclckmn"]')) {
-          const s = document.createElement('script'); s.src = 'https://js.onclckmn.com/static/onclicka.js'; s.async = true; document.head.appendChild(s)
-          await new Promise((resolve, reject) => {
-            s.onload = resolve
-            s.onerror = () => reject(new Error('OnClickA script load failed'))
-            setTimeout(() => reject(new Error('OnClickA script load timeout')), 10000)
-          })
+    let attempts = 0
+    const interval = setInterval(async () => {
+      attempts++
+      if (window.initCdTma) {
+        clearInterval(interval)
+        try {
+          onclickaShowRef.current = await window.initCdTma({ id: onclickaSpotId })
+          setOnclickaReady(true)
+          console.log('OnClickA ready')
+        } catch (e) {
+          console.warn('OnClickA initCdTma error:', e)
+          setOnclickaError('OnClickA не удалось инициализировать')
+          setTimeout(() => setOnclickaError(''), 5000)
         }
-        let attempts = 0
-        const interval = setInterval(async () => {
-          attempts++
-          if (window.initCdTma) {
-            clearInterval(interval)
-            try {
-              onclickaShowRef.current = await window.initCdTma({ id: onclickaSpotId })
-              setOnclickaReady(true)
-            } catch (e) {
-              console.warn('OnClickA initCdTma error:', e)
-              setOnclickaError('OnClickA не удалось инициализировать')
-              setTimeout(() => setOnclickaError(''), 5000)
-            }
-          }
-          if (attempts >= 20) { clearInterval(interval); console.warn('OnClickA: initCdTma not found after 10s') }
-        }, 500)
-      } catch (e) { console.warn('OnClickA init:', e) }
-    })()
+      }
+      if (attempts >= 30) { clearInterval(interval); console.warn('OnClickA: initCdTma not found after 15s') }
+    }, 500)
+    return () => clearInterval(interval)
   }, [onclickaSpotId])
 
   // Init RichAds — TelegramAdsController SDK
