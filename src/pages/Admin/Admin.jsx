@@ -1732,6 +1732,70 @@ function PartnershipAdmin() {
               </div>
             ))}
           </div>
+
+          {/* AUTO-POST */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(0,230,118,0.15)',borderRadius:12,padding:14}}>
+            <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:'#00e676',marginBottom:10}}>📢 АВТО-ПОСТИНГ</div>
+            <div style={{marginBottom:8}}>
+              <div style={{fontFamily:'Orbitron',fontSize:8,fontWeight:700,color:'rgba(232,242,255,0.35)',letterSpacing:'.06em',marginBottom:3}}>Включить (0=выкл, 1=вкл)</div>
+              <div style={{display:'flex',gap:6}}>
+                <input style={{flex:1,background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'7px 10px',color:'#e8f2ff',fontFamily:'DM Sans',fontSize:12,outline:'none'}}
+                  value={pSettings['partnership_autopost_enabled'] ?? '0'}
+                  onChange={e => setPSettings(p => ({...p, partnership_autopost_enabled: e.target.value}))}/>
+                <button onClick={()=>savePSetting('partnership_autopost_enabled')} style={{padding:'7px 12px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:8,fontWeight:700,cursor:'pointer',background:'rgba(0,212,255,0.12)',color:'#00d4ff',flexShrink:0}}>
+                  {pSaving === 'partnership_autopost_enabled' ? '...' : 'СОХР'}
+                </button>
+              </div>
+            </div>
+            <div style={{marginBottom:10}}>
+              <div style={{fontFamily:'Orbitron',fontSize:8,fontWeight:700,color:'rgba(232,242,255,0.35)',letterSpacing:'.06em',marginBottom:3}}>Интервал (часов)</div>
+              <div style={{display:'flex',gap:6}}>
+                <input style={{flex:1,background:'#0b1630',border:'1px solid rgba(26,95,255,0.3)',borderRadius:8,padding:'7px 10px',color:'#e8f2ff',fontFamily:'DM Sans',fontSize:12,outline:'none'}}
+                  value={pSettings['partnership_autopost_interval_hours'] ?? '72'}
+                  onChange={e => setPSettings(p => ({...p, partnership_autopost_interval_hours: e.target.value}))}/>
+                <button onClick={()=>savePSetting('partnership_autopost_interval_hours')} style={{padding:'7px 12px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:8,fontWeight:700,cursor:'pointer',background:'rgba(0,212,255,0.12)',color:'#00d4ff',flexShrink:0}}>
+                  {pSaving === 'partnership_autopost_interval_hours' ? '...' : 'СОХР'}
+                </button>
+              </div>
+            </div>
+            {pSettings['partnership_autopost_last'] && (
+              <div style={{fontSize:9,color:'rgba(232,242,255,0.3)',marginBottom:6}}>
+                🕐 Последний: {new Date(pSettings['partnership_autopost_last']).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+              </div>
+            )}
+            <div style={{fontSize:9,color:'rgba(232,242,255,0.25)',lineHeight:1.5}}>
+              💡 Бот публикует пост в каналы всех партнёров. Используется кастомный пост партнёра или стандартный шаблон.
+            </div>
+          </div>
+
+          {/* ACTIONS */}
+          <div style={{background:'#0e1c3a',border:'1px solid rgba(255,179,0,0.15)',borderRadius:12,padding:14}}>
+            <div style={{fontFamily:'Orbitron',fontSize:10,fontWeight:700,color:'#ffb300',marginBottom:10}}>⚡ ДЕЙСТВИЯ</div>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              <button onClick={async()=>{
+                showToast('🔍 Проверяю...')
+                try {
+                  const r = await api.post('/api/partnership/check-all')
+                  const s = r.data.stats || {}
+                  showToast(`✅ Проверено: ${s.total||0} | OK: ${s.ok||0} | Блок: ${s.blocked||0} | Пауза: ${s.paused||0}`)
+                  load()
+                } catch(e) { showToast('❌ '+(e?.response?.data?.error||e.message)) }
+              }} style={{width:'100%',padding:'10px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:9,fontWeight:700,cursor:'pointer',background:'rgba(0,212,255,0.1)',color:'#00d4ff'}}>
+                🔍 ПРОВЕРИТЬ ВСЕХ ПАРТНЁРОВ
+              </button>
+              <button onClick={async()=>{
+                if (!confirm('Опубликовать пост во все каналы партнёров?')) return
+                showToast('📢 Публикую...')
+                try {
+                  const r = await api.post('/api/partnership/auto-post')
+                  showToast(`📢 Готово: ${r.data.success||0} успешно, ${r.data.failed||0} ошибок`)
+                  loadSettings()
+                } catch(e) { showToast('❌ '+(e?.response?.data?.error||e.message)) }
+              }} style={{width:'100%',padding:'10px',border:'none',borderRadius:8,fontFamily:'Orbitron',fontSize:9,fontWeight:700,cursor:'pointer',background:'rgba(0,230,118,0.1)',color:'#00e676'}}>
+                📢 АВТО-ПОСТИНГ СЕЙЧАС
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
