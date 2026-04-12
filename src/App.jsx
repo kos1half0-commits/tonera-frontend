@@ -55,6 +55,7 @@ export default function App() {
   })
   const [tasksView, setTasksView] = useState('list')
   const [blockMsg, setBlockMsg] = useState(null)
+  const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [showSupport, setShowSupport] = useState(false)
   const [showPartnership, setShowPartnership] = useState(false)
   const [showPromos, setShowPromos] = useState(false)
@@ -72,10 +73,55 @@ export default function App() {
       setUser(r.data.user)
     }).catch(e => {
       const msg = e?.response?.data?.error
-      if (msg) setBlockMsg(msg)
+      if (msg) {
+        setBlockMsg(msg)
+        if (msg.includes('работ')) setMaintenanceMode(true)
+      }
       else setUser({ balance_ton: 0, username: 'Пользователь' })
     })
   }, [])
+
+  // === Instant maintenance detection from any 503 API response ===
+  useEffect(() => {
+    const handler = (e) => {
+      setMaintenanceMode(true)
+      setBlockMsg(e.detail || '🔧 Технические работы. Скоро вернёмся!')
+    }
+    window.addEventListener('maintenanceDetected', handler)
+    return () => window.removeEventListener('maintenanceDetected', handler)
+  }, [])
+
+  const maintRef = useRef(false)
+  useEffect(() => { maintRef.current = maintenanceMode }, [maintenanceMode])
+
+  // === MAINTENANCE POLLING — check every 5s, show/hide instantly ===
+  useEffect(() => {
+    // Admins bypass maintenance
+    const tgUserId_ = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+    const isAdm = tgUserId_ && String(tgUserId_) === String(ADMIN_ID)
+    if (isAdm) return
+
+    let active = true
+    const check = async () => {
+      try {
+        const r = await api.get('/api/settings/maintenance')
+        if (!active) return
+        if (r.data?.value === '1') {
+          setMaintenanceMode(true)
+          setBlockMsg('🔧 Технические работы. Скоро вернёмся!')
+        } else {
+          if (maintRef.current) {
+            // Maintenance ended — full reload for clean state
+            window.location.reload()
+            return
+          }
+        }
+      } catch {}
+    }
+    check()
+    const interval = setInterval(check, 5000)
+    return () => { active = false; clearInterval(interval) }
+  }, [maintenanceMode])
 
   // === PC BLOCK — only allow mobile Telegram (admins bypass) ===
   const tgPlatform = window.Telegram?.WebApp?.platform || ''
@@ -170,12 +216,29 @@ export default function App() {
   if (page === 'adorder') return <AdOrder onBack={() => setPage(null)} />
 
   if (blockMsg) return (
-    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',padding:24,textAlign:'center',background:'#050a1a'}}>
-      <div style={{fontSize:52,marginBottom:16}}>{blockMsg.includes('работ') ? '🔧' : '🚫'}</div>
-      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:14,fontWeight:700,color:'#e8f2ff',marginBottom:8,letterSpacing:'.05em'}}>
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:'100vh',padding:24,textAlign:'center',background:'linear-gradient(180deg,#050a1a 0%,#0a1228 50%,#050a1a 100%)'}}>
+      <style>{`
+        @keyframes maintPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.15);opacity:.8} }
+        @keyframes maintGlow { 0%,100%{box-shadow:0 0 20px rgba(26,95,255,0.3)} 50%{box-shadow:0 0 40px rgba(26,95,255,0.6)} }
+        @keyframes maintDots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+        @keyframes maintSpin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+      `}</style>
+      <div style={{width:90,height:90,borderRadius:'50%',background:'linear-gradient(135deg,rgba(26,95,255,0.15),rgba(0,212,255,0.1))',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:24,animation:'maintGlow 2s ease-in-out infinite'}}>
+        <div style={{fontSize:44,animation: blockMsg.includes('работ') ? 'maintSpin 4s linear infinite' : 'maintPulse 2s ease-in-out infinite'}}>
+          {blockMsg.includes('работ') ? '⚙️' : '🚫'}
+        </div>
+      </div>
+      <div style={{fontFamily:'Orbitron,sans-serif',fontSize:16,fontWeight:900,color:'#e8f2ff',marginBottom:8,letterSpacing:'.08em'}}>
         {blockMsg.includes('работ') ? 'ТЕХНИЧЕСКИЕ РАБОТЫ' : 'ДОСТУП ОГРАНИЧЕН'}
       </div>
-      <div style={{fontFamily:'DM Sans,sans-serif',fontSize:13,color:'rgba(232,242,255,0.5)',lineHeight:1.6}}>{blockMsg}</div>
+      <div style={{fontFamily:'DM Sans,sans-serif',fontSize:14,color:'rgba(232,242,255,0.6)',lineHeight:1.7,maxWidth:300,marginBottom:20}}>{blockMsg}</div>
+      {blockMsg.includes('работ') && (
+        <div style={{fontFamily:'DM Sans,sans-serif',fontSize:12,color:'rgba(0,212,255,0.6)',display:'flex',alignItems:'center',gap:6}}>
+          <div style={{width:6,height:6,borderRadius:'50%',background:'#00d4ff',animation:'maintPulse 1.5s ease-in-out infinite'}} />
+          Обновление данных
+          <div style={{width:6,height:6,borderRadius:'50%',background:'#00d4ff',animation:'maintPulse 1.5s ease-in-out 0.3s infinite'}} />
+        </div>
+      )}
     </div>
   )
 

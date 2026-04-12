@@ -11,6 +11,20 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// Intercept 503 maintenance responses — notify App instantly
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 503) {
+      const msg = error.response.data?.error || ''
+      if (msg.includes('работ') || msg.includes('maintenance')) {
+        window.dispatchEvent(new CustomEvent('maintenanceDetected', { detail: msg }))
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 export const authLogin       = () => api.post('/api/auth/login')
 export const getUserStakes   = () => api.get('/api/staking/my')
 export const createStake     = (data) => api.post('/api/staking/stake', data)
