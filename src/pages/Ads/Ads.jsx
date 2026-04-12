@@ -569,7 +569,7 @@ export default function Ads() {
             <TadsWidget
               id={tadsWidgetId}
               type="fullscreen"
-              debug={true}
+              debug={false}
               onShowReward={handleTadsReward}
               onClickReward={handleTadsReward}
               onAdsNotFound={handleTadsNotFound}
