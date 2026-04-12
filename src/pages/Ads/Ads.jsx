@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../../api/index'
 import AdBanner from '../../components/AdBanner'
-import { TadsWidget } from 'react-tads-widget'
+import { TadsWidget, TadsWidgetProvider } from 'react-tads-widget'
 import './Ads.css'
 
 let monetagHandler = null
@@ -557,16 +557,18 @@ export default function Ads() {
 
       {/* Tads Widget - always rendered on Tads tab */}
       {activeTab === 'tads' && tadsEnabled && tadsWidgetId && (
-        <div style={{ margin: '12px 0' }}>
-          <TadsWidget
-            id={tadsWidgetId}
-            type="fullscreen"
-            debug={true}
-            onShowReward={handleTadsReward}
-            onClickReward={handleTadsReward}
-            onAdsNotFound={handleTadsNotFound}
-          />
-        </div>
+        <TadsWidgetProvider>
+          <div style={{ margin: '12px 0' }}>
+            <TadsWidget
+              id={tadsWidgetId}
+              type="fullscreen"
+              debug={true}
+              onShowReward={handleTadsReward}
+              onClickReward={handleTadsReward}
+              onAdsNotFound={handleTadsNotFound}
+            />
+          </div>
+        </TadsWidgetProvider>
       )}
 
       <div className="ads-banners">
