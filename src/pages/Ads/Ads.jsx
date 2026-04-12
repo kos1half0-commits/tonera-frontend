@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../../api/index'
 import AdBanner from '../../components/AdBanner'
+import { TadsWidget } from 'react-tads-widget'
 import './Ads.css'
 
 let monetagHandler = null
@@ -82,6 +83,7 @@ export default function Ads() {
   const [tadsRewarded, setTadsRewarded] = useState(false)
   const [tadsError, setTadsError] = useState('')
   const [tadsReady, setTadsReady] = useState(false)
+  const [tadsVisible, setTadsVisible] = useState(false)
 
   // Load settings
   useEffect(() => {
@@ -357,7 +359,16 @@ export default function Ads() {
 
   const showTads = useCallback(async () => {
     if (tadsLoading || tadsRemaining <= 0 || cooldowns.tads > 0) return
+    if (!tadsWidgetId) {
+      setTadsError('Tads не настроен'); setTimeout(() => setTadsError(''), 4000)
+      return
+    }
+    // Show the TadsWidget — reward will be given via onShowReward callback
+    setTadsVisible(true)
     setTadsLoading(true); setTadsError('')
+  }, [tadsLoading, tadsRemaining, tadsWidgetId, cooldowns.tads])
+
+  const handleTadsReward = useCallback(async () => {
     try {
       const r = await api.post('/api/ads/tads-reward')
       setTadsRewarded(true); setTadsTodayCount(p => p + 1); setTadsTotalEarned(p => p + (parseFloat(r.data?.reward) || tadsReward))
@@ -365,7 +376,14 @@ export default function Ads() {
       startCooldown('tads')
     } catch (e) { setTadsError(e?.response?.data?.error || 'Tads недоступна'); setTimeout(() => setTadsError(''), 4000) }
     setTadsLoading(false)
-  }, [tadsLoading, tadsRemaining, tadsReward, cooldowns.tads, startCooldown])
+    setTadsVisible(false)
+  }, [tadsReward, startCooldown])
+
+  const handleTadsNotFound = useCallback(() => {
+    setTadsError('Нет доступной рекламы Tads'); setTimeout(() => setTadsError(''), 4000)
+    setTadsLoading(false)
+    setTadsVisible(false)
+  }, [])
 
   // Current tab state
   const tabMap = {
@@ -523,8 +541,22 @@ export default function Ads() {
         earningsCls: 'tads-earnings', earningsGradient: 'tads-earnings-gradient',
         reward: tadsReward, todayCount: tadsTodayCount, dailyLimit: tadsDailyLimit, remaining: tadsRemaining,
         limitPercent: tadsLimitPercent, loading: tadsLoading, totalEarned: tadsTotalEarned,
-        onClick: showTads, disabled: !tadsReady, hasId: !!tadsWidgetId,
+        onClick: showTads, disabled: !tadsReady || tadsVisible, hasId: !!tadsWidgetId,
       })}
+
+      {/* Tads Widget - renders fullscreen ad */}
+      {tadsVisible && tadsWidgetId && (
+        <div className="tads-widget-overlay">
+          <TadsWidget
+            id={tadsWidgetId}
+            type="fullscreen"
+            debug={false}
+            onShowReward={handleTadsReward}
+            onClickReward={handleTadsReward}
+            onAdsNotFound={handleTadsNotFound}
+          />
+        </div>
+      )}
 
       <div className="ads-banners">
         <div className="ads-banners-title">📢 СПОНСОРЫ</div>
