@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../../api/index'
 import AdBanner from '../../components/AdBanner'
-import { TadsWidget, TadsWidgetProvider } from 'react-tads-widget'
+import { TadsWidget, TadsWidgetProvider, renderTadsWidget } from 'react-tads-widget'
 import './Ads.css'
 
 let monetagHandler = null
@@ -365,16 +365,23 @@ export default function Ads() {
       setTadsError('Tads не настроен'); setTimeout(() => setTadsError(''), 4000)
       return
     }
-    // Show the TadsWidget — reward will be given via onShowReward callback
-    setTadsVisible(true)
     setTadsLoading(true); setTadsError('')
     // Auto-cancel after 15 seconds if no callback fires
     if (tadsTimeoutRef.current) clearTimeout(tadsTimeoutRef.current)
     tadsTimeoutRef.current = setTimeout(() => {
       setTadsError('Tads не загрузился. Попробуйте позже'); setTimeout(() => setTadsError(''), 4000)
       setTadsLoading(false)
-      setTadsVisible(false)
     }, 15000)
+    // Trigger the fullscreen ad via SDK controller
+    try {
+      renderTadsWidget({ id: tadsWidgetId, type: 'fullscreen' })
+    } catch (e) {
+      console.warn('Tads renderTadsWidget error:', e)
+      setTadsError('Tads не удалось показать рекламу')
+      setTimeout(() => setTadsError(''), 4000)
+      setTadsLoading(false)
+      if (tadsTimeoutRef.current) clearTimeout(tadsTimeoutRef.current)
+    }
   }, [tadsLoading, tadsRemaining, tadsWidgetId, cooldowns.tads])
 
   const handleTadsReward = useCallback(async () => {
