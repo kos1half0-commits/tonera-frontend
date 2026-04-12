@@ -555,9 +555,9 @@ export default function Ads() {
         onClick: showTads, disabled: !tadsReady || tadsVisible, hasId: !!tadsWidgetId,
       })}
 
-      {/* Tads Widget - renders fullscreen ad */}
-      {tadsVisible && tadsWidgetId && (
-        <div className="tads-widget-overlay">
+      {/* Tads Widget - always rendered on Tads tab */}
+      {activeTab === 'tads' && tadsEnabled && tadsWidgetId && (
+        <div style={{ margin: '12px 0' }}>
           <TadsWidget
             id={tadsWidgetId}
             type="fullscreen"
