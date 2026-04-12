@@ -357,6 +357,8 @@ export default function Ads() {
     setRichadsLoading(false)
   }, [richadsLoading, richadsRemaining, richadsReward, richadsReady, cooldowns.richads, startCooldown])
 
+  const tadsTimeoutRef = useRef(null)
+
   const showTads = useCallback(async () => {
     if (tadsLoading || tadsRemaining <= 0 || cooldowns.tads > 0) return
     if (!tadsWidgetId) {
@@ -366,9 +368,17 @@ export default function Ads() {
     // Show the TadsWidget — reward will be given via onShowReward callback
     setTadsVisible(true)
     setTadsLoading(true); setTadsError('')
+    // Auto-cancel after 15 seconds if no callback fires
+    if (tadsTimeoutRef.current) clearTimeout(tadsTimeoutRef.current)
+    tadsTimeoutRef.current = setTimeout(() => {
+      setTadsError('Tads не загрузился. Попробуйте позже'); setTimeout(() => setTadsError(''), 4000)
+      setTadsLoading(false)
+      setTadsVisible(false)
+    }, 15000)
   }, [tadsLoading, tadsRemaining, tadsWidgetId, cooldowns.tads])
 
   const handleTadsReward = useCallback(async () => {
+    if (tadsTimeoutRef.current) clearTimeout(tadsTimeoutRef.current)
     try {
       const r = await api.post('/api/ads/tads-reward')
       setTadsRewarded(true); setTadsTodayCount(p => p + 1); setTadsTotalEarned(p => p + (parseFloat(r.data?.reward) || tadsReward))
@@ -380,6 +390,7 @@ export default function Ads() {
   }, [tadsReward, startCooldown])
 
   const handleTadsNotFound = useCallback(() => {
+    if (tadsTimeoutRef.current) clearTimeout(tadsTimeoutRef.current)
     setTadsError('Нет доступной рекламы Tads'); setTimeout(() => setTadsError(''), 4000)
     setTadsLoading(false)
     setTadsVisible(false)
